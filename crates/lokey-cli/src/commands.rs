@@ -135,7 +135,9 @@ fn find<'a>(session: &'a Session, key: &str, project: Option<&str>) -> Result<&'
         .filter(|entry| same_name(&entry.key, key))
         .collect();
     match matches.as_slice() {
-        [] => Err(Failure::Message(format!("no key named {key} in any project"))),
+        [] => Err(Failure::Message(format!(
+            "no key named {key} in any project"
+        ))),
         [only] => Ok(only),
         several => {
             let names: Vec<&str> = several.iter().map(|e| e.project.as_str()).collect();
