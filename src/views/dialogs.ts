@@ -193,13 +193,14 @@ export function openSettings(context: SettingsContext): void {
       announce(`Removed the empty project ${context.project}.`);
       return;
     }
-    settingsDialog.close();
+    // Opened on top of Settings, so Cancel returns focus inside it.
     confirmDelete({
       title: `Delete project ${context.project}?`,
       text: `Deletes ${context.project} and its ${plural(context.projectCount, "key")}. This cannot be undone.`,
       confirm: "Delete project",
       run: (deletion) => api.deleteProject(context.project, deletion),
       onDone: (snapshot) => {
+        settingsDialog.close();
         context.onSnapshot(snapshot);
         announce(
           `Deleted project ${context.project} and its ${plural(context.projectCount, "key")}.`,
@@ -213,13 +214,14 @@ export function openSettings(context: SettingsContext): void {
       announce("There are no keys to delete.");
       return;
     }
-    settingsDialog.close();
+    // Opened on top of Settings, so Cancel returns focus inside it.
     confirmDelete({
       title: "Delete all keys?",
       text: `Deletes all ${plural(context.totalCount, "key")} in ${plural(context.projectTotal, "project")}. The vault and its passwords stay. This cannot be undone.`,
       confirm: "Delete all keys",
       run: (deletion) => api.truncate(deletion),
       onDone: (snapshot) => {
+        settingsDialog.close();
         context.onSnapshot(snapshot);
         announce(`Deleted ${plural(context.totalCount, "key")}. The vault is empty.`);
       },

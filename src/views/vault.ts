@@ -89,6 +89,27 @@ function actionButton(action: Action, key: string): HTMLButtonElement {
   return button;
 }
 
+/**
+ * Masked content: the dots are hidden from assistive technology and replaced
+ * by one spoken word, so a list is not read as twelve bullets per row.
+ */
+function setMasked(text: HTMLElement, empty: boolean): void {
+  text.dataset.state = "masked";
+  text.dataset.empty = String(empty);
+  text.removeAttribute("title");
+  if (empty) {
+    text.textContent = "(empty)";
+    return;
+  }
+  const dots = document.createElement("span");
+  dots.setAttribute("aria-hidden", "true");
+  dots.textContent = MASK;
+  const spoken = document.createElement("span");
+  spoken.className = "visually-hidden";
+  spoken.textContent = "hidden";
+  text.replaceChildren(dots, spoken);
+}
+
 function buildRow(row: Row, index: number): HTMLTableRowElement {
   const tr = document.createElement("tr");
   tr.dataset.project = row.project;
@@ -111,8 +132,7 @@ function buildRow(row: Row, index: number): HTMLTableRowElement {
   cell.className = "value-cell";
   const text = document.createElement("span");
   text.className = "cell-text mono";
-  text.dataset.state = "masked";
-  text.textContent = row.length === 0 ? "(empty)" : MASK;
+  setMasked(text, row.length === 0);
   const actions = document.createElement("span");
   actions.className = "row-actions";
   actions.append(...ACTIONS.map((action) => actionButton(action, row.key)));
@@ -128,9 +148,7 @@ function showValue(tr: HTMLTableRowElement, value: string | undefined): void {
   const toggle = find(tr, '[data-action="reveal"]', HTMLButtonElement);
   const { key } = rowKey(tr);
   if (value === undefined) {
-    text.dataset.state = "masked";
-    text.textContent = text.textContent === "(empty)" ? "(empty)" : MASK;
-    text.removeAttribute("title");
+    setMasked(text, text.dataset.empty === "true");
     toggle.setAttribute("aria-pressed", "false");
     toggle.setAttribute("aria-label", `Show ${key}`);
     toggle.replaceChildren(icon("eye"));
@@ -181,7 +199,9 @@ function render(): void {
   renderProjects();
   const query = byId("search", HTMLInputElement).value;
   const rows = visibleRows(snapshot.rows, project, query);
-  const focusedKey = rowFor(document.activeElement)?.dataset.key;
+  const focusedRow = rowFor(document.activeElement);
+  const focusedKey = focusedRow?.dataset.key;
+  const focusedIndex = focusedRow ? [...rowsBody().rows].indexOf(focusedRow) : -1;
   const focusedAction =
     document.activeElement instanceof HTMLElement
       ? document.activeElement.dataset.action
@@ -195,7 +215,17 @@ function render(): void {
   if (rows.length === 0) {
     empty.replaceChildren();
     if (query.trim()) {
-      empty.textContent = `No keys in ${project} match "${query.trim()}".`;
+      const clear = document.createElement("button");
+      clear.type = "button";
+      clear.className = "btn";
+      clear.textContent = "Clear search";
+      clear.addEventListener("click", () => {
+        const search = byId("search", HTMLInputElement);
+        search.value = "";
+        render();
+        search.focus();
+      });
+      empty.append(`No keys in ${project} match "${query.trim()}".`, clear);
     } else {
       const code = document.createElement("code");
       code.textContent = "lokey set key=NAME value=VALUE";
@@ -212,9 +242,15 @@ function render(): void {
     else revealed = undefined;
   }
   if (focusedKey) {
-    const tr = findRow({ project, key: focusedKey });
+    // The same row if it survived; otherwise the row now in its place, the one
+    // above, or the add row, so focus never falls to <body> (SC 2.4.3).
+    const remaining = [...rowsBody().rows];
+    const tr =
+      findRow({ project, key: focusedKey }) ??
+      remaining[focusedIndex] ??
+      remaining[focusedIndex - 1];
     const target = tr?.querySelector<HTMLElement>(`[data-action="${focusedAction ?? "reveal"}"]`);
-    target?.focus();
+    (target ?? byId("new-key", HTMLInputElement)).focus();
   }
   updateAddLabel();
 }
@@ -309,6 +345,7 @@ async function startEdit(tr: HTMLTableRowElement): Promise<void> {
   input.spellcheck = false;
   label.append(name, input);
   text.replaceWith(label);
+  cell.classList.add("editing");
   input.focus();
   input.select();
 

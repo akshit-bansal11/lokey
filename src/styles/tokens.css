@@ -65,11 +65,12 @@
   --icon: 1rem;
   --row-h: 2.5rem;
   --col-num: 3rem;
-  --col-key: 34%;
+  --col-key: 30%;
   --form-width: 22rem;
   --dialog-width: 28rem;
   --hairline: 1px;
   --focus-width: 2px;
+  --clip-bar: 2px; /* clipboard countdown; 1px was too faint at 96 DPI */
 
   /* Radius: control < card < surface. */
   --radius-control: 6px;

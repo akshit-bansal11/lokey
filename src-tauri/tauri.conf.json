@@ -17,8 +17,8 @@
         "title": "lokey",
         "width": 960,
         "height": 640,
-        "minWidth": 520,
-        "minHeight": 420,
+        "minWidth": 640,
+        "minHeight": 460,
         "center": true,
         "contentProtected": true
       }

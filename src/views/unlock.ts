@@ -2,6 +2,7 @@
 
 import { api, toFailure } from "@/lib/api.ts";
 import { busy, field, find, mount, setFormError } from "@/lib/dom.ts";
+import { announce } from "@/lib/status.ts";
 import type { LockReason, Snapshot } from "@/lib/types.ts";
 
 const REASONS: Record<LockReason, string> = {
@@ -27,6 +28,9 @@ export function showUnlock(
   const submit = find(form, 'button[type="submit"]', HTMLButtonElement);
   const input = field(form, "master");
   find(form, "[data-reason]", HTMLElement).textContent = reason ? REASONS[reason] : "";
+  // Also spoken: focus lands in the field, so a screen reader user would
+  // otherwise never hear why the vault locked (SC 4.1.3).
+  if (reason) announce(REASONS[reason]);
   find(form, "[data-vault-path]", HTMLElement).textContent = vaultPath;
 
   if (lockoutSecs > 0) {

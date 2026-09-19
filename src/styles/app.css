@@ -288,6 +288,7 @@ main {
 }
 
 .grid {
+  overflow: clip; /* keeps hovered first and last rows inside the rounded corners */
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
@@ -344,7 +345,9 @@ main {
 }
 
 .grid tfoot td {
+  border-block-start: var(--hairline) solid var(--color-border-subtle);
   border-block-end: 0;
+  background: var(--color-bg-canvas); /* the add row reads as a different kind of row */
 }
 
 .cell-text {
@@ -382,6 +385,10 @@ main {
   gap: var(--space-1);
 }
 
+.value-cell.editing .row-actions {
+  display: none;
+}
+
 .new-row .input {
   min-height: var(--icon-button);
 }
@@ -394,6 +401,10 @@ main {
   margin: var(--space-5) 0 0;
   color: var(--color-text-secondary);
   text-align: center;
+}
+
+.empty .btn {
+  margin-inline-start: var(--space-2);
 }
 
 .empty code {
@@ -421,12 +432,19 @@ main {
   color: var(--color-text-muted);
 }
 
+/* Below this width the hint would wrap and grow the bar; the keys still work. */
+@media (max-width: 47.5rem) {
+  .statusbar .shortcuts {
+    display: none;
+  }
+}
+
 /* Signature: a hairline that drains over the clipboard's 30 seconds. */
 .clip-timer {
   position: absolute;
   inset-inline: 0;
-  inset-block-start: calc(-1 * var(--hairline));
-  height: var(--hairline);
+  inset-block-start: calc(-1 * var(--clip-bar));
+  height: var(--clip-bar);
   background: var(--color-focus);
   transform-origin: left;
 }
