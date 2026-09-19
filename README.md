@@ -80,14 +80,20 @@ Rules worth knowing:
   password.
 - **Projects** keep the same key name apart: `DATABASE_URL` can exist once in
   `web` and once in `api`. Leave out `project=` and the key goes to `default`.
-  `get` finds a key in any project when the name is unique.
+  `get` and `delete` find a key in any project when the name is unique.
 - **Names** use letters, digits and `_ - . /`, and match regardless of case.
 - **A value typed as `value=...` is saved in your shell history**, in plain
   text. Leave `value=` out and lokey asks for it with hidden input instead.
 - **In scripts**, use `--view`, because plain `get` copies the value and prints
   nothing useful: `$env:API_KEY = lokey get key=API_KEY --view`
 - **`import`** reads a `.env` file too: `Get-Content .env | lokey import project=web`.
-  If any line is not a pair, nothing is imported.
+  If any line is not a pair, nothing is imported. Pasting into the terminal,
+  finish with Ctrl+Z then Enter (Ctrl+D in Git Bash). In Windows PowerShell 5.1,
+  run `$OutputEncoding = [Text.Encoding]::UTF8` first or non-ASCII characters
+  arrive as `?`.
+- **Any terminal works**: PowerShell, cmd, Windows Terminal, VS Code and Git
+  Bash. Passwords show as `*` while you type, or nothing at all in a Git Bash
+  window.
 
 ## The desktop app
 
