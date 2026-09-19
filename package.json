@@ -1,0 +1,11 @@
+{
+  "name": "lokey",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Local-only encrypted key/value vault: a CLI and a desktop app sharing one vault file",
+  "license": "MIT",
+  "scripts": {
+    "check": "cargo fmt --all && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace",
+    "check:ci": "cargo fmt --all --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked"
+  }
+}

@@ -1,0 +1,17 @@
+# One-off: resolves Cargo.lock on a runner, since the owner's PC has no Rust
+# toolchain. The lockfile is committed from the artifact; then this file goes.
+name: lockfile
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  lock:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo generate-lockfile
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: Cargo.lock
+          path: Cargo.lock
