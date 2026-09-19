@@ -53,9 +53,7 @@ impl Store {
         password::check_new("master", master)?;
         password::check_new("deletion", deletion)?;
         if master == deletion {
-            return Err(Error::WeakPassword(
-                "the master and deletion passwords must be different".into(),
-            ));
+            return Err(same_passwords());
         }
 
         let kdf = KdfParams::DEFAULT;
@@ -303,9 +301,7 @@ impl Session {
         if let (Some(master), Some((_, deletion))) = (new_master, new_deletion)
             && master == deletion
         {
-            return Err(Error::WeakPassword(
-                "the master and deletion passwords must be different".into(),
-            ));
+            return Err(same_passwords());
         }
 
         let store = self.store.clone();
@@ -313,6 +309,19 @@ impl Session {
             let mut file = store.read()?;
             self.reload(&file)?;
             self.merge_inbox(&mut file);
+            // Changing one password alone must not make it equal the other,
+            // or the master password would also authorise deletes.
+            let same = match (new_master, new_deletion) {
+                (Some(master), None) => is_deletion(&self.body, master, self.kdf)?,
+                (None, Some((_, next))) => {
+                    let key = crypto::derive_key(next.as_bytes(), &unb64(&self.salt)?, self.kdf)?;
+                    crypto::ct_eq(key.as_ref(), self.key.as_ref())
+                }
+                _ => false,
+            };
+            if same {
+                return Err(same_passwords());
+            }
             if let Some((current, next)) = new_deletion {
                 verify_deletion(&self.body, current, self.kdf, store.dir())?;
                 self.body.deletion = deletion_check(next, self.kdf)?;
@@ -436,13 +445,22 @@ fn verify_deletion(
     dir: &std::path::Path,
 ) -> Result<()> {
     lockout::check(dir)?;
-    let candidate = crypto::derive_key(deletion.as_bytes(), &unb64(&body.deletion.salt)?, kdf)?;
-    let expected = Zeroizing::new(unb64(&body.deletion.hash)?);
-    if crypto::ct_eq(candidate.as_ref(), &expected) {
+    if is_deletion(body, deletion, kdf)? {
         lockout::clear(dir)
     } else {
         Err(lockout::fail(dir))
     }
+}
+
+/// Whether `candidate` is the deletion password. No lockout bookkeeping.
+fn is_deletion(body: &Body, candidate: &str, kdf: KdfParams) -> Result<bool> {
+    let derived = crypto::derive_key(candidate.as_bytes(), &unb64(&body.deletion.salt)?, kdf)?;
+    let expected = Zeroizing::new(unb64(&body.deletion.hash)?);
+    Ok(crypto::ct_eq(derived.as_ref(), &expected))
+}
+
+fn same_passwords() -> Error {
+    Error::WeakPassword("the master and deletion passwords must be different".into())
 }
 
 fn seal_body(key: &[u8; KEY_LEN], body: &Body, file: &VaultFile) -> Result<crypto::Sealed> {
@@ -741,6 +759,27 @@ mod tests {
             session.change_passwords(None, Some(("guess guess guess", "new deletion phrase")));
 
         assert!(matches!(result, Err(Error::WrongPassword { .. })));
+    }
+
+    #[test]
+    fn change_master_password_alone_cannot_equal_the_deletion_password() {
+        let (_dir, store) = new_vault();
+        let (mut session, _) = store.unlock(MASTER).unwrap();
+
+        let result = session.change_passwords(Some(DELETION), None);
+
+        assert!(matches!(result, Err(Error::WeakPassword(_))));
+        assert!(store.unlock(MASTER).is_ok());
+    }
+
+    #[test]
+    fn change_deletion_password_alone_cannot_equal_the_master_password() {
+        let (_dir, store) = new_vault();
+        let (mut session, _) = store.unlock(MASTER).unwrap();
+
+        let result = session.change_passwords(None, Some((DELETION, MASTER)));
+
+        assert!(matches!(result, Err(Error::WeakPassword(_))));
     }
 
     #[test]
