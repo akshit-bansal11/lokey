@@ -17,7 +17,7 @@ use zeroize::Zeroizing;
 use crate::{Failure, args::Args, import, prompt};
 
 const HELP: &str = "\
-lokey — local-only encrypted key/value vault. No network, ever.
+lokey: a local-only encrypted key/value vault. No network, ever.
 
   lokey set key=NAME value=VALUE [project=P]   save a value (no password needed)
   lokey set key=NAME [project=P]               same, typing the value hidden
