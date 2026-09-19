@@ -6,7 +6,7 @@ All notable changes to lokey are recorded here, following
 
 ## [Unreleased]
 
-## [0.2.0] - 2026-09-19
+## [0.2.0] - 2026-09-20
 
 ### Fixed
 
