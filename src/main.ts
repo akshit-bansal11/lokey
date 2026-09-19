@@ -33,6 +33,7 @@ async function route(reason?: LockReason | "manual"): Promise<void> {
     showSetup(
       (snapshot) => enterVault(status, snapshot),
       reason === "missing" ? "The vault file was removed. Create a new vault." : "",
+      () => void route(),
     );
     return;
   }

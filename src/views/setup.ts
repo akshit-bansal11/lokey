@@ -27,7 +27,12 @@ function confirmMismatch(
   return differs;
 }
 
-export function showSetup(onCreated: (snapshot: Snapshot) => void, notice = ""): void {
+/** `onExists` runs when a vault appeared meanwhile, say from `lokey init`. */
+export function showSetup(
+  onCreated: (snapshot: Snapshot) => void,
+  notice = "",
+  onExists?: () => void,
+): void {
   const root = mount("tpl-setup");
   const form = find(root, "#setup-form", HTMLFormElement);
   const submit = find(form, 'button[type="submit"]', HTMLButtonElement);
@@ -65,7 +70,12 @@ export function showSetup(onCreated: (snapshot: Snapshot) => void, notice = ""):
       onCreated(await api.create(master, deletion));
     } catch (failure) {
       restore();
-      setFormError(form, toFailure(failure).message);
+      const { code, message } = toFailure(failure);
+      if (code === "exists" && onExists) {
+        onExists();
+        return;
+      }
+      setFormError(form, message);
     }
   });
 

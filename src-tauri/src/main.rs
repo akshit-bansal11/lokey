@@ -62,7 +62,7 @@ impl Inner {
     }
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn status(state: State<'_, AppState>) -> Status {
     let inner = state.lock();
     match &inner.store {
@@ -114,24 +114,24 @@ fn open(inner: &mut Inner, master: &str) -> Result<Snapshot, Failure> {
     Ok(snapshot)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn lock(state: State<'_, AppState>) {
     state.lock().session = None;
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn touch(state: State<'_, AppState>) {
     state.lock().last_active = Instant::now();
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn reveal(state: State<'_, AppState>, project: String, key: String) -> Result<String, Failure> {
     let mut inner = state.lock();
     Ok(inner.session()?.get(&project, &key)?.value.clone())
 }
 
 /// Copies a value and schedules the clear. Returns the clear delay in seconds.
-#[tauri::command]
+#[tauri::command(async)]
 fn copy(state: State<'_, AppState>, project: String, key: String) -> Result<u64, Failure> {
     let mut inner = state.lock();
     let sequence = clipboard::copy_secret(&inner.session()?.get(&project, &key)?.value)?;
@@ -240,6 +240,7 @@ fn serve_backoff<T>(result: Result<T, Failure>) -> Result<T, Failure> {
 /// Pushes changes made by other processes into the window, and locks the
 /// vault after `IDLE_LOCK` without activity.
 fn watch(app: &AppHandle) {
+    let mut reported = None;
     loop {
         thread::sleep(WATCH_EVERY);
         let state = app.state::<AppState>();
@@ -274,9 +275,13 @@ fn watch(app: &AppHandle) {
                 let _ = app.emit("vault-locked", "missing");
             }
             Err(other) => {
-                // Probably a write in progress elsewhere; try again next tick.
-                inner.seen = modified;
-                let _ = app.emit("vault-error", other.to_string());
+                // Probably a write in progress or a scanner holding the file.
+                // `seen` stays put so the next tick tries again; the error is
+                // reported once per change, not every tick.
+                if reported != modified {
+                    reported = modified;
+                    let _ = app.emit("vault-error", other.to_string());
+                }
             }
         }
     }

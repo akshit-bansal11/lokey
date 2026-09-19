@@ -48,6 +48,8 @@ let pendingProjects: string[] = [];
 let revealed: Revealed | undefined;
 let lastTouch = 0;
 let options: VaultOptions;
+/** True while a value is being edited in place; see `render`. */
+let editing = false;
 
 function isAction(value: string | undefined): value is Action {
   return ACTIONS.some((action) => action === value);
@@ -196,6 +198,9 @@ function renderProjects(): void {
 }
 
 function render(): void {
+  // A change from the terminal must not rebuild the row holding an open edit.
+  // The snapshot is kept; the edit renders it when it finishes.
+  if (editing) return;
   renderProjects();
   const query = byId("search", HTMLInputElement).value;
   const rows = visibleRows(snapshot.rows, project, query);
@@ -307,7 +312,8 @@ async function onAction(action: Action, tr: HTMLTableRowElement): Promise<void> 
         return;
       }
       case "edit":
-        return startEdit(tr);
+        await startEdit(tr);
+        return;
       case "delete":
         confirmDelete({
           title: `Delete ${target.key}?`,
@@ -346,6 +352,7 @@ async function startEdit(tr: HTMLTableRowElement): Promise<void> {
   label.append(name, input);
   text.replaceWith(label);
   cell.classList.add("editing");
+  editing = true;
   input.focus();
   input.select();
 
@@ -353,6 +360,7 @@ async function startEdit(tr: HTMLTableRowElement): Promise<void> {
   const finish = async (save: boolean): Promise<void> => {
     if (done) return;
     done = true;
+    editing = false;
     if (save && input.value !== current) {
       try {
         applySnapshot(await api.save(target.project, target.key, input.value));
@@ -545,5 +553,6 @@ export function leaveVault(): void {
   document.removeEventListener("pointerdown", touch);
   for (const dialog of document.querySelectorAll("dialog")) dialog.close();
   revealed = undefined;
+  editing = false;
   showShortcuts(false);
 }
