@@ -1,6 +1,6 @@
 # STATE.md — lokey
 
-**Updated:** 2026-09-19 · **Branch:** `release/0.2.0` · **Last release:** `v0.1.0`
+**Updated:** 2026-09-20 · **Branch:** `release/0.2.0` · **Last release:** `v0.1.0`
 
 ## Bootstrap record
 
@@ -15,7 +15,7 @@
 
 - **In flight:** 0.2.0 on PR #2: password prompts show `*` and work in mintty; 11 CLI/app fixes from a code audit (see CHANGELOG).
 - **Blocked on:** Nothing.
-- **Next action:** the maintainer runs the PR build's `lokey init` in PowerShell and in a Git Bash window, then the PR merges and `v0.2.0` is tagged.
+- **Next action:** confirm the v0.2.0 release assets, checksums and attestations as for v0.1.0.
 
 ## Verified facts
 
@@ -51,7 +51,7 @@
 | Suite | Status | Note |
 | --- | --- | --- |
 | unit / integration | green | Rust + node:test, CI run 35438355151 |
-| CLI password-prompt commands end to end | never run | need a console; the 0.2.0 prompt (`*` feedback, mintty `stty` path) is unverified on a real terminal |
+| CLI password-prompt commands end to end | manual pass | maintainer ran the 0.2.0 PR build`s `lokey init` in Windows Terminal and Git Bash, 2026-09-20; no automated test (needs a console) |
 | desktop window | never run | no automated UI test; needs a manual pass |
 | `install.ps1` end to end | never run | parse-checked on PS 5.1 and 7; running it would change the user PATH |
 
