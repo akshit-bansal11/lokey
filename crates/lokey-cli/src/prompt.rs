@@ -2,7 +2,7 @@
 //! console, never to stdout, so `lokey get key=X --view` output stays clean
 //! for scripts.
 
-use std::io::{self, BufRead, Write};
+use std::io::{self, BufRead, IsTerminal, Write};
 
 use lokey_core::{MIN_PASSWORD_CHARS, check_new_password};
 use zeroize::Zeroizing;
@@ -13,9 +13,67 @@ use crate::Failure;
 /// redirected input cannot spin forever.
 const ATTEMPTS: usize = 5;
 
-/// Reads without echo, straight from the console.
+/// Reads a password without showing it.
+///
+/// In a Windows console (PowerShell, cmd, Windows Terminal, VS Code, Git Bash
+/// inside Windows Terminal) each character shows as `*`, so typing and pasting
+/// are visibly accepted. A mintty window (Git Bash, MSYS2, Cygwin) is not a
+/// console: its input arrives on a pipe that only its own `stty` can stop
+/// echoing, so that path reads stdin with echo turned off through `stty`.
 pub fn secret(prompt: &str) -> io::Result<Zeroizing<String>> {
-    rpassword::prompt_password(prompt).map(Zeroizing::new)
+    if !stdin_is_console() && io::stdin().is_terminal() {
+        return secret_from_pty(prompt);
+    }
+    let config = rpassword::ConfigBuilder::new()
+        .password_feedback_mask('*')
+        .build();
+    rpassword::prompt_password_with_config(prompt, config).map(Zeroizing::new)
+}
+
+/// mintty and friends: stdin is a Cygwin/MSYS pty. Refuses rather than
+/// reading a password the screen would show.
+// ponytail: Ctrl+C while echo is off leaves it off; `stty echo` restores it.
+fn secret_from_pty(prompt: &str) -> io::Result<Zeroizing<String>> {
+    if !stty("-echo") {
+        return Err(io::Error::other(
+            "this terminal cannot hide what you type, so lokey will not ask for a \
+             password here. run it from PowerShell or Windows Terminal, or as: winpty lokey",
+        ));
+    }
+    eprint!("{prompt}");
+    io::stderr().flush()?;
+    let mut answer = Zeroizing::new(String::new());
+    let read = io::stdin().lock().read_line(&mut answer);
+    stty("echo");
+    eprintln!();
+    read?;
+    let end = answer.trim_end_matches(['\r', '\n']).len();
+    answer.truncate(end);
+    Ok(answer)
+}
+
+/// Runs the terminal's own `stty` on our stdin, which it recognises as its pty.
+fn stty(setting: &str) -> bool {
+    std::process::Command::new("stty")
+        .arg(setting)
+        .stdin(std::process::Stdio::inherit())
+        .status()
+        .is_ok_and(|status| status.success())
+}
+
+#[cfg(windows)]
+fn stdin_is_console() -> bool {
+    use std::os::windows::io::AsRawHandle;
+    use windows_sys::Win32::System::Console::GetConsoleMode;
+
+    let mut mode = 0;
+    // SAFETY: the handle is our own stdin and `mode` outlives the call.
+    unsafe { GetConsoleMode(io::stdin().as_raw_handle(), &mut mode) != 0 }
+}
+
+#[cfg(not(windows))]
+fn stdin_is_console() -> bool {
+    true
 }
 
 /// Asks for a new password twice and checks it against the policy.
