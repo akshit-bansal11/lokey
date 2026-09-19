@@ -37,7 +37,9 @@ lokey: a local-only encrypted key/value vault. No network, ever.
 
 Passwords: set and import need none. Everything else asks for the master
 password. delete and truncate also ask for the deletion password.
-The project defaults to 'default'. Names: letters, digits and _ - . /";
+set and import save to project 'default' unless you add project=P. get and
+delete without project= find the key in whichever project holds it.
+Names: letters, digits and _ - . /";
 
 pub fn run(args: &Args) -> Result<(), Failure> {
     match args.command.as_str() {
@@ -133,11 +135,7 @@ fn find<'a>(session: &'a Session, key: &str, project: Option<&str>) -> Result<&'
         .filter(|entry| same_name(&entry.key, key))
         .collect();
     match matches.as_slice() {
-        [] => Err(Error::NotFound {
-            project: DEFAULT_PROJECT.into(),
-            key: key.into(),
-        }
-        .into()),
+        [] => Err(Failure::Message(format!("no key named {key} in any project"))),
         [only] => Ok(only),
         several => {
             let names: Vec<&str> = several.iter().map(|e| e.project.as_str()).collect();
@@ -374,22 +372,18 @@ fn import_pairs(args: &Args) -> Result<(), Failure> {
     Ok(())
 }
 
-/// From a pipe (`Get-Content .env | lokey import`) read everything; from a
-/// terminal, read until an empty line.
+/// Reads everything up to end of input, from a pipe (`Get-Content .env |
+/// lokey import`) or a terminal. Stopping at a blank line would leave the rest
+/// of a paste in the console for the shell to run, secrets and all.
 fn read_paste() -> Result<Zeroizing<String>, Failure> {
-    let mut text = Zeroizing::new(String::new());
     if io::stdin().is_terminal() {
-        eprintln!("paste KEY=VALUE or key,value; lines, then press Enter on an empty line:");
-        loop {
-            let mut line = Zeroizing::new(String::new());
-            if io::stdin().read_line(&mut line)? == 0 || line.trim().is_empty() {
-                break;
-            }
-            text.push_str(&line);
-        }
-    } else {
-        io::stdin().read_to_string(&mut text)?;
+        eprintln!(
+            "paste KEY=VALUE or key,value; lines, then finish with Ctrl+Z and Enter \
+             (Ctrl+D in Git Bash):"
+        );
     }
+    let mut text = Zeroizing::new(String::new());
+    io::stdin().read_to_string(&mut text)?;
     Ok(text)
 }
 

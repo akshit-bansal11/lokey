@@ -29,7 +29,7 @@ pub fn parse(text: &str) -> Parsed {
             continue;
         }
         let chunks: Vec<&str> = match line.find(['=', ',']) {
-            Some(at) if line[at..].starts_with('=') => vec![line.strip_suffix(';').unwrap_or(line)],
+            Some(at) if line[at..].starts_with('=') => vec![line],
             Some(_) => line.split(';').collect(),
             None => vec![line],
         };
@@ -103,6 +103,13 @@ mod tests {
             parsed.pairs,
             pairs(&[("URL", "https://h/?a=1,2"), ("X", "a=b")])
         );
+    }
+
+    #[test]
+    fn parse_keeps_a_trailing_semicolon_in_a_dotenv_value() {
+        let parsed = parse("CONN=Server=x;Database=y;");
+
+        assert_eq!(parsed.pairs, pairs(&[("CONN", "Server=x;Database=y;")]));
     }
 
     #[test]
