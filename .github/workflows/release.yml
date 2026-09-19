@@ -27,10 +27,18 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+      - name: Tag matches the version the binaries report
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}".TrimStart('v')
+          $version = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          if ($tag -ne $version) { throw "tag v$tag does not match version $version in tauri.conf.json" }
+          $cargo = [regex]::Match((Get-Content Cargo.toml -Raw), '(?m)^version = "([^"]+)"').Groups[1].Value
+          if ($tag -ne $cargo) { throw "tag v$tag does not match version $cargo in Cargo.toml" }
       - run: npm ci
       # The release is built only from a commit that passes the full gate.
       - run: npm run check:ci
-      - run: npx tauri build --ci
+      - run: npx tauri build --ci -- --locked
       - run: cargo build --release --locked -p lokey-cli
 
       - name: Collect release files
