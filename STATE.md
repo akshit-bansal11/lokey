@@ -51,7 +51,7 @@
 | Suite | Status | Note |
 | --- | --- | --- |
 | unit / integration | green | Rust + node:test, CI run 35438355151 |
-| CLI password-prompt commands end to end | manual pass | maintainer ran the 0.2.0 PR build`s `lokey init` in Windows Terminal and Git Bash, 2026-09-20; no automated test (needs a console) |
+| CLI password-prompt commands end to end | manual pass | maintainer ran the 0.2.0 PR build's `lokey init` in Windows Terminal and Git Bash, 2026-09-20; no automated test (needs a console) |
 | desktop window | never run | no automated UI test; needs a manual pass |
 | `install.ps1` end to end | never run | parse-checked on PS 5.1 and 7; running it would change the user PATH |
 
