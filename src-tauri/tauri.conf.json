@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "lokey",
+  "mainBinaryName": "lokey-app",
+  "version": "0.1.0",
+  "identifier": "io.github.akshitbansal11.lokey",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "lokey",
+        "width": 960,
+        "height": 640,
+        "minWidth": 520,
+        "minHeight": 420,
+        "center": true,
+        "contentProtected": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "freezePrototype": true
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "publisher": "Akshit Bansal",
+    "shortDescription": "Local-only encrypted key/value vault",
+    "longDescription": "lokey keeps your environment keys, passwords and backup codes in an encrypted file on this PC. No network, ever. The lokey CLI shares the same vault.",
+    "copyright": "MIT License",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  }
+}

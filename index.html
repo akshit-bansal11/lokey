@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>lokey</title>
+    <link rel="stylesheet" href="/src/styles/app.css" />
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <main id="main" tabindex="-1"></main>
+
+    <footer class="statusbar">
+      <span class="clip-timer" id="clip-timer" hidden></span>
+      <span id="status" role="status" aria-live="polite"></span>
+      <span class="shortcuts" id="shortcuts" hidden>
+        Up/Down move · Enter show · Ctrl+C copy · F2 edit · Delete remove · / search · Ctrl+L lock
+      </span>
+    </footer>
+
+    <!-- First run: no vault on this PC yet. -->
+    <template id="tpl-setup">
+      <section class="gate">
+        <form class="gate-form" id="setup-form" novalidate>
+          <h1 class="gate-title">Set up lokey</h1>
+          <p class="gate-lede">
+            Your keys stay in one encrypted file on this PC. Two passwords protect it.
+          </p>
+          <label class="field">
+            <span class="field-label">Master password</span>
+            <input class="input" type="password" name="master" autocomplete="new-password" required />
+            <span class="field-hint">Opens the vault. 15 or more characters; a few random words work well.</span>
+            <span class="field-error" data-error-for="master"></span>
+          </label>
+          <label class="field">
+            <span class="field-label">Master password again</span>
+            <input class="input" type="password" name="master2" autocomplete="new-password" required />
+            <span class="field-error" data-error-for="master2"></span>
+          </label>
+          <label class="field">
+            <span class="field-label">Deletion password</span>
+            <input class="input" type="password" name="deletion" autocomplete="new-password" required />
+            <span class="field-hint">Needed to delete keys. Must differ from the master password.</span>
+            <span class="field-error" data-error-for="deletion"></span>
+          </label>
+          <label class="field">
+            <span class="field-label">Deletion password again</span>
+            <input class="input" type="password" name="deletion2" autocomplete="new-password" required />
+            <span class="field-error" data-error-for="deletion2"></span>
+          </label>
+          <p class="notice" role="alert" data-form-error></p>
+          <button type="submit" class="btn primary">Create vault</button>
+          <p class="gate-note">
+            There is no recovery. If you forget the master password, the vault cannot be opened.
+          </p>
+        </form>
+      </section>
+    </template>
+
+    <!-- Every launch after the first. -->
+    <template id="tpl-unlock">
+      <section class="gate">
+        <form class="gate-form" id="unlock-form" novalidate>
+          <h1 class="gate-title">lokey</h1>
+          <p class="notice" data-reason></p>
+          <label class="field">
+            <span class="field-label">Master password</span>
+            <input class="input" type="password" name="master" autocomplete="current-password" required />
+          </label>
+          <p class="notice" role="alert" data-form-error></p>
+          <button type="submit" class="btn primary">Unlock</button>
+          <p class="gate-note mono" data-vault-path></p>
+        </form>
+      </section>
+    </template>
+
+    <!-- The vault: a three-column sheet. -->
+    <template id="tpl-vault">
+      <section class="vault">
+        <header class="toolbar">
+          <h1 class="wordmark">lokey</h1>
+          <label>
+            <span class="visually-hidden">Project</span>
+            <select class="input" id="project"></select>
+          </label>
+          <label class="search">
+            <span data-icon="search"></span>
+            <span class="visually-hidden">Search keys</span>
+            <input class="input" type="search" id="search" placeholder="Search keys" autocomplete="off" spellcheck="false" />
+          </label>
+          <span class="spacer"></span>
+          <button type="button" class="btn icon" id="settings-open" aria-label="Settings" title="Settings">
+            <span data-icon="settings"></span>
+          </button>
+          <button type="button" class="btn icon" id="lock" aria-label="Lock" title="Lock (Ctrl+L)">
+            <span data-icon="lock"></span>
+          </button>
+        </header>
+        <div class="sheet">
+          <p class="notice sheet-notice" role="alert" id="vault-alert"></p>
+          <table class="grid" id="grid">
+            <caption class="visually-hidden" id="grid-caption"></caption>
+            <colgroup>
+              <col class="c-num" />
+              <col class="c-key" />
+              <col />
+            </colgroup>
+            <thead>
+              <tr>
+                <th scope="col" class="num">#</th>
+                <th scope="col">Key</th>
+                <th scope="col">Value</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+            <tfoot>
+              <tr class="new-row">
+                <td class="num" aria-hidden="true">+</td>
+                <td>
+                  <label>
+                    <span class="visually-hidden">New key name</span>
+                    <input class="input mono" id="new-key" placeholder="NEW_KEY" autocomplete="off" spellcheck="false" />
+                  </label>
+                </td>
+                <td>
+                  <div class="value-cell">
+                    <label class="cell-text">
+                      <span class="visually-hidden">New key value</span>
+                      <input class="input mono" id="new-value" type="password" placeholder="value" autocomplete="off" />
+                    </label>
+                    <button type="button" class="btn primary" id="add">Add</button>
+                  </div>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+          <p class="empty" id="empty" hidden></p>
+        </div>
+      </section>
+    </template>
+
+    <!-- Asks for the deletion password before any delete. -->
+    <dialog id="delete-dialog" aria-labelledby="delete-title">
+      <form class="dialog-form" method="dialog" id="delete-form" novalidate>
+        <h2 class="dialog-title" id="delete-title">Delete</h2>
+        <p class="dialog-text" id="delete-text"></p>
+        <label class="field">
+          <span class="field-label">Deletion password</span>
+          <input class="input" type="password" name="deletion" autocomplete="off" required />
+        </label>
+        <p class="notice" role="alert" data-form-error></p>
+        <div class="dialog-actions">
+          <button type="button" class="btn" data-close>Cancel</button>
+          <button type="submit" class="btn primary" id="delete-confirm">Delete</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Adds a project; it is saved when its first key is added. -->
+    <dialog id="project-dialog" aria-labelledby="project-title">
+      <form class="dialog-form" method="dialog" id="project-form" novalidate>
+        <h2 class="dialog-title" id="project-title">New project</h2>
+        <label class="field">
+          <span class="field-label">Project name</span>
+          <input class="input mono" name="name" autocomplete="off" spellcheck="false" required />
+          <span class="field-hint">Letters, digits and _ - . / only. It is saved with its first key.</span>
+          <span class="field-error" data-error-for="name"></span>
+        </label>
+        <div class="dialog-actions">
+          <button type="button" class="btn" data-close>Cancel</button>
+          <button type="submit" class="btn primary">Create project</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="settings-dialog" aria-labelledby="settings-title">
+      <div class="dialog-form">
+        <h2 class="dialog-title" id="settings-title">Settings</h2>
+        <section class="settings-section" aria-labelledby="settings-file">
+          <h3 id="settings-file">Vault file</h3>
+          <p class="gate-note" id="settings-path"></p>
+          <p class="dialog-text">
+            The lokey command-line tool reads and writes this same file, so keys set there appear here.
+          </p>
+        </section>
+        <form class="settings-section" id="master-form" aria-labelledby="settings-master" novalidate>
+          <h3 id="settings-master">Change master password</h3>
+          <label class="field">
+            <span class="field-label">New master password</span>
+            <input class="input" type="password" name="master" autocomplete="new-password" required />
+            <span class="field-error" data-error-for="master"></span>
+          </label>
+          <label class="field">
+            <span class="field-label">New master password again</span>
+            <input class="input" type="password" name="master2" autocomplete="new-password" required />
+            <span class="field-error" data-error-for="master2"></span>
+          </label>
+          <p class="notice" role="alert" data-form-error></p>
+          <div class="dialog-actions">
+            <button type="submit" class="btn">Change master password</button>
+          </div>
+        </form>
+        <form class="settings-section" id="deletion-form" aria-labelledby="settings-deletion" novalidate>
+          <h3 id="settings-deletion">Change deletion password</h3>
+          <label class="field">
+            <span class="field-label">Current deletion password</span>
+            <input class="input" type="password" name="current" autocomplete="off" required />
+          </label>
+          <label class="field">
+            <span class="field-label">New deletion password</span>
+            <input class="input" type="password" name="deletion" autocomplete="new-password" required />
+            <span class="field-error" data-error-for="deletion"></span>
+          </label>
+          <label class="field">
+            <span class="field-label">New deletion password again</span>
+            <input class="input" type="password" name="deletion2" autocomplete="new-password" required />
+            <span class="field-error" data-error-for="deletion2"></span>
+          </label>
+          <p class="notice" role="alert" data-form-error></p>
+          <div class="dialog-actions">
+            <button type="submit" class="btn">Change deletion password</button>
+          </div>
+        </form>
+        <section class="settings-section" aria-labelledby="settings-remove">
+          <h3 id="settings-remove">Remove keys</h3>
+          <div class="dialog-actions">
+            <button type="button" class="btn" id="delete-project">
+              <span data-icon="trash"></span><span id="delete-project-label"></span>
+            </button>
+            <button type="button" class="btn" id="delete-all">
+              <span data-icon="trash"></span><span>Delete all keys</span>
+            </button>
+          </div>
+        </section>
+        <div class="dialog-actions">
+          <button type="button" class="btn primary" data-close>Done</button>
+        </div>
+      </div>
+    </dialog>
+  </body>
+</html>

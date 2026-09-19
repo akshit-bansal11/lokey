@@ -5,7 +5,24 @@
   "description": "Local-only encrypted key/value vault: a CLI and a desktop app sharing one vault file",
   "license": "MIT",
   "scripts": {
-    "check": "cargo fmt --all && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace",
-    "check:ci": "cargo fmt --all --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked"
+    "dev": "vite",
+    "build": "vite build",
+    "tauri": "tauri",
+    "test:ui": "node --test \"src/**/*.test.ts\"",
+    "check": "biome check --write . && tsc --noEmit && npm run test:ui && vite build && cargo fmt --all && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace",
+    "check:ci": "biome ci . && tsc --noEmit && npm run test:ui && vite build && cargo fmt --all --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "2.11.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "@tauri-apps/cli": "2.11.4",
+    "@types/node": "26.6.2",
+    "typescript": "7.0.2",
+    "vite": "8.3.0"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }
