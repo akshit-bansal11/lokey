@@ -1,0 +1,28 @@
+# Vaults and anything that could hold a secret. Listed first on purpose:
+# this repo is a credential store, and a committed vault cannot be un-published.
+*.lokey
+*.lokey.bak
+*.lokey.lock
+*.sv
+*.sv.bak
+session.bin
+lockout.json
+.env
+.env.*
+!.env.example
+
+# Rust
+/target/
+
+# Frontend
+node_modules/
+/dist/
+
+# Tauri generated schemas
+/src-tauri/gen/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
