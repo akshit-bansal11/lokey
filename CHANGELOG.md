@@ -6,7 +6,7 @@ All notable changes to lokey are recorded here, following
 
 ## [Unreleased]
 
-## [0.1.0]
+## [0.1.0] - 2026-09-19
 
 The first release under the name lokey. It replaces the PowerShell tool
 secure-vault, which is kept at the `legacy-powershell` tag.
