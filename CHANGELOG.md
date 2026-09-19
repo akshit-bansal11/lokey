@@ -6,6 +6,37 @@ All notable changes to lokey are recorded here, following
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-19
+
+### Fixed
+
+- Password prompts in PowerShell, cmd, Windows Terminal and VS Code showed
+  nothing while you typed, so typing and pasting looked ignored. Each
+  character now shows as `*`.
+- Password prompts hung in a Git Bash, MSYS2 or Cygwin (mintty) window. They
+  now read with echo turned off, and refuse rather than show a password where
+  echo cannot be turned off.
+- Changing only the master or only the deletion password could make the two
+  equal, so the master password alone authorised deletes. It is now refused,
+  in the command-line tool and the app.
+- `lokey import` pasted into a terminal stopped at the first blank line and
+  left the rest of the paste for the shell to run. It now reads to Ctrl+Z
+  (Ctrl+D in Git Bash).
+- `lokey import` dropped a trailing `;` from `KEY=VALUE` lines.
+- `get` and `delete` without `project=` said a missing key was not in
+  `default` when every project had been searched; the help now says so too.
+- The app: a change from a terminal no longer wipes a value you are editing.
+- The app: errors while opening a value for editing are shown instead of lost.
+- The app: if a vault appears while the setup screen is open, Create goes to
+  the unlock screen instead of failing.
+- The app retries reading the vault after a failed read, instead of missing
+  that change until the next write.
+- The app window no longer freezes while a password is being checked.
+- `install.ps1` no longer leaves its settings in your PowerShell session, and
+  upgrades `lokey.exe` while a clipboard-clear helper is still running.
+- A release tag that does not match the version in the code now fails the
+  release instead of shipping mislabelled files.
+
 ## [0.1.0] - 2026-09-19
 
 The first release under the name lokey. It replaces the PowerShell tool
@@ -50,5 +81,6 @@ secure-vault, which is kept at the `legacy-powershell` tag.
 - Deleting a key or changing a password also rewrites the backup file, so the
   old value or password does not survive in it.
 
-[Unreleased]: https://github.com/akshit-bansal11/lokey/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/akshit-bansal11/lokey/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/akshit-bansal11/lokey/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/akshit-bansal11/lokey/releases/tag/v0.1.0

@@ -1,7 +1,7 @@
 {
   "name": "lokey",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local-only encrypted key/value vault: a CLI and a desktop app sharing one vault file",
   "license": "MIT",
   "scripts": {
