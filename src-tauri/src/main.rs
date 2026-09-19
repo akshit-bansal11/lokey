@@ -316,7 +316,8 @@ fn main() {
 
     app.run(|handle, event| {
         if let RunEvent::Exit = event {
-            let mut inner = handle.state::<AppState>().lock();
+            let state = handle.state::<AppState>();
+            let mut inner = state.lock();
             inner.session = None;
             // Do not leave a copied secret behind when the app closes.
             if let Some(sequence) = inner.copied.take() {
