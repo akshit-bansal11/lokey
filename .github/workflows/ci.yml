@@ -12,22 +12,56 @@ permissions:
 
 jobs:
   gate:
-    name: gate (fmt, clippy, tests)
+    name: gate (lint, types, tests)
     # Windows, because the clipboard code only compiles there and must be linted.
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2.9.2
+      - run: npm ci
       - run: npm run check:ci
+
+  build:
+    name: build Windows binaries
+    needs: gate
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+      - run: npm ci
+      - run: npx tauri build --ci
+      - run: cargo build --release --locked -p lokey-cli
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: lokey-windows-x64
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            target/release/lokey.exe
+            target/release/lokey-app.exe
+            target/release/bundle/nsis/*.exe
 
   audit:
     name: dependency advisories
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - run: npm audit --audit-level=high
       - uses: taiki-e/install-action@v2.87.16
         with:
           tool: cargo-audit
