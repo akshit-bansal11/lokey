@@ -1,6 +1,6 @@
 # DIRECTORY-STRUCTURE.md — lokey
 
-**Generated:** 2026-09-19 · **Command:** `git ls-files`, rendered as a tree by a short Python loop (no `tree` binary on the machine)
+**Generated:** 2026-09-20 · **Command:** `git ls-files`, rendered as a tree by a short Python loop (no `tree` binary on the machine)
 
 ## Excluded from the walk
 
@@ -21,16 +21,6 @@ lokey/
 │   │   └── release.yml
 │   └── dependabot.yml
 ├── crates/
-│   ├── lokey-cli/
-│   │   ├── src/
-│   │   │   ├── args.rs
-│   │   │   ├── commands.rs
-│   │   │   ├── import.rs
-│   │   │   ├── main.rs
-│   │   │   └── prompt.rs
-│   │   ├── tests/
-│   │   │   └── cli.rs
-│   │   └── Cargo.toml
 │   └── lokey-core/
 │       ├── src/
 │       │   ├── clipboard.rs
@@ -45,8 +35,6 @@ lokey/
 │       │   ├── store.rs
 │       │   └── vault.rs
 │       └── Cargo.toml
-├── scripts/
-│   └── install.ps1
 ├── src/
 │   ├── lib/
 │   │   ├── api.ts
@@ -102,17 +90,14 @@ lokey/
 
 | Directory | Why it exists |
 | --- | --- |
-| `crates/lokey-core/` | The engine. The only code that touches cryptography or the vault file, shared by CLI and app so they cannot disagree about the format. |
-| `crates/lokey-cli/` | The `lokey` command. Parses, prompts, prints; no vault logic of its own. |
-| `crates/lokey-cli/tests/` | End-to-end tests that run the real binary. Rust's convention for integration tests. |
+| `crates/lokey-core/` | The engine. The only code that touches cryptography or the vault file. Separate from the app so the vault logic can be tested without a window. |
 | `src-tauri/` | The desktop app's Rust side: commands the page calls, the file watcher, window config. |
 | `src-tauri/capabilities/` | Tauri permissions: the page may only listen to vault events. |
-| `src-tauri/icons/` | App and installer icons. |
+| `src-tauri/icons/` | App icons, embedded in the exe. |
 | `src/` | The page shown in the app window (Vite root is the repo root, which is Tauri's standard layout). |
 | `src/lib/` | Page modules without screens: the typed IPC client, DOM helpers, icons, status bar, pure row logic. |
 | `src/views/` | One module per screen or dialog group. |
 | `src/styles/` | The token file and the stylesheet that consumes it. |
-| `scripts/` | `install.ps1`, published with every release. |
 | `.github/workflows/` | CI (`ci.yml`), release on tag (`release.yml`), lockfile resolution (`lockfile.yml`). |
 | `.cargo/` | `audit.toml`: accepted RustSec warnings with reasons and expiry. |
 | `.claude/` | Project rules for agents. |
