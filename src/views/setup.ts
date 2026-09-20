@@ -27,7 +27,7 @@ function confirmMismatch(
   return differs;
 }
 
-/** `onExists` runs when a vault appeared meanwhile, say from `lokey init`. */
+/** `onExists` runs when a vault appeared meanwhile, say from a second window. */
 export function showSetup(
   onCreated: (snapshot: Snapshot) => void,
   notice = "",
