@@ -75,8 +75,10 @@ lokey/
 ├── Cargo.lock
 ├── Cargo.toml
 ├── CHANGELOG.md
+├── DIRECTORY-STRUCTURE.md
 ├── index.html
 ├── LICENSE
+├── OPEN_ITEMS.md
 ├── package-lock.json
 ├── package.json
 ├── README.md
