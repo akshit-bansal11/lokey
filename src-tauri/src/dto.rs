@@ -42,7 +42,8 @@ pub struct Arrival {
 pub struct Snapshot {
     pub rows: Vec<Row>,
     pub projects: Vec<Project>,
-    /// Values that arrived through password-less `set` (usually the CLI).
+    /// Values merged out of the vault's sealed inbox. Only the removed
+    /// command line ever wrote one, so this is empty for a vault made here.
     pub arrivals: Vec<Arrival>,
     pub rejected: usize,
     pub header_restored: bool,

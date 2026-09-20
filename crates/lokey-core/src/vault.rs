@@ -1,9 +1,12 @@
-//! Vault operations. `Store::set` needs no password; everything else starts
-//! from `Store::unlock` and runs on the returned `Session`.
+//! Vault operations. `Store::set` seals a value into the inbox and needs no
+//! password; everything else starts from `Store::unlock` and runs on the
+//! returned `Session`. Nothing shipping calls `set` since the command line was
+//! removed, but a vault written by one can still hold inbox records, so the
+//! merge on unlock stays.
 //!
 //! A `Session` holds the derived master key in memory. Each operation re-reads
-//! the file under the lock, so a change made meanwhile by another process (a
-//! CLI `set`, an edit in the app) is merged rather than overwritten.
+//! the file under the lock, so a change made meanwhile by another process (an
+//! edit in a second window) is merged rather than overwritten.
 
 use std::path::PathBuf;
 

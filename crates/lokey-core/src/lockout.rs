@@ -1,5 +1,5 @@
-//! Backoff and lockout for wrong passwords, shared by the CLI and the app
-//! because it lives next to the vault.
+//! Backoff and lockout for wrong passwords. It lives next to the vault, so
+//! every process that opens that vault shares one count.
 //!
 //! This stops a person or script hammering the prompt. It is not the real
 //! defence against a stolen file: anyone holding `vault.lokey` can skip this
