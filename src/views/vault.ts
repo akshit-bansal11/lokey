@@ -277,7 +277,7 @@ export function applySnapshot(next: Snapshot): void {
   }
   if (next.headerRestored) {
     alertText(
-      "Warning: someone replaced this vault's public key, and lokey put it back. Values added with lokey set while it was replaced may have been readable by whoever changed it. Change those secrets where they were issued.",
+      "Warning: someone replaced this vault's public key, and lokey put it back. Values sealed to it while it was replaced may have been readable by whoever changed it. Change those secrets where they were issued.",
     );
   } else if (next.rejected > 0) {
     alertText(

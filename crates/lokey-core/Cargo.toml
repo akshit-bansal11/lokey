@@ -1,6 +1,6 @@
 [package]
 name = "lokey-core"
-description = "Vault engine shared by the lokey CLI and desktop app"
+description = "Vault engine behind the lokey desktop app"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
