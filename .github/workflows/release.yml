@@ -38,18 +38,14 @@ jobs:
       - run: npm ci
       # The release is built only from a commit that passes the full gate.
       - run: npm run check:ci
-      - run: npx tauri build --ci -- --locked
-      - run: cargo build --release --locked -p lokey-cli
+      # --no-bundle: the release is one portable exe, so no installer is built.
+      - run: npx tauri build --ci --no-bundle -- --locked
 
       - name: Collect release files
         shell: pwsh
         run: |
-          $version = "${{ github.ref_name }}".TrimStart('v')
           New-Item -ItemType Directory -Force out | Out-Null
           Copy-Item target/release/lokey.exe out/lokey.exe
-          Copy-Item target/release/lokey-app.exe out/lokey-app.exe
-          Copy-Item (Get-ChildItem target/release/bundle/nsis/*.exe | Select-Object -First 1).FullName "out/lokey_${version}_x64-setup.exe"
-          Copy-Item scripts/install.ps1 out/install.ps1
           Get-ChildItem out -File | ForEach-Object {
             "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name
           } | Set-Content -Encoding ascii out/SHA256SUMS.txt

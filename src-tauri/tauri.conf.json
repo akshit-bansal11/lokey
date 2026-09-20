@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "lokey",
-  "mainBinaryName": "lokey-app",
+  "mainBinaryName": "lokey",
   "version": "0.2.0",
   "identifier": "io.github.akshitbansal11.lokey",
   "build": {
@@ -33,7 +33,7 @@
     "targets": ["nsis"],
     "publisher": "Akshit Bansal",
     "shortDescription": "Local-only encrypted key/value vault",
-    "longDescription": "lokey keeps your environment keys, passwords and backup codes in an encrypted file on this PC. No network, ever. The lokey CLI shares the same vault.",
+    "longDescription": "lokey keeps your environment keys, passwords and backup codes in an encrypted file on this PC. No network, ever.",
     "copyright": "MIT License",
     "icon": [
       "icons/32x32.png",

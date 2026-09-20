@@ -8,6 +8,11 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
+# The binary is `lokey.exe`, not `lokey-app.exe`: the app is the whole product.
+[[bin]]
+name = "lokey"
+path = "src/main.rs"
+
 [build-dependencies]
 tauri-build = { version = "2.6.3", features = [] }
 
