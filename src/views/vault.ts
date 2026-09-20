@@ -198,7 +198,7 @@ function renderProjects(): void {
 }
 
 function render(): void {
-  // A change from the terminal must not rebuild the row holding an open edit.
+  // A change from another window must not rebuild the row holding an open edit.
   // The snapshot is kept; the edit renders it when it finishes.
   if (editing) return;
   renderProjects();
@@ -232,12 +232,7 @@ function render(): void {
       });
       empty.append(`No keys in ${project} match "${query.trim()}".`, clear);
     } else {
-      const code = document.createElement("code");
-      code.textContent = "lokey set key=NAME value=VALUE";
-      empty.append(
-        `No keys in ${project} yet. Add one in the row above, or from a terminal: `,
-        code,
-      );
+      empty.append(`No keys in ${project} yet. Add one in the row above.`);
     }
   }
 
@@ -276,9 +271,9 @@ export function applySnapshot(next: Snapshot): void {
   const arrivals = next.arrivals;
   if (arrivals.length === 1 && arrivals[0]) {
     const { key, project: from, replaced } = arrivals[0];
-    announce(`${key} ${replaced ? "was replaced" : "arrived"} in ${from} from the terminal.`);
+    announce(`${key} ${replaced ? "was replaced" : "arrived"} in ${from}.`);
   } else if (arrivals.length > 1) {
-    announce(`${arrivals.length} keys arrived from the terminal.`);
+    announce(`${arrivals.length} keys arrived while the vault was closed.`);
   }
   if (next.headerRestored) {
     alertText(

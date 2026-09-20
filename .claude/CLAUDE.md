@@ -2,8 +2,11 @@ This project inherits every rule in ~/.claude/CLAUDE.md. Rules below add to or o
 
 # lokey
 
-A local-only encrypted key/value vault for Windows: the `lokey` CLI and a Tauri
-desktop app over one engine, `lokey-core`. Public repo, released from tags.
+A local-only encrypted key/value vault for Windows: a Tauri desktop app over
+one engine, `lokey-core`. Public repo, released from tags as a single portable
+`lokey.exe` (`tauri build --no-bundle`; there is no installer). The `lokey`
+command-line tool was removed on 2026-09-20 — do not reintroduce a second
+front-end without asking.
 
 ## Facts a session needs before touching code
 
@@ -18,9 +21,12 @@ desktop app over one engine, `lokey-core`. Public repo, released from tags.
 - **Never add network code.** "No network, ever" is the product claim: no
   telemetry, update checks, crash reporting or remote fonts. The Tauri CSP only
   allows `self` and the IPC channel.
-- **Password rules are product decisions, not bugs:** `set` and `import` need
-  no password; every other command asks for the master password every time;
-  `delete` and `truncate` also need the deletion password.
+- **Password rules are product decisions, not bugs:** the master password
+  opens the vault and is asked for again after every lock; deleting a key, a
+  project or everything also needs the deletion password.
+- **The sealed inbox has no writer** since the CLI went. The read and merge
+  path stays so vaults written by it still open; see `OPEN_ITEMS.md` before
+  touching `hpke`, `Store::set` or `merge_inbox`.
 
 ## Gate
 

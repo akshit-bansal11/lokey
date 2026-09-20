@@ -6,6 +6,21 @@ All notable changes to lokey are recorded here, following
 
 ## [Unreleased]
 
+### Removed
+
+- **The `lokey` command-line tool.** lokey is the desktop app now. `lokey.exe`,
+  its installer script and the `lokey set`, `get`, `view`, `projects`,
+  `delete`, `truncate`, `import`, `init`, `passwd` and `status` commands are
+  gone. Your vault is untouched: the app opens the same file, with the same
+  passwords, and merges anything the command line had left pending.
+- **The setup program.** A release is now one portable `lokey.exe` you run from
+  wherever you put it, plus `SHA256SUMS.txt`. If you installed 0.2.0, uninstall
+  it from Settings › Apps as usual; the vault is not part of it.
+
+### Changed
+
+- The app's own binary is now `lokey.exe`, not `lokey-app.exe`.
+
 ## [0.2.0] - 2026-09-20
 
 ### Fixed

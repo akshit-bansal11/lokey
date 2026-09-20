@@ -33,7 +33,7 @@ function isFailure(value: unknown): value is Failure {
   );
 }
 
-/** lokey-core writes terse lowercase messages for the CLI; the app shows sentences. */
+/** lokey-core writes terse lowercase messages; the app shows them as sentences. */
 function sentence(message: string): string {
   const text = message.trim();
   const capital = text.charAt(0).toUpperCase() + text.slice(1);
