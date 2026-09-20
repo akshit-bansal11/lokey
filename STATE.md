@@ -15,7 +15,7 @@
 
 - **In flight:** `chore/remove-cli`: the command-line tool, its installer script and the NSIS bundle are gone; a release is one portable `lokey.exe`. Staged under `[Unreleased]`, not versioned yet.
 - **Blocked on:** Nothing.
-- **Next action:** open the PR, let the gate and the build job run, and check the artifact holds exactly one exe named `lokey.exe`. Then decide the version (`OPEN_ITEMS.md`).
+- **Next action:** merge PR #3 (green), then decide the version (`OPEN_ITEMS.md`). The window itself still needs one manual pass, ideally against a vault created by 0.2.0's CLI.
 
 ## Verified facts
 
@@ -27,6 +27,7 @@
 | 80 tests pass: 50 core, 11 CLI unit, 9 CLI end-to-end, 10 page | CI gate log, run 35438355151 | 2026-09-19 |
 | Sizes: lokey.exe 796,160 B, lokey-app.exe 8,071,680 B, installer 1,887,352 B | `gh release view v0.1.0 --json assets` | 2026-09-19 |
 | Removing `lokey-cli` costs the lock exactly three packages (`lokey-cli`, `rpassword`, `rtoolbox`) and moves no version | `lockfile.yml` run 35504833456, diff read | 2026-09-20 |
+| The workspace without `lokey-cli` passes the whole gate, and `--no-bundle` builds one exe named `lokey.exe` (8,158,720 B) | CI run 35505074478, all four jobs green; artifact downloaded and listed | 2026-09-20 |
 
 ## Standing hazards
 
