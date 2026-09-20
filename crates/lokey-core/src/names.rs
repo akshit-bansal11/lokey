@@ -4,11 +4,12 @@ use crate::{Error, Result};
 
 pub const DEFAULT_PROJECT: &str = "default";
 const MAX_NAME_CHARS: usize = 128;
-/// 64 KiB keeps one value from inflating the file that every command re-reads.
+/// 64 KiB keeps one value from inflating the file that every change re-reads.
 pub const MAX_VALUE_BYTES: usize = 64 * 1024;
 
-/// Letters, digits and `_ - . /`, so a name survives every shell unquoted and
-/// can never collide with the CLI's own `key=value` syntax.
+/// Letters, digits and `_ - . /`, so a name survives every shell unquoted.
+/// The ban on `=` is inherited from the removed command line, whose arguments
+/// were `key=value`; vaults were written under this rule, so it stays.
 pub fn check_name(kind: &str, name: &str) -> Result<()> {
     if name.is_empty() {
         return Err(Error::InvalidName(format!("{kind} name is empty")));

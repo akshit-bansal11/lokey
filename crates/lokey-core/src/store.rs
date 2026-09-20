@@ -1,6 +1,6 @@
 //! Where the vault lives and how it is read and written.
 //!
-//! The CLI and the app are separate processes sharing one file. Every change
+//! Two app windows are separate processes sharing one file. Every change
 //! is "take the lock, re-read, change, write, release", so two writers can
 //! never overwrite each other's change. Writes go to a temporary file that is
 //! renamed over the vault, so a crash never leaves a half-written vault.

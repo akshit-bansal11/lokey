@@ -3,8 +3,8 @@
 //! The page never sees a key or the vault file. It asks for one value at a
 //! time (`reveal`), and copying happens here, so a copied value never passes
 //! through the page at all. A watcher thread notices when another process
-//! (usually the CLI) changes the vault and pushes a fresh snapshot, which is
-//! how a `lokey set` in a terminal appears in an open window within a moment.
+//! changes the vault and pushes a fresh snapshot, which is how an edit made in
+//! a second window appears here within a quarter of a second.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
