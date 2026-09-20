@@ -2,7 +2,7 @@
   "name": "lokey",
   "private": true,
   "version": "0.2.0",
-  "description": "Local-only encrypted key/value vault: a CLI and a desktop app sharing one vault file",
+  "description": "Local-only encrypted key/value vault: a desktop app for Windows",
   "license": "MIT",
   "scripts": {
     "dev": "vite",
