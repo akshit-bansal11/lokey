@@ -45,3 +45,10 @@ export function nameProblem(kind: string, name: string): string {
     ? ""
     : `The ${kind} name cannot contain "${bad}". Use letters, digits and _ - . /`;
 }
+
+/** The project `step` places after `current` in `names`, wrapping at either end. */
+export function nextProject(names: string[], current: string, step: number): string {
+  const at = names.findIndex((name) => sameName(name, current));
+  const next = names[(((at + step) % names.length) + names.length) % names.length];
+  return next ?? current;
+}

@@ -1,4 +1,4 @@
-// The three <dialog>s declared in index.html. Native showModal() supplies the
+// The <dialog>s declared in index.html. Native showModal() supplies the
 // focus trap, Escape to close, the inert background and focus return (UI-10).
 
 import { api, toFailure } from "@/lib/api.ts";
@@ -229,4 +229,9 @@ export function openSettings(context: SettingsContext): void {
   };
 
   settingsDialog.showModal();
+}
+
+/** The shortcuts list is static markup; opening it is all there is. */
+export function showKeys(): void {
+  byId("keys-dialog", HTMLDialogElement).showModal();
 }

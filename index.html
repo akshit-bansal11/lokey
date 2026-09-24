@@ -16,7 +16,7 @@
       <span class="clip-timer" id="clip-timer" hidden></span>
       <span id="status" role="status" aria-live="polite"></span>
       <span class="shortcuts" id="shortcuts" hidden>
-        Enter show · Ctrl+C copy · F2 edit · Del delete · / search · Ctrl+L lock
+        F1 shortcuts · / search · Ctrl+L lock
       </span>
     </footer>
 
@@ -91,7 +91,10 @@
             <input class="input" type="search" id="search" placeholder="Search keys" autocomplete="off" spellcheck="false" />
           </label>
           <span class="spacer"></span>
-          <button type="button" class="btn icon" id="settings-open" aria-label="Settings" title="Settings">
+          <button type="button" class="btn icon" id="keys-open" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (F1)">
+            <span data-icon="keyboard"></span>
+          </button>
+          <button type="button" class="btn icon" id="settings-open" aria-label="Settings" title="Settings (Ctrl+,)">
             <span data-icon="settings"></span>
           </button>
           <button type="button" class="btn icon" id="lock" aria-label="Lock" title="Lock (Ctrl+L)">
@@ -233,6 +236,39 @@
               <span data-icon="trash"></span><span>Delete all keys</span>
             </button>
           </div>
+        </section>
+        <div class="dialog-actions">
+          <button type="button" class="btn primary" data-close>Done</button>
+        </div>
+      </div>
+    </dialog>
+    <!-- Every shortcut the vault binds; commandFor and onSheetKey in vault.ts. -->
+    <dialog id="keys-dialog" aria-labelledby="keys-title">
+      <div class="dialog-form">
+        <h2 class="dialog-title" id="keys-title">Keyboard shortcuts</h2>
+        <section class="settings-section" aria-labelledby="keys-vault">
+          <h3 id="keys-vault">Vault</h3>
+          <dl class="keys">
+            <dt><kbd>Ctrl+N</kbd></dt><dd>Add a key</dd>
+            <dt><kbd>Ctrl+Shift+N</kbd></dt><dd>New project</dd>
+            <dt><kbd>Ctrl+PgUp</kbd> <kbd>Ctrl+PgDn</kbd></dt><dd>Previous or next project</dd>
+            <dt><kbd>Ctrl+F</kbd> <kbd>Ctrl+K</kbd> <kbd>/</kbd></dt><dd>Search</dd>
+            <dt><kbd>Ctrl+,</kbd></dt><dd>Settings</dd>
+            <dt><kbd>Ctrl+L</kbd></dt><dd>Lock</dd>
+            <dt><kbd>F1</kbd> <kbd>?</kbd></dt><dd>These shortcuts</dd>
+          </dl>
+        </section>
+        <section class="settings-section" aria-labelledby="keys-rows">
+          <h3 id="keys-rows">Rows</h3>
+          <dl class="keys">
+            <dt><kbd>↑ ↓</kbd> <kbd>Home</kbd> <kbd>End</kbd></dt><dd>Move between rows</dd>
+            <dt><kbd>Tab</kbd></dt><dd>Move between a row's buttons</dd>
+            <dt><kbd>Enter</kbd> <kbd>Space</kbd></dt><dd>Use the focused button</dd>
+            <dt><kbd>Ctrl+C</kbd></dt><dd>Copy the value</dd>
+            <dt><kbd>F2</kbd></dt><dd>Edit the value</dd>
+            <dt><kbd>Del</kbd></dt><dd>Delete the key</dd>
+            <dt><kbd>Esc</kbd></dt><dd>Hide the value, then back to search</dd>
+          </dl>
         </section>
         <div class="dialog-actions">
           <button type="button" class="btn primary" data-close>Done</button>
