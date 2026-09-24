@@ -16,7 +16,7 @@ pub use crate::format::Entry;
 use crate::{
     Error, Result,
     crypto::{self, KEY_LEN, KdfParams, SALT_LEN, b64, unb64},
-    format::{Body, DeletionCheck, Record, VaultFile},
+    format::{Body, Record, VERSION, VaultFile},
     lockout, names, password,
     store::{History, Store},
 };
@@ -52,12 +52,8 @@ impl Report {
 
 impl Store {
     /// Creates a new vault. Fails if one already exists.
-    pub fn create(&self, master: &str, deletion: &str) -> Result<()> {
+    pub fn create(&self, master: &str) -> Result<()> {
         password::check_new("master", master)?;
-        password::check_new("deletion", deletion)?;
-        if master == deletion {
-            return Err(same_passwords());
-        }
 
         let kdf = KdfParams::DEFAULT;
         let salt: [u8; SALT_LEN] = crypto::random();
@@ -67,7 +63,6 @@ impl Store {
         let body = Body {
             secret_key: b64(&pair.secret),
             public_key: public_key.clone(),
-            deletion: deletion_check(deletion, kdf)?,
             entries: Vec::new(),
         };
 
@@ -76,7 +71,7 @@ impl Store {
             ct: String::new(),
         };
         let mut file = VaultFile::new(kdf, b64(&salt), public_key, placeholder);
-        file.body = seal_body(&key, &body, &file)?;
+        reseal(&key, &body, &mut file)?;
 
         self.locked(|store| {
             if store.exists() {
@@ -150,7 +145,7 @@ impl Store {
             let mut file = file;
             let report = session.merge_inbox(&mut file);
             if report.touched() {
-                file.body = seal_body(&session.key, &session.body, &file)?;
+                reseal(&session.key, &session.body, &mut file)?;
                 store.write(&file, History::Keep)?;
             }
             Ok((session, report))
@@ -222,7 +217,7 @@ impl Session {
             self.reload(&file)?;
             let report = self.merge_inbox(&mut file);
             if report.touched() {
-                file.body = seal_body(&self.key, &self.body, &file)?;
+                reseal(&self.key, &self.body, &mut file)?;
                 store.write(&file, History::Keep)?;
             }
             Ok(report)
@@ -240,10 +235,8 @@ impl Session {
         })
     }
 
-    pub fn delete_key(&mut self, deletion: &str, project: &str, key: &str) -> Result<Report> {
-        let (kdf, dir) = (self.kdf, self.store.dir().to_path_buf());
+    pub fn delete_key(&mut self, project: &str, key: &str) -> Result<Report> {
         let (_, report) = self.transact(History::Forget, |body| {
-            verify_deletion(body, deletion, kdf, &dir)?;
             let before = body.entries.len();
             body.entries.retain(|entry| {
                 !(names::same(&entry.project, project) && names::same(&entry.key, key))
@@ -260,10 +253,8 @@ impl Session {
     }
 
     /// Removes a project and every key in it. Returns how many keys went.
-    pub fn delete_project(&mut self, deletion: &str, project: &str) -> Result<(usize, Report)> {
-        let (kdf, dir) = (self.kdf, self.store.dir().to_path_buf());
+    pub fn delete_project(&mut self, project: &str) -> Result<(usize, Report)> {
         self.transact(History::Forget, |body| {
-            verify_deletion(body, deletion, kdf, &dir)?;
             let before = body.entries.len();
             body.entries
                 .retain(|entry| !names::same(&entry.project, project));
@@ -277,65 +268,28 @@ impl Session {
         })
     }
 
-    /// Removes every key in every project. The vault and its passwords stay.
-    pub fn truncate(&mut self, deletion: &str) -> Result<(usize, Report)> {
-        let (kdf, dir) = (self.kdf, self.store.dir().to_path_buf());
+    /// Removes every key in every project. The vault and its password stay.
+    pub fn truncate(&mut self) -> Result<(usize, Report)> {
         self.transact(History::Forget, |body| {
-            verify_deletion(body, deletion, kdf, &dir)?;
             let removed = body.entries.len();
             body.entries.clear();
             Ok(removed)
         })
     }
 
-    /// Changes the master password, the deletion password, or both. Changing
-    /// the deletion password needs the current one.
-    pub fn change_passwords(
-        &mut self,
-        new_master: Option<&str>,
-        new_deletion: Option<(&str, &str)>,
-    ) -> Result<()> {
-        if let Some(master) = new_master {
-            password::check_new("master", master)?;
-        }
-        if let Some((_, deletion)) = new_deletion {
-            password::check_new("deletion", deletion)?;
-        }
-        if let (Some(master), Some((_, deletion))) = (new_master, new_deletion)
-            && master == deletion
-        {
-            return Err(same_passwords());
-        }
-
+    /// Changes the master password. Other sessions go `Stale`.
+    pub fn change_master(&mut self, new_master: &str) -> Result<()> {
+        password::check_new("master", new_master)?;
         let store = self.store.clone();
         store.locked(|store| {
             let mut file = store.read()?;
             self.reload(&file)?;
             self.merge_inbox(&mut file);
-            // Changing one password alone must not make it equal the other,
-            // or the master password would also authorise deletes.
-            let same = match (new_master, new_deletion) {
-                (Some(master), None) => is_deletion(&self.body, master, self.kdf)?,
-                (None, Some((_, next))) => {
-                    let key = crypto::derive_key(next.as_bytes(), &unb64(&self.salt)?, self.kdf)?;
-                    crypto::ct_eq(key.as_ref(), self.key.as_ref())
-                }
-                _ => false,
-            };
-            if same {
-                return Err(same_passwords());
-            }
-            if let Some((current, next)) = new_deletion {
-                verify_deletion(&self.body, current, self.kdf, store.dir())?;
-                self.body.deletion = deletion_check(next, self.kdf)?;
-            }
-            if let Some(master) = new_master {
-                let salt: [u8; SALT_LEN] = crypto::random();
-                self.key = crypto::derive_key(master.as_bytes(), &salt, self.kdf)?;
-                self.salt = b64(&salt);
-                file.salt = self.salt.clone();
-            }
-            file.body = seal_body(&self.key, &self.body, &file)?;
+            let salt: [u8; SALT_LEN] = crypto::random();
+            self.key = crypto::derive_key(new_master.as_bytes(), &salt, self.kdf)?;
+            self.salt = b64(&salt);
+            file.salt = self.salt.clone();
+            reseal(&self.key, &self.body, &mut file)?;
             store.write(&file, History::Forget)
         })
     }
@@ -352,7 +306,7 @@ impl Session {
             self.reload(&file)?;
             let report = self.merge_inbox(&mut file);
             let out = apply(&mut self.body)?;
-            file.body = seal_body(&self.key, &self.body, &file)?;
+            reseal(&self.key, &self.body, &mut file)?;
             store.write(&file, history)?;
             Ok((out, report))
         })
@@ -430,47 +384,15 @@ fn upsert(entries: &mut Vec<Entry>, project: &str, key: &str, value: &str, at: u
     }
 }
 
-fn deletion_check(deletion: &str, kdf: KdfParams) -> Result<DeletionCheck> {
-    let salt: [u8; SALT_LEN] = crypto::random();
-    let hash = crypto::derive_key(deletion.as_bytes(), &salt, kdf)?;
-    Ok(DeletionCheck {
-        salt: b64(&salt),
-        hash: b64(hash.as_ref()),
-    })
-}
-
-/// Checks the deletion password against the verifier in the body. Wrong
-/// answers count toward the same lockout as the master password.
-fn verify_deletion(
-    body: &Body,
-    deletion: &str,
-    kdf: KdfParams,
-    dir: &std::path::Path,
-) -> Result<()> {
-    lockout::check(dir)?;
-    if is_deletion(body, deletion, kdf)? {
-        lockout::clear(dir)
-    } else {
-        Err(lockout::fail(dir))
-    }
-}
-
-/// Whether `candidate` is the deletion password. No lockout bookkeeping.
-fn is_deletion(body: &Body, candidate: &str, kdf: KdfParams) -> Result<bool> {
-    let derived = crypto::derive_key(candidate.as_bytes(), &unb64(&body.deletion.salt)?, kdf)?;
-    let expected = Zeroizing::new(unb64(&body.deletion.hash)?);
-    Ok(crypto::ct_eq(derived.as_ref(), &expected))
-}
-
-fn same_passwords() -> Error {
-    Error::WeakPassword("the master and deletion passwords must be different".into())
-}
-
-fn seal_body(key: &[u8; KEY_LEN], body: &Body, file: &VaultFile) -> Result<crypto::Sealed> {
+/// Seals `body` into `file` as the current format version. The version is in
+/// the associated data, so it is set before sealing.
+fn reseal(key: &[u8; KEY_LEN], body: &Body, file: &mut VaultFile) -> Result<()> {
     let plain = Zeroizing::new(
         serde_json::to_vec(body).map_err(|err| Error::Corrupt(format!("cannot save: {err}")))?,
     );
-    Ok(crypto::seal(key, &plain, &file.aad()))
+    file.version = VERSION;
+    file.body = crypto::seal(key, &plain, &file.aad());
+    Ok(())
 }
 
 fn parse_body(plain: &[u8]) -> Result<Body> {
@@ -485,7 +407,6 @@ mod tests {
     use super::*;
 
     const MASTER: &str = "velvet otter plumbing ninety";
-    const DELETION: &str = "quiet granite lantern forty";
 
     struct TempDir(PathBuf);
 
@@ -512,7 +433,7 @@ mod tests {
     fn new_vault() -> (TempDir, Store) {
         let dir = TempDir::new();
         let store = dir.store();
-        store.create(MASTER, DELETION).unwrap();
+        store.create(MASTER).unwrap();
         (dir, store)
     }
 
@@ -619,18 +540,9 @@ mod tests {
     fn create_twice_returns_vault_exists() {
         let (_dir, store) = new_vault();
 
-        let result = store.create(MASTER, DELETION);
+        let result = store.create(MASTER);
 
         assert!(matches!(result, Err(Error::VaultExists)));
-    }
-
-    #[test]
-    fn create_with_equal_passwords_is_refused() {
-        let dir = TempDir::new();
-
-        let result = dir.store().create(MASTER, MASTER);
-
-        assert!(matches!(result, Err(Error::WeakPassword(_))));
     }
 
     #[test]
@@ -660,24 +572,12 @@ mod tests {
     }
 
     #[test]
-    fn delete_key_with_wrong_deletion_password_keeps_key() {
-        let (_dir, store) = new_vault();
-        let (mut session, _) = store.unlock(MASTER).unwrap();
-        session.put("default", "KEEP", "1").unwrap();
-
-        let result = session.delete_key("not the deletion one", "default", "KEEP");
-
-        assert!(matches!(result, Err(Error::WrongPassword { .. })));
-        assert_eq!(keys(&session), vec!["KEEP".to_string()]);
-    }
-
-    #[test]
-    fn delete_key_with_deletion_password_removes_key() {
+    fn delete_key_removes_key_without_another_password() {
         let (_dir, store) = new_vault();
         let (mut session, _) = store.unlock(MASTER).unwrap();
         session.put("default", "GONE", "1").unwrap();
 
-        session.delete_key(DELETION, "default", "gone").unwrap();
+        session.delete_key("default", "gone").unwrap();
 
         assert!(session.entries().is_empty());
     }
@@ -688,7 +588,7 @@ mod tests {
         let (mut session, _) = store.unlock(MASTER).unwrap();
         session.put("default", "LEAKED", "1").unwrap();
         session.put("default", "OTHER", "2").unwrap();
-        session.delete_key(DELETION, "default", "LEAKED").unwrap();
+        session.delete_key("default", "LEAKED").unwrap();
         let restored = TempDir::new();
         fs::copy(
             dir.0.join("vault.lokey.bak"),
@@ -708,7 +608,7 @@ mod tests {
         session.put("web", "A", "1").unwrap();
         session.put("api", "B", "2").unwrap();
 
-        let (removed, _) = session.delete_project(DELETION, "WEB").unwrap();
+        let (removed, _) = session.delete_project("WEB").unwrap();
 
         assert_eq!(removed, 1);
         assert_eq!(keys(&session), vec!["B".to_string()]);
@@ -721,7 +621,7 @@ mod tests {
         session.put("web", "A", "1").unwrap();
         session.put("api", "B", "2").unwrap();
 
-        let (removed, _) = session.truncate(DELETION).unwrap();
+        let (removed, _) = session.truncate().unwrap();
 
         assert_eq!(removed, 2);
         assert!(session.entries().is_empty());
@@ -733,8 +633,7 @@ mod tests {
         let (mut app, _) = store.unlock(MASTER).unwrap();
         let (mut cli, _) = store.unlock(MASTER).unwrap();
 
-        cli.change_passwords(Some("brand new master phrase"), None)
-            .unwrap();
+        cli.change_master("brand new master phrase").unwrap();
 
         assert!(matches!(app.refresh(), Err(Error::Stale)));
     }
@@ -743,9 +642,7 @@ mod tests {
     fn change_master_password_old_password_stops_working() {
         let (_dir, store) = new_vault();
         let (mut session, _) = store.unlock(MASTER).unwrap();
-        session
-            .change_passwords(Some("brand new master phrase"), None)
-            .unwrap();
+        session.change_master("brand new master phrase").unwrap();
 
         let old = store.unlock(MASTER);
 
@@ -754,35 +651,26 @@ mod tests {
     }
 
     #[test]
-    fn change_deletion_password_needs_the_current_one() {
+    fn v1_vault_with_a_deletion_check_opens_and_is_upgraded() {
         let (_dir, store) = new_vault();
+        let mut file = store.read().unwrap();
+        // Rewrite the vault as 1.0.0 left it: version 1, a deletion check in the body.
+        let salt = unb64(&file.salt).unwrap();
+        let key = crypto::derive_key(MASTER.as_bytes(), &salt, file.kdf).unwrap();
+        let plain = crypto::open(&key, &file.body, &file.aad()).unwrap().unwrap();
+        let mut body: serde_json::Value = serde_json::from_slice(&plain).unwrap();
+        body["deletion"] = serde_json::json!({ "salt": "c2FsdA==", "hash": "aGFzaA==" });
+        file.version = 1;
+        file.body = crypto::seal(&key, &serde_json::to_vec(&body).unwrap(), &file.aad());
+        store.write(&file, History::Keep).unwrap();
+
         let (mut session, _) = store.unlock(MASTER).unwrap();
+        session.put("default", "A", "1").unwrap();
 
-        let result =
-            session.change_passwords(None, Some(("guess guess guess", "new deletion phrase")));
-
-        assert!(matches!(result, Err(Error::WrongPassword { .. })));
-    }
-
-    #[test]
-    fn change_master_password_alone_cannot_equal_the_deletion_password() {
-        let (_dir, store) = new_vault();
-        let (mut session, _) = store.unlock(MASTER).unwrap();
-
-        let result = session.change_passwords(Some(DELETION), None);
-
-        assert!(matches!(result, Err(Error::WeakPassword(_))));
-        assert!(store.unlock(MASTER).is_ok());
-    }
-
-    #[test]
-    fn change_deletion_password_alone_cannot_equal_the_master_password() {
-        let (_dir, store) = new_vault();
-        let (mut session, _) = store.unlock(MASTER).unwrap();
-
-        let result = session.change_passwords(None, Some((DELETION, MASTER)));
-
-        assert!(matches!(result, Err(Error::WeakPassword(_))));
+        assert_eq!(store.read().unwrap().version, VERSION);
+        let raw = fs::read_to_string(store.vault_path()).unwrap();
+        assert!(!raw.contains("deletion"));
+        assert_eq!(keys(&store.unlock(MASTER).unwrap().0), vec!["A".to_string()]);
     }
 
     #[test]

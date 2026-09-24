@@ -315,7 +315,7 @@ async function onAction(action: Action, tr: HTMLTableRowElement): Promise<void> 
           title: `Delete ${target.key}?`,
           text: `Removes ${target.key} from ${target.project}. This cannot be undone.`,
           confirm: "Delete key",
-          run: (deletion) => api.deleteKey(target.project, target.key, deletion),
+          run: () => api.deleteKey(target.project, target.key),
           onDone: (next) => {
             if (revealed && sameName(revealed.key, target.key)) revealed = undefined;
             applySnapshot(next);

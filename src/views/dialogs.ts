@@ -17,7 +17,7 @@ type DeleteRequest = {
   title: string;
   text: string;
   confirm: string;
-  run: (deletion: string) => Promise<Snapshot>;
+  run: () => Promise<Snapshot>;
   onDone: (snapshot: Snapshot) => void;
 };
 
@@ -31,31 +31,28 @@ deleteForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const request = pendingDelete;
   if (!request) return;
-  const input = field(deleteForm, "deletion");
-  if (input.value === "") {
-    setFormError(deleteForm, "Enter the deletion password.");
-    return;
-  }
   setFormError(deleteForm, "");
   const restore = busy(deleteButton, "Deleting…");
   try {
-    const snapshot = await request.run(input.value);
+    const snapshot = await request.run();
     restore();
     deleteDialog.close();
     request.onDone(snapshot);
   } catch (error) {
     restore();
     setFormError(deleteForm, toFailure(error).message);
-    input.select();
   }
 });
 
 deleteDialog.addEventListener("close", () => {
-  field(deleteForm, "deletion").value = "";
   pendingDelete = undefined;
 });
 
-/** Every delete names its object and consequence, and needs the deletion password. */
+/**
+ * Every delete names its object and consequence and waits for a confirm. The
+ * maintainer chose this over an undo window or typing the name (UX-05), on
+ * 2026-09-24, when the deletion password was removed.
+ */
 export function confirmDelete(request: DeleteRequest): void {
   pendingDelete = request;
   byId("delete-title", HTMLElement).textContent = request.title;
@@ -63,7 +60,7 @@ export function confirmDelete(request: DeleteRequest): void {
   deleteButton.textContent = request.confirm;
   setFormError(deleteForm, "");
   deleteDialog.showModal();
-  field(deleteForm, "deletion").focus();
+  deleteButton.focus();
 }
 
 const projectDialog = byId("project-dialog", HTMLDialogElement);
@@ -101,28 +98,23 @@ export function askProjectName(onCreated: (name: string) => void, onCancel: () =
 
 const settingsDialog = byId("settings-dialog", HTMLDialogElement);
 const masterForm = byId("master-form", HTMLFormElement);
-const deletionForm = byId("deletion-form", HTMLFormElement);
-
-async function policyError(label: string, password: string): Promise<string> {
-  try {
-    await api.checkPassword(label, password);
-    return "";
-  } catch (error) {
-    return toFailure(error).message;
-  }
-}
 
 masterForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const master = field(masterForm, "master").value;
-  const problem = await policyError("master", master);
+  let problem = "";
+  try {
+    await api.checkPassword("master", master);
+  } catch (error) {
+    problem = toFailure(error).message;
+  }
   setFieldError(masterForm, "master", problem);
   const mismatch = field(masterForm, "master2").value !== master;
   setFieldError(masterForm, "master2", mismatch ? "The two passwords do not match." : "");
   if (problem || mismatch) return;
   const restore = busy(find(masterForm, 'button[type="submit"]', HTMLButtonElement), "Changing…");
   try {
-    await api.changePasswords({ newMaster: master });
+    await api.changeMaster(master);
     masterForm.reset();
     setFormError(masterForm, "");
     announce("Master password changed. Use the new one next time you unlock.");
@@ -133,36 +125,9 @@ masterForm.addEventListener("submit", async (event) => {
   }
 });
 
-deletionForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const current = field(deletionForm, "current").value;
-  const next = field(deletionForm, "deletion").value;
-  const problem = await policyError("deletion", next);
-  setFieldError(deletionForm, "deletion", problem);
-  const mismatch = field(deletionForm, "deletion2").value !== next;
-  setFieldError(deletionForm, "deletion2", mismatch ? "The two passwords do not match." : "");
-  if (problem || mismatch) return;
-  if (current === "") {
-    setFormError(deletionForm, "Enter the current deletion password.");
-    return;
-  }
-  const restore = busy(find(deletionForm, 'button[type="submit"]', HTMLButtonElement), "Changing…");
-  try {
-    await api.changePasswords({ currentDeletion: current, newDeletion: next });
-    deletionForm.reset();
-    setFormError(deletionForm, "");
-    announce("Deletion password changed.");
-  } catch (error) {
-    setFormError(deletionForm, toFailure(error).message);
-  } finally {
-    restore();
-  }
-});
-
 settingsDialog.addEventListener("close", () => {
   masterForm.reset();
-  deletionForm.reset();
-  for (const form of [masterForm, deletionForm]) setFormError(form, "");
+  setFormError(masterForm, "");
 });
 
 type SettingsContext = {
@@ -198,7 +163,7 @@ export function openSettings(context: SettingsContext): void {
       title: `Delete project ${context.project}?`,
       text: `Deletes ${context.project} and its ${plural(context.projectCount, "key")}. This cannot be undone.`,
       confirm: "Delete project",
-      run: (deletion) => api.deleteProject(context.project, deletion),
+      run: () => api.deleteProject(context.project),
       onDone: (snapshot) => {
         settingsDialog.close();
         context.onSnapshot(snapshot);
@@ -217,9 +182,9 @@ export function openSettings(context: SettingsContext): void {
     // Opened on top of Settings, so Cancel returns focus inside it.
     confirmDelete({
       title: "Delete all keys?",
-      text: `Deletes all ${plural(context.totalCount, "key")} in ${plural(context.projectTotal, "project")}. The vault and its passwords stay. This cannot be undone.`,
+      text: `Deletes all ${plural(context.totalCount, "key")} in ${plural(context.projectTotal, "project")}. The vault and its password stay. This cannot be undone.`,
       confirm: "Delete all keys",
-      run: (deletion) => api.truncate(deletion),
+      run: () => api.truncate(),
       onDone: (snapshot) => {
         settingsDialog.close();
         context.onSnapshot(snapshot);

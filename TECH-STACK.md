@@ -59,9 +59,9 @@
 | Value | Setting | Recorded because |
 | --- | --- | --- |
 | Argon2id | 64 MiB, t=3, p=1 | SECURITY-SPEC SEC-05; stored per vault in the header |
-| Master / deletion password minimum | 15 characters, max 1024, leaked-list check | SECURITY-SPEC SEC-06 (NIST SP 800-63B-4) |
+| Master password minimum | 15 characters, max 1024, leaked-list check | SECURITY-SPEC SEC-06 (NIST SP 800-63B-4) |
 | Lockout | 10 wrong passwords then 15 minutes; backoff 1s doubling to 30s | `lockout.json`, beside the vault |
-| App idle lock | 15 minutes | `IDLE_LOCK` in `src-tauri/src/main.rs` |
+| App idle lock | 5 minutes | `IDLE_LOCK` in `src-tauri/src/main.rs` |
 | Clipboard clear | 30 seconds, only if unchanged | `CLEAR_AFTER` in `clipboard.rs` |
 | Value size cap | 64 KiB | keeps the file every change re-reads small |
 | Coverage threshold | not set | UNKNOWN: no coverage tool wired yet |

@@ -21,9 +21,12 @@ front-end without asking.
 - **Never add network code.** "No network, ever" is the product claim: no
   telemetry, update checks, crash reporting or remote fonts. The Tauri CSP only
   allows `self` and the IPC channel.
-- **Password rules are product decisions, not bugs:** the master password
-  opens the vault and is asked for again after every lock; deleting a key, a
-  project or everything also needs the deletion password.
+- **Password rules are product decisions, not bugs:** one master password
+  opens the vault, is asked for again after every lock, and then allows
+  everything. The deletion password was removed on 2026-09-24 by the
+  maintainer's choice; deletes only confirm in a dialog (a chosen exception to
+  UX-05). Do not reintroduce a second password without asking. The app locks
+  after 5 minutes idle and on exit.
 - **The sealed inbox has no writer** since the CLI went. The read and merge
   path stays so vaults written by it still open; see `OPEN_ITEMS.md` before
   touching `hpke`, `Store::set` or `merge_inbox`.

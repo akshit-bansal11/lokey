@@ -59,7 +59,7 @@ export const api = {
   status: () => call<Status>("status"),
   checkPassword: (label: string, password: string) =>
     call<null>("check_password", { label, password }),
-  create: (master: string, deletion: string) => call<Snapshot>("create", { master, deletion }),
+  create: (master: string) => call<Snapshot>("create", { master }),
   unlock: (master: string) => call<Snapshot>("unlock", { master }),
   lock: () => call<null>("lock"),
   touch: () => call<null>("touch"),
@@ -67,16 +67,10 @@ export const api = {
   copy: (project: string, key: string) => call<number>("copy", { project, key }),
   save: (project: string, key: string, value: string) =>
     call<Snapshot>("save", { project, key, value }),
-  deleteKey: (project: string, key: string, deletion: string) =>
-    call<Snapshot>("delete_key", { project, key, deletion }),
-  deleteProject: (project: string, deletion: string) =>
-    call<Snapshot>("delete_project", { project, deletion }),
-  truncate: (deletion: string) => call<Snapshot>("truncate", { deletion }),
-  changePasswords: (change: {
-    newMaster?: string;
-    currentDeletion?: string;
-    newDeletion?: string;
-  }) => call<null>("change_passwords", change),
+  deleteKey: (project: string, key: string) => call<Snapshot>("delete_key", { project, key }),
+  deleteProject: (project: string) => call<Snapshot>("delete_project", { project }),
+  truncate: () => call<Snapshot>("truncate"),
+  changeMaster: (newMaster: string) => call<null>("change_master", { newMaster }),
 };
 
 export function onVaultChanged(handler: (snapshot: Snapshot) => void): Promise<UnlistenFn> {

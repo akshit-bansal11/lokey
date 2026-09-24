@@ -6,8 +6,8 @@ import { announce } from "@/lib/status.ts";
 import type { LockReason, Snapshot } from "@/lib/types.ts";
 
 const REASONS: Record<LockReason, string> = {
-  idle: "Locked after 15 minutes without activity.",
-  stale: "The passwords were changed in another window. Unlock with the new master password.",
+  idle: "Locked after 5 minutes without activity.",
+  stale: "The master password was changed in another window. Unlock with the new one.",
   missing: "The vault file was removed while it was open.",
 };
 

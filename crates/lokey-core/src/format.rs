@@ -3,7 +3,7 @@
 //! ```text
 //! header   format, version, kdf params, salt, public_key     (readable)
 //! body     AES-256-GCM under the master key                   (sealed)
-//!            secret_key, public_key copy, deletion check, entries
+//!            secret_key, public_key copy, entries
 //! inbox    HPKE records added by `set` without a password     (sealed to public_key)
 //! ```
 //!
@@ -23,7 +23,9 @@ use crate::{
 };
 
 const FORMAT: &str = "lokey";
-const VERSION: u32 = 1;
+/// v2 dropped the deletion-password check from the body. v1 files still open;
+/// the first write re-seals them as v2, which older builds then refuse.
+pub(crate) const VERSION: u32 = 2;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct VaultFile {
@@ -56,7 +58,7 @@ impl VaultFile {
         if file.format != FORMAT {
             return Err(Error::Corrupt("this file is not a lokey vault".into()));
         }
-        if file.version != VERSION {
+        if !(1..=VERSION).contains(&file.version) {
             return Err(Error::Corrupt(format!(
                 "vault format v{} needs a newer lokey (this build reads v{VERSION})",
                 file.version
@@ -87,16 +89,9 @@ impl VaultFile {
 pub struct Body {
     pub secret_key: String,
     pub public_key: String,
-    pub deletion: DeletionCheck,
+    /// A v1 body's `deletion` check is an unknown field now: skipped on read,
+    /// gone on the next write.
     pub entries: Vec<Entry>,
-}
-
-/// Argon2id of the deletion password under its own salt. It lives inside the
-/// body, so it cannot be attacked offline without the master password first.
-#[derive(Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
-pub struct DeletionCheck {
-    pub salt: String,
-    pub hash: String,
 }
 
 #[derive(Clone, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
@@ -154,6 +149,16 @@ mod tests {
     fn parse_rejects_other_format() {
         let mut file = sample();
         file.format = "secure-vault".into();
+
+        let parsed = VaultFile::parse(&file.to_json());
+
+        assert!(matches!(parsed, Err(Error::Corrupt(_))));
+    }
+
+    #[test]
+    fn parse_rejects_a_newer_version() {
+        let mut file = sample();
+        file.version = VERSION + 1;
 
         let parsed = VaultFile::parse(&file.to_json());
 
