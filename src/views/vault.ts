@@ -10,6 +10,7 @@ import { type IconName, icon } from "@/lib/icons.ts";
 import {
   DEFAULT_PROJECT,
   nameProblem,
+  nextProject,
   projectNames,
   sameName,
   visibleRows,
@@ -17,7 +18,7 @@ import {
 } from "@/lib/rows.ts";
 import { announce, showShortcuts, startClipboardTimer } from "@/lib/status.ts";
 import type { Row, Snapshot } from "@/lib/types.ts";
-import { askProjectName, confirmDelete, openSettings } from "@/views/dialogs.ts";
+import { askProjectName, confirmDelete, openSettings, showKeys } from "@/views/dialogs.ts";
 
 const MASK = "••••••••••••";
 const NEW_PROJECT = "\u0000new";
@@ -417,12 +418,22 @@ function handleFailure(error: unknown): void {
   alertText(failure.message);
 }
 
-/** Up/Down move between rows, keeping the same action column. */
-function moveFocus(from: HTMLElement, step: number): void {
+type RowPick = (rows: HTMLTableRowElement[], at: number) => number;
+
+/** Row-to-row keys: which row each one lands on, given the current one. */
+const ROW_MOVES: Record<string, RowPick> = {
+  ArrowDown: (_, at) => at + 1,
+  ArrowUp: (_, at) => at - 1,
+  Home: () => 0,
+  End: (rows) => rows.length - 1,
+};
+
+/** Moves to another row, keeping the same action column. */
+function focusRow(from: HTMLElement, pick: RowPick): void {
   const tr = rowFor(from);
   if (!tr) return;
   const rows = [...rowsBody().rows];
-  const next = rows[rows.indexOf(tr) + step];
+  const next = rows[pick(rows, rows.indexOf(tr))];
   const action = from.dataset.action ?? "reveal";
   next?.querySelector<HTMLElement>(`[data-action="${action}"]`)?.focus();
 }
@@ -432,9 +443,15 @@ function onSheetKey(event: KeyboardEvent): void {
   if (!(target instanceof HTMLElement) || target instanceof HTMLInputElement) return;
   const tr = rowFor(target);
   if (!tr) return;
-  if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+  const move = ROW_MOVES[event.key];
+  if (move) {
     event.preventDefault();
-    moveFocus(target, event.key === "ArrowDown" ? 1 : -1);
+    focusRow(target, move);
+  } else if (event.key === "Escape") {
+    // First Escape hides a shown value; the next goes back to search.
+    event.preventDefault();
+    if (revealed) hideRevealed();
+    else focusSearch();
   } else if (event.key === "F2") {
     event.preventDefault();
     void onAction("edit", tr);
@@ -448,17 +465,91 @@ function onSheetKey(event: KeyboardEvent): void {
   }
 }
 
-function onGlobalKey(event: KeyboardEvent): void {
-  touch();
+function focusSearch(): void {
+  const search = byId("search", HTMLInputElement);
+  search.focus();
+  search.select();
+}
+
+function switchProject(name: string): void {
+  project = name;
+  hideRevealed();
+  render();
+}
+
+function stepProject(step: number): void {
+  switchProject(nextProject(projectNames(snapshot.projects, pendingProjects), project, step));
+  announce(`Showing ${project}.`);
+}
+
+function newProject(): void {
+  askProjectName(
+    (name) => {
+      if (!pendingProjects.some((p) => sameName(p, name))) pendingProjects.push(name);
+      project = name;
+      render();
+      byId("new-key", HTMLInputElement).focus();
+      announce(`Project ${name} created. It is saved with its first key.`);
+    },
+    () => render(),
+  );
+}
+
+function settings(): void {
+  const projectCount = visibleRows(snapshot.rows, project, "").length;
+  openSettings({
+    vaultPath: options.vaultPath,
+    project,
+    projectCount,
+    totalCount: snapshot.rows.length,
+    projectTotal: snapshot.projects.length,
+    onSnapshot: applySnapshot,
+    onForgetProject: () => {
+      pendingProjects = pendingProjects.filter((p) => !sameName(p, project));
+      project = DEFAULT_PROJECT;
+      render();
+    },
+  });
+}
+
+/** The page-wide shortcuts; the shortcuts dialog lists every one of them. */
+function commandFor(event: KeyboardEvent): (() => void) | undefined {
   const inField =
     event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement;
-  if (event.key === "/" && !inField && !document.querySelector("dialog[open]")) {
-    event.preventDefault();
-    byId("search", HTMLInputElement).focus();
-  } else if (event.key.toLowerCase() === "l" && (event.ctrlKey || event.metaKey)) {
+  // Single-character keys only outside fields, so they never eat typing (SC 2.1.4).
+  if (event.key === "F1" || (event.key === "?" && !inField)) return showKeys;
+  if (event.key === "/" && !inField) return focusSearch;
+  if (!(event.ctrlKey || event.metaKey) || event.altKey) return undefined;
+  switch (event.key.toLowerCase()) {
+    case "n":
+      return event.shiftKey ? newProject : () => byId("new-key", HTMLInputElement).focus();
+    case "f":
+    case "k":
+      return focusSearch;
+    case ",":
+      return settings;
+    case "pageup":
+      return () => stepProject(-1);
+    case "pagedown":
+      return () => stepProject(1);
+    default:
+      return undefined;
+  }
+}
+
+function onGlobalKey(event: KeyboardEvent): void {
+  touch();
+  if (event.key.toLowerCase() === "l" && (event.ctrlKey || event.metaKey)) {
     event.preventDefault();
     options.onLock();
+    return;
   }
+  // Nothing else reaches past an open dialog or an open edit.
+  if (editing || document.querySelector("dialog[open]")) return;
+  const command = commandFor(event);
+  if (!command) return;
+  event.preventDefault();
+  command();
 }
 
 export function showVault(initial: Snapshot, vaultOptions: VaultOptions): void {
@@ -470,22 +561,8 @@ export function showVault(initial: Snapshot, vaultOptions: VaultOptions): void {
 
   const select = find(root, "#project", HTMLSelectElement);
   select.addEventListener("change", () => {
-    if (select.value !== NEW_PROJECT) {
-      project = select.value;
-      hideRevealed();
-      render();
-      return;
-    }
-    askProjectName(
-      (name) => {
-        if (!pendingProjects.some((p) => sameName(p, name))) pendingProjects.push(name);
-        project = name;
-        render();
-        byId("new-key", HTMLInputElement).focus();
-        announce(`Project ${name} created. It is saved with its first key.`);
-      },
-      () => render(),
-    );
+    if (select.value === NEW_PROJECT) newProject();
+    else switchProject(select.value);
   });
 
   const search = find(root, "#search", HTMLInputElement);
@@ -519,22 +596,8 @@ export function showVault(initial: Snapshot, vaultOptions: VaultOptions): void {
   find(root, "#add", HTMLButtonElement).addEventListener("click", () => void addKey());
 
   find(root, "#lock", HTMLButtonElement).addEventListener("click", () => options.onLock());
-  find(root, "#settings-open", HTMLButtonElement).addEventListener("click", () => {
-    const projectCount = visibleRows(snapshot.rows, project, "").length;
-    openSettings({
-      vaultPath: options.vaultPath,
-      project,
-      projectCount,
-      totalCount: snapshot.rows.length,
-      projectTotal: snapshot.projects.length,
-      onSnapshot: applySnapshot,
-      onForgetProject: () => {
-        pendingProjects = pendingProjects.filter((p) => !sameName(p, project));
-        project = DEFAULT_PROJECT;
-        render();
-      },
-    });
-  });
+  find(root, "#settings-open", HTMLButtonElement).addEventListener("click", settings);
+  find(root, "#keys-open", HTMLButtonElement).addEventListener("click", showKeys);
 
   document.addEventListener("keydown", onGlobalKey);
   document.addEventListener("pointerdown", touch);

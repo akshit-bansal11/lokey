@@ -6,6 +6,16 @@ All notable changes to lokey are recorded here, following
 
 ## [Unreleased]
 
+### Added
+
+- **Keyboard shortcuts for everything in the vault.** `Ctrl+N` adds a key,
+  `Ctrl+Shift+N` makes a project, `Ctrl+PgUp` / `Ctrl+PgDn` switch projects,
+  `Ctrl+F` or `Ctrl+K` search, `Ctrl+,` opens Settings. In the rows, `Home` and
+  `End` jump to the first and last key, and `Esc` hides a shown value, then
+  goes back to search.
+- A keyboard shortcuts list: press `F1` or `?`, or use the keyboard button in
+  the toolbar.
+
 ## [0.3.0] - 2026-09-20
 
 ### Removed

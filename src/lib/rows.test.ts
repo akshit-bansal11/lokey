@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { nameProblem, projectNames, visibleRows, wouldReplace } from "./rows.ts";
+import { nameProblem, nextProject, projectNames, visibleRows, wouldReplace } from "./rows.ts";
 import type { Row } from "./types.ts";
 
 function row(overrides: Partial<Row>): Row {
@@ -84,4 +84,16 @@ test("nameProblem rejects an equals sign", () => {
 
 test("nameProblem accepts env style names", () => {
   assert.equal(nameProblem("key", "NEXT_PUBLIC_URL.v2/x-y"), "");
+});
+
+test("nextProject steps forward and back, wrapping at either end", () => {
+  const names = ["default", "api", "web"];
+
+  assert.equal(nextProject(names, "api", 1), "web");
+  assert.equal(nextProject(names, "web", 1), "default");
+  assert.equal(nextProject(names, "default", -1), "web");
+});
+
+test("nextProject matches the current project case-insensitively", () => {
+  assert.equal(nextProject(["default", "Web"], "web", 1), "default");
 });
