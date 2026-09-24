@@ -21,7 +21,7 @@ use lokey_core::{ChangeKind, Error, Session, Store, check_new_password, clipboar
 use tauri::{AppHandle, Emitter, Manager, RunEvent, State};
 
 /// The vault locks itself after this long without any activity in the window.
-const IDLE_LOCK: Duration = Duration::from_secs(15 * 60);
+const IDLE_LOCK: Duration = Duration::from_secs(5 * 60);
 /// How often the watcher checks the vault file's modified time. One metadata
 /// call per tick; nothing is read unless the time changed.
 const WATCH_EVERY: Duration = Duration::from_millis(250);
@@ -84,13 +84,9 @@ fn check_password(label: String, password: String) -> Result<(), Failure> {
 }
 
 #[tauri::command(async)]
-fn create(
-    state: State<'_, AppState>,
-    master: String,
-    deletion: String,
-) -> Result<Snapshot, Failure> {
+fn create(state: State<'_, AppState>, master: String) -> Result<Snapshot, Failure> {
     let mut inner = state.lock();
-    inner.store()?.create(&master, &deletion)?;
+    inner.store()?.create(&master)?;
     open(&mut inner, &master)
 }
 
@@ -167,74 +163,38 @@ fn delete_key(
     state: State<'_, AppState>,
     project: String,
     key: String,
-    deletion: String,
 ) -> Result<Snapshot, Failure> {
-    mutate(&state, |session| {
-        session.delete_key(&deletion, &project, &key)
-    })
+    mutate(&state, |session| session.delete_key(&project, &key))
 }
 
 #[tauri::command(async)]
-fn delete_project(
-    state: State<'_, AppState>,
-    project: String,
-    deletion: String,
-) -> Result<Snapshot, Failure> {
-    mutate(&state, |session| {
-        session.delete_project(&deletion, &project).map(|(_, r)| r)
-    })
+fn delete_project(state: State<'_, AppState>, project: String) -> Result<Snapshot, Failure> {
+    mutate(&state, |session| session.delete_project(&project).map(|(_, r)| r))
 }
 
 #[tauri::command(async)]
-fn truncate(state: State<'_, AppState>, deletion: String) -> Result<Snapshot, Failure> {
-    mutate(&state, |session| {
-        session.truncate(&deletion).map(|(_, r)| r)
-    })
+fn truncate(state: State<'_, AppState>) -> Result<Snapshot, Failure> {
+    mutate(&state, |session| session.truncate().map(|(_, r)| r))
 }
 
 #[tauri::command(async)]
-fn change_passwords(
-    state: State<'_, AppState>,
-    new_master: Option<String>,
-    current_deletion: Option<String>,
-    new_deletion: Option<String>,
-) -> Result<(), Failure> {
-    let deletion = match (&current_deletion, &new_deletion) {
-        (Some(current), Some(next)) => Some((current.as_str(), next.as_str())),
-        _ => None,
-    };
-    let result = {
-        let mut inner = state.lock();
-        let changed = inner
-            .session()?
-            .change_passwords(new_master.as_deref(), deletion);
-        inner.mark_seen();
-        changed
-    };
-    serve_backoff(result.map_err(Failure::from))
+fn change_master(state: State<'_, AppState>, new_master: String) -> Result<(), Failure> {
+    let mut inner = state.lock();
+    let changed = inner.session()?.change_master(&new_master);
+    inner.mark_seen();
+    changed.map_err(Failure::from)
 }
 
-/// Runs a password-gated change and returns the new snapshot, serving the
-/// wrong-password backoff outside the state lock.
+/// Runs a change and returns the new snapshot.
 fn mutate(
     state: &State<'_, AppState>,
     change: impl FnOnce(&mut Session) -> lokey_core::Result<lokey_core::Report>,
 ) -> Result<Snapshot, Failure> {
-    let result = {
-        let mut inner = state.lock();
-        let session = inner.session()?;
-        let outcome = change(session).map(|report| Snapshot::new(session, &report));
-        inner.mark_seen();
-        outcome
-    };
-    serve_backoff(result.map_err(Failure::from))
-}
-
-fn serve_backoff<T>(result: Result<T, Failure>) -> Result<T, Failure> {
-    if let Err(Failure { wait_ms, .. }) = &result {
-        thread::sleep(Duration::from_millis(*wait_ms));
-    }
-    result
+    let mut inner = state.lock();
+    let session = inner.session()?;
+    let outcome = change(session).map(|report| Snapshot::new(session, &report));
+    inner.mark_seen();
+    outcome.map_err(Failure::from)
 }
 
 /// Pushes changes made by other processes into the window, and locks the
@@ -314,7 +274,7 @@ fn main() {
             delete_key,
             delete_project,
             truncate,
-            change_passwords,
+            change_master,
         ])
         .build(tauri::generate_context!())
         .expect("lokey failed to start");

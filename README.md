@@ -22,14 +22,11 @@ wherever you keep your tools; to remove lokey, delete it.
 
 ## First use
 
-The first run offers to create the vault. You choose two passwords:
+The first run offers to create the vault. You choose one **master password**.
+Once it is entered, everything is open: reading, adding, editing, copying and
+deleting. Deleting asks you to confirm, naming what goes.
 
-| Password | What it does |
-| --- | --- |
-| **Master** | Opens the vault. Needed to read, list, edit or copy anything. |
-| **Deletion** | Needed, together with the master password, to delete keys. |
-
-Each must be at least 15 characters, and lokey refuses passwords that appear in
+It must be at least 15 characters, and lokey refuses passwords that appear in
 public lists of leaked passwords. A few random words make a strong password
 that is easy to remember.
 
@@ -45,12 +42,15 @@ a time.
 - Type a name and value in the last row and press Enter to add a key.
 - Show, copy, edit and delete are on each row. Copying clears the clipboard
   after 30 seconds, and a thin line in the status bar counts it down.
-- Keyboard: Up/Down move between rows, Enter shows, Ctrl+C copies, F2 edits,
-  Delete deletes, `/` searches, Ctrl+L locks.
+- Everything works from the keyboard. Press **F1** (or `?`) for the full
+  list: Ctrl+N adds a key, Ctrl+Shift+N makes a project, Ctrl+PgUp/PgDn switch
+  projects, Ctrl+F searches, Ctrl+, opens settings, Ctrl+L locks; in the rows,
+  Up/Down/Home/End move, Enter shows, Ctrl+C copies, F2 edits, Del deletes.
 - **Projects** keep the same key name apart: `DATABASE_URL` can exist once in
   `web` and once in `api`. New keys go to `default` unless you pick another.
 - **Names** use letters, digits and `_ - . /`, and match regardless of case.
-- The app locks itself after 15 minutes without use.
+- The app locks itself after 5 minutes without use, and whenever it is
+  closed: the next start asks for the master password again.
 - The window is hidden from screenshots and screen sharing, so a value on
   screen does not leak into a recording or a video call.
 
@@ -97,7 +97,9 @@ What lokey does not do, deliberately or because it cannot:
   sealed to it afterwards would be readable to them. lokey keeps a second copy
   of that key inside the encrypted part, checks it on every unlock, puts it back
   and warns you if it was changed.
-- **An old copy of the vault file still opens with the passwords it had.**
+- **Anyone at your unlocked PC can delete keys.** There is no second
+  password for deleting; the idle lock and Ctrl+L are the protection.
+- **An old copy of the vault file still opens with the password it had.**
   After changing a password, delete any backups you made of the old file.
 - **Deleting overwrites the data, but SSDs can keep old blocks.** Full-disk
   encryption is the real guarantee.

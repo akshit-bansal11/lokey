@@ -26,7 +26,7 @@
         <form class="gate-form" id="setup-form" novalidate>
           <h1 class="gate-title">Set up lokey</h1>
           <p class="gate-lede">
-            Your keys stay in one encrypted file on this PC. Two passwords protect it.
+            Your keys stay in one encrypted file on this PC. One password protects it.
           </p>
           <label class="field">
             <span class="field-label">Master password</span>
@@ -38,17 +38,6 @@
             <span class="field-label">Master password again</span>
             <input class="input" type="password" name="master2" autocomplete="new-password" required />
             <span class="field-error" data-error-for="master2"></span>
-          </label>
-          <label class="field">
-            <span class="field-label">Deletion password</span>
-            <input class="input" type="password" name="deletion" autocomplete="new-password" required />
-            <span class="field-hint">Needed to delete keys. Must differ from the master password.</span>
-            <span class="field-error" data-error-for="deletion"></span>
-          </label>
-          <label class="field">
-            <span class="field-label">Deletion password again</span>
-            <input class="input" type="password" name="deletion2" autocomplete="new-password" required />
-            <span class="field-error" data-error-for="deletion2"></span>
           </label>
           <p class="notice" role="alert" data-form-error></p>
           <button type="submit" class="btn primary">Create vault</button>
@@ -144,15 +133,11 @@
       </section>
     </template>
 
-    <!-- Asks for the deletion password before any delete. -->
+    <!-- Confirms any delete, naming what goes. -->
     <dialog id="delete-dialog" aria-labelledby="delete-title" aria-describedby="delete-text">
       <form class="dialog-form" method="dialog" id="delete-form" novalidate>
         <h2 class="dialog-title" id="delete-title">Delete</h2>
         <p class="dialog-text" id="delete-text"></p>
-        <label class="field">
-          <span class="field-label">Deletion password</span>
-          <input class="input" type="password" name="deletion" autocomplete="off" required />
-        </label>
         <p class="notice" role="alert" data-form-error></p>
         <div class="dialog-actions">
           <button type="button" class="btn" data-close>Cancel</button>
@@ -203,27 +188,6 @@
           <p class="notice" role="alert" data-form-error></p>
           <div class="dialog-actions">
             <button type="submit" class="btn">Change master password</button>
-          </div>
-        </form>
-        <form class="settings-section" id="deletion-form" aria-labelledby="settings-deletion" novalidate>
-          <h3 id="settings-deletion">Change deletion password</h3>
-          <label class="field">
-            <span class="field-label">Current deletion password</span>
-            <input class="input" type="password" name="current" autocomplete="off" required />
-          </label>
-          <label class="field">
-            <span class="field-label">New deletion password</span>
-            <input class="input" type="password" name="deletion" autocomplete="new-password" required />
-            <span class="field-error" data-error-for="deletion"></span>
-          </label>
-          <label class="field">
-            <span class="field-label">New deletion password again</span>
-            <input class="input" type="password" name="deletion2" autocomplete="new-password" required />
-            <span class="field-error" data-error-for="deletion2"></span>
-          </label>
-          <p class="notice" role="alert" data-form-error></p>
-          <div class="dialog-actions">
-            <button type="submit" class="btn">Change deletion password</button>
           </div>
         </form>
         <section class="settings-section" aria-labelledby="settings-remove">

@@ -1,7 +1,7 @@
 //! Every cryptographic primitive lokey uses, in one file.
 //!
 //! - AES-256-GCM seals the vault body under a key derived from the master password.
-//! - Argon2id derives that key, and the deletion-password verifier.
+//! - Argon2id derives that key.
 //! - HPKE (RFC 9180, DHKEM-X25519 / HKDF-SHA256 / AES-256-GCM) seals `set`
 //!   records to the vault's public key, which is how a value can be added
 //!   without the master password while only the master password can read it.
@@ -84,14 +84,6 @@ pub fn derive_key(
         .hash_password_into(password, salt, key.as_mut())
         .map_err(|err| Error::Corrupt(format!("key derivation failed: {err}")))?;
     Ok(key)
-}
-
-/// Constant-time equality, so comparing a derived verifier leaks no timing.
-pub fn ct_eq(a: &[u8], b: &[u8]) -> bool {
-    if a.len() != b.len() {
-        return false;
-    }
-    a.iter().zip(b).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
 }
 
 /// AES-256-GCM output: a fresh random nonce and the ciphertext with its tag.
@@ -287,12 +279,5 @@ mod tests {
         };
 
         assert!(matches!(weak.check(), Err(Error::Corrupt(_))));
-    }
-
-    #[test]
-    fn ct_eq_compares_content_and_length() {
-        assert!(ct_eq(b"abc", b"abc"));
-        assert!(!ct_eq(b"abc", b"abd"));
-        assert!(!ct_eq(b"abc", b"abcd"));
     }
 }
