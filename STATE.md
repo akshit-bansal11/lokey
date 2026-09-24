@@ -1,6 +1,6 @@
 # STATE.md — lokey
 
-**Updated:** 2026-09-24 · **Branch:** `feat/master-password-only` · **Last release:** none live; `v0.0.1` in flight (earlier releases withdrawn)
+**Updated:** 2026-09-24 · **Branch:** `main` · **Last release:** `v0.0.1` (the only release; earlier ones deleted)
 
 ## Bootstrap record
 
@@ -13,7 +13,7 @@
 
 ## Where the work is right now
 
-- **In flight:** v0.0.1, the clean-slate first release. The deletion password is removed (vault format v2; v1 vaults open and upgrade on first write), the idle lock is 5 minutes, and every action has a keyboard shortcut. Releases v0.1.0 to v1.0.0 and their tags are to be deleted once v0.0.1 is published, by the maintainer's decision.
+- **In flight:** Nothing. PR #6 removed the deletion password (vault format v2), set the idle lock to 5 minutes, and shipped as v0.0.1 on 2026-09-24, a clean-slate first release. Releases v0.1.0 to v1.0.0 and their tags were deleted the same day by the maintainer; `legacy-powershell` stays.
 - **Blocked on:** Nothing.
 - **Next action:** in the real window, press every shortcut once (whether WebView2 lets the page have `Ctrl+N`, `Ctrl+F` and `F1` is unverified), and open a vault made by an earlier build to see it upgrade.
 
@@ -21,6 +21,11 @@
 
 | Fact | Proved by | Verified |
 | --- | --- | --- |
+| v0.0.1 ships `lokey.exe` 8,139,776 B and `SHA256SUMS.txt` 77 B; both download with 200 | `gh release view v0.0.1 --json assets`; `curl` on `releases/download/v0.0.1/`; release run 35969351601 green | 2026-09-24 |
+| v0.0.1 `lokey.exe` matches its published checksum and carries a valid attestation | `sha256sum -c` (CRLF stripped) OK; `gh attestation verify` exit 0 | 2026-09-24 |
+| `releases/latest/download/lokey.exe` serves the v0.0.1 exe | `curl` 200, its SHA-256 equals the v0.0.1 entry in `SHA256SUMS.txt` | 2026-09-24 |
+| Only `v0.0.1` and `legacy-powershell` remain as releases/tags | `gh release list`; `git ls-remote --tags origin` | 2026-09-24 |
+| A v1 vault carrying a deletion check opens and is re-sealed as v2 | `v1_vault_with_a_deletion_check_opens_and_is_upgraded`, CI gate on PR #6 | 2026-09-24 |
 | Removing `lokey-cli` costs the lock exactly three packages (`lokey-cli`, `rpassword`, `rtoolbox`) and moves no version | `lockfile.yml` run 35504833456, diff read | 2026-09-20 |
 | The workspace without `lokey-cli` passes the whole gate, and `--no-bundle` builds one exe named `lokey.exe` | CI run 35505074478, all four jobs green; artifact downloaded and listed | 2026-09-20 |
 | The release pipeline still gates on the tag matching all three version files | `release.yml` run 35506826668, step "Tag matches the version the binaries report" green | 2026-09-20 |
@@ -47,9 +52,9 @@
 
 | Suite | Status | Note |
 | --- | --- | --- |
-| page logic (node:test) | green locally | 12 tests, 2026-09-24; CI pending on this branch |
-| Rust unit / integration | pending | CI on this branch; deletion-password tests replaced by a no-password delete test and a v1-upgrade test; the 9 end-to-end CLI tests went with the crate |
-| desktop window | never run | no automated UI test; needs a manual pass, now including every keyboard shortcut |
+| page logic (node:test) | green | 12 tests, CI gate on PR #6 |
+| Rust unit / integration | green | 48 tests, CI gate on PR #6; deletion-password tests replaced by a no-password delete test and a v1-upgrade test; the 9 end-to-end CLI tests went with the crate |
+| desktop window | never run | no automated UI test; needs a manual pass: every shortcut, one-password setup, the delete confirm, the 5-minute lock |
 | the app opens a vault written by the old CLI | never run | the inbox merge is the path that matters; needs a manual pass with a 0.2.0 vault |
 
 ## Continuity file health
