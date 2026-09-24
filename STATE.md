@@ -1,6 +1,6 @@
 # STATE.md — lokey
 
-**Updated:** 2026-09-24 · **Branch:** `feat/keyboard-shortcuts` · **Last release:** `v0.3.0` (1.0.0 in flight)
+**Updated:** 2026-09-24 · **Branch:** `main` · **Last release:** `v1.0.0`
 
 ## Bootstrap record
 
@@ -13,7 +13,7 @@
 
 ## Where the work is right now
 
-- **In flight:** v1.0.0: keyboard shortcuts for every vault action (`Ctrl+N`, `Ctrl+Shift+N`, `Ctrl+PgUp/PgDn`, `Ctrl+F`/`Ctrl+K`, `Ctrl+,`, `F1`/`?`, `Home`/`End`, `Esc`) and a shortcuts dialog. Branch `feat/keyboard-shortcuts`; merge, then tag `v1.0.0`.
+- **In flight:** Nothing. PR #4 added keyboard shortcuts for every vault action and a shortcuts dialog (`F1`/`?`), and shipped as v1.0.0 on 2026-09-24.
 - **Blocked on:** Nothing.
 - **Next action:** press every shortcut once in the real window; whether WebView2 lets the page have `Ctrl+N`, `Ctrl+F` and `F1` is unverified. Then open the released exe once against a vault created by 0.2.0's CLI. That exercises the inbox merge, the one path this release leaves load-bearing and never run.
 
@@ -21,6 +21,9 @@
 
 | Fact | Proved by | Verified |
 | --- | --- | --- |
+| Both v1.0.0 assets download from `releases/latest/download/` | `curl -sL -o f -w '%{http_code}'` returned 200 for `lokey.exe` and `SHA256SUMS.txt` | 2026-09-24 |
+| v1.0.0 `lokey.exe` matches its published checksum and carries a valid attestation | `sha256sum -c` (CRLF stripped) OK; `gh attestation verify` exit 0 | 2026-09-24 |
+| v1.0.0 ships exactly two assets: `lokey.exe` 8,158,720 B and `SHA256SUMS.txt` 77 B | `gh release view v1.0.0 --json assets`; release run 35964335045 green | 2026-09-24 |
 | Both v0.3.0 assets download from `releases/latest/download/` | `curl -sL -o f -w '%{http_code}'` returned 200 for `lokey.exe` and `SHA256SUMS.txt` | 2026-09-20 |
 | v0.3.0 `lokey.exe` matches its published checksum | `sha256sum -c` against the file with CRLF stripped; see `OPEN_ITEMS.md` | 2026-09-20 |
 | The released exe carries a valid build attestation | `gh attestation verify lokey.exe --repo akshit-bansal11/lokey` exit 0 | 2026-09-20 |
@@ -52,8 +55,8 @@
 
 | Suite | Status | Note |
 | --- | --- | --- |
-| page logic (node:test) | green locally | 12 tests (2 new for `nextProject`), 2026-09-24; CI pending |
-| Rust unit / integration | green | CI gate on the released commit, run 35506461871; the 9 end-to-end CLI tests went with the crate |
+| page logic (node:test) | green | 12 tests, CI gate on PR #4, run 35963783496 |
+| Rust unit / integration | green | CI gate on PR #4, run 35963783496; the 9 end-to-end CLI tests went with the crate |
 | desktop window | never run | no automated UI test; needs a manual pass, now including every keyboard shortcut |
 | the app opens a vault written by the old CLI | never run | the inbox merge is the path that matters; needs a manual pass with a 0.2.0 vault |
 
