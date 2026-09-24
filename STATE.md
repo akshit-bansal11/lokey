@@ -1,6 +1,6 @@
 # STATE.md — lokey
 
-**Updated:** 2026-09-20 · **Branch:** `main` · **Last release:** `v0.3.0`
+**Updated:** 2026-09-24 · **Branch:** `feat/keyboard-shortcuts` · **Last release:** `v0.3.0` (1.0.0 in flight)
 
 ## Bootstrap record
 
@@ -13,9 +13,9 @@
 
 ## Where the work is right now
 
-- **In flight:** Nothing. PR #3 removed the command-line tool and shipped as v0.3.0 on 2026-09-20: lokey is the desktop app alone, released as one portable `lokey.exe`.
+- **In flight:** v1.0.0: keyboard shortcuts for every vault action (`Ctrl+N`, `Ctrl+Shift+N`, `Ctrl+PgUp/PgDn`, `Ctrl+F`/`Ctrl+K`, `Ctrl+,`, `F1`/`?`, `Home`/`End`, `Esc`) and a shortcuts dialog. Branch `feat/keyboard-shortcuts`; merge, then tag `v1.0.0`.
 - **Blocked on:** Nothing.
-- **Next action:** open the released exe once against a vault created by 0.2.0's CLI. That exercises the inbox merge, the one path this release leaves load-bearing and never run.
+- **Next action:** press every shortcut once in the real window; whether WebView2 lets the page have `Ctrl+N`, `Ctrl+F` and `F1` is unverified. Then open the released exe once against a vault created by 0.2.0's CLI. That exercises the inbox merge, the one path this release leaves load-bearing and never run.
 
 ## Verified facts
 
@@ -52,9 +52,9 @@
 
 | Suite | Status | Note |
 | --- | --- | --- |
-| page logic (node:test) | green | 10 tests, CI gate on the released commit, run 35506461871 |
+| page logic (node:test) | green locally | 12 tests (2 new for `nextProject`), 2026-09-24; CI pending |
 | Rust unit / integration | green | CI gate on the released commit, run 35506461871; the 9 end-to-end CLI tests went with the crate |
-| desktop window | never run | no automated UI test; needs a manual pass |
+| desktop window | never run | no automated UI test; needs a manual pass, now including every keyboard shortcut |
 | the app opens a vault written by the old CLI | never run | the inbox merge is the path that matters; needs a manual pass with a 0.2.0 vault |
 
 ## Continuity file health
