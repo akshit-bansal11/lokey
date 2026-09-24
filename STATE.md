@@ -1,6 +1,6 @@
 # STATE.md — lokey
 
-**Updated:** 2026-09-24 · **Branch:** `main` · **Last release:** `v1.0.0`
+**Updated:** 2026-09-24 · **Branch:** `feat/master-password-only` · **Last release:** none live; `v0.0.1` in flight (earlier releases withdrawn)
 
 ## Bootstrap record
 
@@ -9,26 +9,18 @@
 | Bootstrapped | 2026-09-19 (moved from `F:/projects/mini-projects/lokey-lcmdjsfbbr`) |
 | Stack detected as | Rust 2024 workspace (lokey-core, lokey-cli, src-tauri) + Vite/TypeScript page, from Cargo.lock and package-lock.json. `lokey-cli` removed 2026-09-20 |
 | Quality gate command | `npm run check` (CI: `npm run check:ci`) |
-| Deployed at | not deployed; released at https://github.com/akshit-bansal11/lokey/releases/tag/v0.3.0 |
+| Deployed at | not deployed; released from tags at https://github.com/akshit-bansal11/lokey/releases |
 
 ## Where the work is right now
 
-- **In flight:** Nothing. PR #4 added keyboard shortcuts for every vault action and a shortcuts dialog (`F1`/`?`), and shipped as v1.0.0 on 2026-09-24.
+- **In flight:** v0.0.1, the clean-slate first release. The deletion password is removed (vault format v2; v1 vaults open and upgrade on first write), the idle lock is 5 minutes, and every action has a keyboard shortcut. Releases v0.1.0 to v1.0.0 and their tags are to be deleted once v0.0.1 is published, by the maintainer's decision.
 - **Blocked on:** Nothing.
-- **Next action:** press every shortcut once in the real window; whether WebView2 lets the page have `Ctrl+N`, `Ctrl+F` and `F1` is unverified. Then open the released exe once against a vault created by 0.2.0's CLI. That exercises the inbox merge, the one path this release leaves load-bearing and never run.
+- **Next action:** in the real window, press every shortcut once (whether WebView2 lets the page have `Ctrl+N`, `Ctrl+F` and `F1` is unverified), and open a vault made by an earlier build to see it upgrade.
 
 ## Verified facts
 
 | Fact | Proved by | Verified |
 | --- | --- | --- |
-| Both v1.0.0 assets download from `releases/latest/download/` | `curl -sL -o f -w '%{http_code}'` returned 200 for `lokey.exe` and `SHA256SUMS.txt` | 2026-09-24 |
-| v1.0.0 `lokey.exe` matches its published checksum and carries a valid attestation | `sha256sum -c` (CRLF stripped) OK; `gh attestation verify` exit 0 | 2026-09-24 |
-| v1.0.0 ships exactly two assets: `lokey.exe` 8,158,720 B and `SHA256SUMS.txt` 77 B | `gh release view v1.0.0 --json assets`; release run 35964335045 green | 2026-09-24 |
-| Both v0.3.0 assets download from `releases/latest/download/` | `curl -sL -o f -w '%{http_code}'` returned 200 for `lokey.exe` and `SHA256SUMS.txt` | 2026-09-20 |
-| v0.3.0 `lokey.exe` matches its published checksum | `sha256sum -c` against the file with CRLF stripped; see `OPEN_ITEMS.md` | 2026-09-20 |
-| The released exe carries a valid build attestation | `gh attestation verify lokey.exe --repo akshit-bansal11/lokey` exit 0 | 2026-09-20 |
-| v0.3.0 ships exactly two assets: `lokey.exe` 8,158,720 B and `SHA256SUMS.txt` 77 B | `gh release view v0.3.0 --json assets` | 2026-09-20 |
-| The release notes are the CHANGELOG's 0.3.0 section, extracted by `release.yml` | `gh release view v0.3.0 --json body` | 2026-09-20 |
 | Removing `lokey-cli` costs the lock exactly three packages (`lokey-cli`, `rpassword`, `rtoolbox`) and moves no version | `lockfile.yml` run 35504833456, diff read | 2026-09-20 |
 | The workspace without `lokey-cli` passes the whole gate, and `--no-bundle` builds one exe named `lokey.exe` | CI run 35505074478, all four jobs green; artifact downloaded and listed | 2026-09-20 |
 | The release pipeline still gates on the tag matching all three version files | `release.yml` run 35506826668, step "Tag matches the version the binaries report" green | 2026-09-20 |
@@ -55,8 +47,8 @@
 
 | Suite | Status | Note |
 | --- | --- | --- |
-| page logic (node:test) | green | 12 tests, CI gate on PR #4, run 35963783496 |
-| Rust unit / integration | green | CI gate on PR #4, run 35963783496; the 9 end-to-end CLI tests went with the crate |
+| page logic (node:test) | green locally | 12 tests, 2026-09-24; CI pending on this branch |
+| Rust unit / integration | pending | CI on this branch; deletion-password tests replaced by a no-password delete test and a v1-upgrade test; the 9 end-to-end CLI tests went with the crate |
 | desktop window | never run | no automated UI test; needs a manual pass, now including every keyboard shortcut |
 | the app opens a vault written by the old CLI | never run | the inbox merge is the path that matters; needs a manual pass with a 0.2.0 vault |
 
