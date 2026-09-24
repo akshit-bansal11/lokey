@@ -657,7 +657,9 @@ mod tests {
         // Rewrite the vault as 1.0.0 left it: version 1, a deletion check in the body.
         let salt = unb64(&file.salt).unwrap();
         let key = crypto::derive_key(MASTER.as_bytes(), &salt, file.kdf).unwrap();
-        let plain = crypto::open(&key, &file.body, &file.aad()).unwrap().unwrap();
+        let plain = crypto::open(&key, &file.body, &file.aad())
+            .unwrap()
+            .unwrap();
         let mut body: serde_json::Value = serde_json::from_slice(&plain).unwrap();
         body["deletion"] = serde_json::json!({ "salt": "c2FsdA==", "hash": "aGFzaA==" });
         file.version = 1;
@@ -670,7 +672,10 @@ mod tests {
         assert_eq!(store.read().unwrap().version, VERSION);
         let raw = fs::read_to_string(store.vault_path()).unwrap();
         assert!(!raw.contains("deletion"));
-        assert_eq!(keys(&store.unlock(MASTER).unwrap().0), vec!["A".to_string()]);
+        assert_eq!(
+            keys(&store.unlock(MASTER).unwrap().0),
+            vec!["A".to_string()]
+        );
     }
 
     #[test]
