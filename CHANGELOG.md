@@ -6,6 +6,8 @@ All notable changes to lokey are recorded here, following
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-24
+
 ### Added
 
 - **Keyboard shortcuts for everything in the vault.** `Ctrl+N` adds a key,
@@ -108,7 +110,8 @@ secure-vault, which is kept at the `legacy-powershell` tag.
 - Deleting a key or changing a password also rewrites the backup file, so the
   old value or password does not survive in it.
 
-[Unreleased]: https://github.com/akshit-bansal11/lokey/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/akshit-bansal11/lokey/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/akshit-bansal11/lokey/compare/v0.3.0...v1.0.0
 [0.3.0]: https://github.com/akshit-bansal11/lokey/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/akshit-bansal11/lokey/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/akshit-bansal11/lokey/releases/tag/v0.1.0

@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "lokey",
   "mainBinaryName": "lokey",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "identifier": "io.github.akshitbansal11.lokey",
   "build": {
     "frontendDist": "../dist",
