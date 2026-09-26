@@ -93,6 +93,17 @@ fn served<T>(result: Result<T, Failure>) -> Result<T, Failure> {
     result
 }
 
+/// Asks for the master password again before anything that adds a way into
+/// the vault or takes a copy of it away, so a vault left unlocked cannot be
+/// given a password or recovery key someone else knows, or be copied off.
+fn verified(state: &State<'_, AppState>, master: &str) -> Result<(), Failure> {
+    let result = state
+        .lock()
+        .session()
+        .and_then(|session| Ok(session.verify_master(master)?));
+    served(result)
+}
+
 fn shown(recovery_key: RecoveryKey) -> String {
     recovery_key.as_str().to_owned()
 }
@@ -219,11 +230,7 @@ fn export_backup(
     state: State<'_, AppState>,
     master: String,
 ) -> Result<Option<String>, Failure> {
-    let verified = state
-        .lock()
-        .session()
-        .and_then(|session| Ok(session.verify_master(&master)?));
-    served(verified)?;
+    verified(&state, &master)?;
     let Some(dest) = on_main_thread(&app, move || file_dialog::save(&window, BACKUP_NAME))? else {
         return Ok(None);
     };
@@ -303,8 +310,10 @@ fn truncate(state: State<'_, AppState>) -> Result<Snapshot, Failure> {
 #[tauri::command(async)]
 fn change_master(
     state: State<'_, AppState>,
+    current_master: String,
     new_master: String,
 ) -> Result<Option<String>, Failure> {
+    verified(&state, &current_master)?;
     let mut inner = state.lock();
     let changed = inner.session()?.change_master(&new_master);
     inner.mark_seen();
@@ -313,7 +322,12 @@ fn change_master(
 
 /// Issues a new recovery key (`on`), returned once, or removes it.
 #[tauri::command(async)]
-fn set_recovery(state: State<'_, AppState>, on: bool) -> Result<Option<String>, Failure> {
+fn set_recovery(
+    state: State<'_, AppState>,
+    master: String,
+    on: bool,
+) -> Result<Option<String>, Failure> {
+    verified(&state, &master)?;
     let mut inner = state.lock();
     let changed = inner.session()?.set_recovery(on);
     inner.mark_seen();

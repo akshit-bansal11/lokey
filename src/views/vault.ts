@@ -276,11 +276,7 @@ export function applySnapshot(next: Snapshot): void {
   } else if (arrivals.length > 1) {
     announce(`${arrivals.length} keys arrived while the vault was closed.`);
   }
-  if (next.headerRestored) {
-    alertText(
-      "Warning: someone replaced this vault's public key, and lokey put it back. Values sealed to it while it was replaced may have been readable by whoever changed it. Change those secrets where they were issued.",
-    );
-  } else if (next.rejected > 0) {
+  if (next.rejected > 0) {
     alertText(
       `${next.rejected} value(s) added from the terminal could not be opened and were discarded.`,
     );
