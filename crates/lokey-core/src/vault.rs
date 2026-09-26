@@ -762,9 +762,12 @@ mod tests {
         let (mut session, _) = store.unlock(MASTER).unwrap();
         session.change_master(NEW_MASTER).unwrap();
         session.put("default", "AFTER", "secret").unwrap();
-        let old_kek =
-            crypto::derive_key(MASTER.as_bytes(), &unb64(&old_copy.salt).unwrap(), old_copy.kdf)
-                .unwrap();
+        let old_kek = crypto::derive_key(
+            MASTER.as_bytes(),
+            &unb64(&old_copy.salt).unwrap(),
+            old_copy.kdf,
+        )
+        .unwrap();
         let old_dek = open_data_key(&old_kek, &old_copy).unwrap().unwrap();
 
         let new_file = store.read().unwrap();
@@ -791,7 +794,10 @@ mod tests {
         let (recovered, second) = store.recover(&first, NEW_MASTER).unwrap();
 
         assert_eq!(keys(&recovered), vec!["KEPT".to_string()]);
-        assert!(matches!(store.unlock(MASTER), Err(Error::WrongPassword { .. })));
+        assert!(matches!(
+            store.unlock(MASTER),
+            Err(Error::WrongPassword { .. })
+        ));
         assert!(store.unlock(NEW_MASTER).is_ok());
         assert!(matches!(
             store.recover(&first, MASTER),
@@ -959,7 +965,9 @@ mod tests {
         session.export(&backup).unwrap();
         let elsewhere = TempDir::new();
 
-        let result = elsewhere.store().restore(&backup, "wrong password entirely");
+        let result = elsewhere
+            .store()
+            .restore(&backup, "wrong password entirely");
 
         assert!(matches!(result, Err(Error::WrongPassword { .. })));
         assert!(!elsewhere.store().exists());

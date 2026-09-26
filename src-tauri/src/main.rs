@@ -297,7 +297,9 @@ fn delete_key(
 
 #[tauri::command(async)]
 fn delete_project(state: State<'_, AppState>, project: String) -> Result<Snapshot, Failure> {
-    mutate(&state, |session| session.delete_project(&project).map(|_| ()))
+    mutate(&state, |session| {
+        session.delete_project(&project).map(|_| ())
+    })
 }
 
 #[tauri::command(async)]
