@@ -1,6 +1,6 @@
 # STATE.md — lokey
 
-**Updated:** 2026-09-27 · **Branch:** `release/0.0.2` · **Last release:** `v0.0.1` (v0.0.2 in flight)
+**Updated:** 2026-09-27 · **Branch:** `main` · **Last release:** `v0.0.2`
 
 ## Bootstrap record
 
@@ -13,7 +13,7 @@
 
 ## Where the work is right now
 
-- **In flight:** v0.0.2 on `release/0.0.2`: `release.yml` now writes `SHA256SUMS.txt` with LF endings; no app change. v0.0.1 (2026-09-24) was the clean-slate first release; v0.1.0 to v1.0.0 were deleted.
+- **In flight:** Nothing. v0.0.2 (2026-09-27, PR #11) changed only `release.yml`: `SHA256SUMS.txt` is now written with LF endings. v0.0.1 (2026-09-24) was the clean-slate first release; v0.1.0 to v1.0.0 were deleted.
 - **Blocked on:** Nothing.
 - **Next action:** in the real window, press every shortcut once (whether WebView2 lets the page have `Ctrl+N`, `Ctrl+F` and `F1` is unverified), and open a vault made by an earlier build to see it upgrade.
 
@@ -21,10 +21,10 @@
 
 | Fact | Proved by | Verified |
 | --- | --- | --- |
-| v0.0.1 ships `lokey.exe` 8,139,776 B and `SHA256SUMS.txt` 77 B; both download with 200 | `gh release view v0.0.1 --json assets`; `curl` on `releases/download/v0.0.1/`; release run 35969351601 green | 2026-09-24 |
-| v0.0.1 `lokey.exe` matches its published checksum and carries a valid attestation | `sha256sum -c` (CRLF stripped) OK; `gh attestation verify` exit 0 | 2026-09-24 |
-| `releases/latest/download/lokey.exe` serves the v0.0.1 exe | `curl` 200, its SHA-256 equals the v0.0.1 entry in `SHA256SUMS.txt` | 2026-09-24 |
-| Only `v0.0.1` and `legacy-powershell` remain as releases/tags | `gh release list`; `git ls-remote --tags origin` | 2026-09-24 |
+| v0.0.2 ships `lokey.exe` 8,139,776 B and `SHA256SUMS.txt` 76 B (LF, no CR); both download with 200 | `gh release view v0.0.2 --json assets`; `curl` on `releases/download/v0.0.2/`; `od -c`; release run 36266056743 green | 2026-09-27 |
+| `sha256sum -c SHA256SUMS.txt` passes on the v0.0.2 file as downloaded, unmodified, in Git Bash | ran it: `lokey.exe: OK` | 2026-09-27 |
+| v0.0.2 `lokey.exe` carries a valid attestation | `gh attestation verify` exit 0 | 2026-09-27 |
+| `releases/latest/download/lokey.exe` serves the v0.0.2 exe | `curl` 200, `cmp` equal to the v0.0.2 download | 2026-09-27 |
 | A v1 vault carrying a deletion check opens and is re-sealed as v2 | `v1_vault_with_a_deletion_check_opens_and_is_upgraded`, CI gate on PR #6 | 2026-09-24 |
 | Removing `lokey-cli` costs the lock exactly three packages (`lokey-cli`, `rpassword`, `rtoolbox`) and moves no version | `lockfile.yml` run 35504833456, diff read | 2026-09-20 |
 | The workspace without `lokey-cli` passes the whole gate, and `--no-bundle` builds one exe named `lokey.exe` | CI run 35505074478, all four jobs green; artifact downloaded and listed | 2026-09-20 |
