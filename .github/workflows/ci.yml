@@ -59,7 +59,7 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: npm audit --audit-level=high
-      - uses: taiki-e/install-action@v2.87.16
+      - uses: taiki-e/install-action@v2.87.19
         with:
           tool: cargo-audit
       - run: cargo audit --deny warnings
