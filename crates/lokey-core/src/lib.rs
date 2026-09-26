@@ -16,4 +16,4 @@ mod vault;
 pub use error::{Error, Result};
 pub use password::check_new as check_new_password;
 pub use store::Store;
-pub use vault::{Change, ChangeKind, Entry, Report, Session};
+pub use vault::{Change, ChangeKind, Entry, RecoveryKey, Report, Session};

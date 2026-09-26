@@ -18,9 +18,14 @@ pub enum Error {
     LockedOut {
         remaining: Duration,
     },
-    /// The vault was re-keyed by another process (passwords changed), so the
-    /// key held in memory no longer opens it. The holder must unlock again.
+    /// The vault was re-keyed by another process (the master password
+    /// changed), so the key held in memory no longer opens it. The holder
+    /// must unlock again.
     Stale,
+    /// Recovery was asked for, but this vault has no recovery key.
+    NoRecovery,
+    /// What was typed is not the shape of a recovery key at all.
+    BadRecoveryKey,
     NotFound {
         project: String,
         key: String,
@@ -52,7 +57,15 @@ impl fmt::Display for Error {
                     secs % 60
                 )
             }
-            Self::Stale => write!(f, "the vault's passwords changed, unlock again"),
+            Self::Stale => write!(f, "the master password was changed, unlock again"),
+            Self::NoRecovery => write!(
+                f,
+                "this vault has no recovery key, so only the master password opens it"
+            ),
+            Self::BadRecoveryKey => write!(
+                f,
+                "a recovery key is 32 letters and digits, like ABCD-EFGH-…, check what you typed"
+            ),
             Self::NotFound { project, key } => write!(f, "no key '{key}' in project '{project}'"),
             Self::InvalidName(why)
             | Self::WeakPassword(why)

@@ -73,9 +73,11 @@ impl Store {
             .ok()
     }
 
-    /// Values added by `set` and not yet merged. Needs no password.
-    pub fn pending(&self) -> Result<usize> {
-        self.locked(|store| Ok(store.read()?.inbox.len()))
+    /// Whether the vault can also be opened with a recovery key. The header
+    /// says so in the clear; it needs no password.
+    pub fn has_recovery(&self) -> bool {
+        self.locked(Self::read)
+            .is_ok_and(|file| file.recovery.is_some())
     }
 
     pub fn lockout_remaining(&self) -> Option<Duration> {
@@ -102,6 +104,16 @@ impl Store {
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => Err(Error::NoVault),
             Err(err) => Err(err.into()),
         }
+    }
+
+    /// Writes the vault, exactly as it is on disk, to `dest`. The copy is as
+    /// encrypted as the vault itself.
+    pub(crate) fn copy_to(&self, dest: &Path) -> Result<()> {
+        let bytes = fs::read(self.vault_path())?;
+        let mut out = File::create(dest)?;
+        out.write_all(&bytes)?;
+        out.sync_all()?;
+        Ok(())
     }
 
     pub(crate) fn write(&self, file: &VaultFile, history: History) -> Result<()> {

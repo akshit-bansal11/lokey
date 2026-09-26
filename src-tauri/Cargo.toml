@@ -21,5 +21,10 @@ lokey-core.workspace = true
 serde.workspace = true
 tauri = { version = "2.11.5", features = [] }
 
+# The Save and Open dialogs for backups (file_dialog.rs). Already a
+# dependency of lokey-core; no new crate enters the build.
+[target.'cfg(windows)'.dependencies]
+windows-sys = { workspace = true, features = ["Win32_UI_Controls_Dialogs"] }
+
 [lints]
 workspace = true
