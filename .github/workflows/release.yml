@@ -46,9 +46,11 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force out | Out-Null
           Copy-Item target/release/lokey.exe out/lokey.exe
-          Get-ChildItem out -File | ForEach-Object {
+          $sums = Get-ChildItem out -File | ForEach-Object {
             "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name
-          } | Set-Content -Encoding ascii out/SHA256SUMS.txt
+          }
+          # LF endings: Set-Content writes CRLF, which breaks `sha256sum -c`.
+          [IO.File]::WriteAllText("$PWD/out/SHA256SUMS.txt", ($sums -join "`n") + "`n")
           Get-Content out/SHA256SUMS.txt
 
       - name: Release notes from CHANGELOG.md

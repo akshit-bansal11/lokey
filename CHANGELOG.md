@@ -6,6 +6,13 @@ All notable changes to lokey are recorded here, following
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-09-27
+
+### Fixed
+
+- `SHA256SUMS.txt` now uses LF line endings, so `sha256sum -c SHA256SUMS.txt`
+  works on Linux, WSL and Git Bash. The app itself is unchanged from 0.0.1.
+
 ## [0.0.1] - 2026-09-24
 
 The first release of lokey as it stands: a local-only encrypted key/value vault
@@ -33,5 +40,6 @@ A vault made by an earlier build opens as before with its master password. Its
 deletion password is no longer asked for and is dropped the next time the
 vault is saved. After that, the earlier builds cannot open the vault.
 
-[Unreleased]: https://github.com/akshit-bansal11/lokey/compare/v0.0.1...HEAD
+[Unreleased]: https://github.com/akshit-bansal11/lokey/compare/v0.0.2...HEAD
+[0.0.2]: https://github.com/akshit-bansal11/lokey/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/akshit-bansal11/lokey/releases/tag/v0.0.1
