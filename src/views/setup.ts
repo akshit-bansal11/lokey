@@ -3,7 +3,7 @@
 
 import { api, toFailure } from "@/lib/api.ts";
 import { busy, field, find, mount, setFieldError, setFormError } from "@/lib/dom.ts";
-import type { Opened, Snapshot } from "@/lib/types.ts";
+import type { Opened } from "@/lib/types.ts";
 
 /** Checks one password field on blur, without deriving any key. */
 export async function checkOnBlur(form: HTMLFormElement, name: string): Promise<void> {
@@ -30,7 +30,7 @@ function wantsRecovery(form: HTMLFormElement): boolean {
 
 type SetupHandlers = {
   onCreated: (opened: Opened) => void;
-  onRestored: (snapshot: Snapshot) => void;
+  onRestored: (opened: Opened) => void;
   /** Runs when a vault appeared meanwhile, say from a second window. */
   onExists?: () => void;
 };
@@ -116,9 +116,9 @@ function showRestore(path: string, handlers: SetupHandlers): void {
     }
     const restore = busy(submit, "Restoring…");
     try {
-      const snapshot = await api.restore(input.value);
+      const opened = await api.restore(input.value);
       input.value = "";
-      handlers.onRestored(snapshot);
+      handlers.onRestored(opened);
     } catch (failure) {
       restore();
       const { code, message } = toFailure(failure);

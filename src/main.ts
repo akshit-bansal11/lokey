@@ -44,9 +44,13 @@ async function route(reason?: LockReason | "manual"): Promise<void> {
       {
         onCreated: (opened) =>
           enterOpened(status, opened, "It opens the vault if you forget the master password."),
-        onRestored: (snapshot) => {
-          enterVault(status, snapshot);
+        onRestored: (opened) => {
           announce("Backup restored.");
+          enterOpened(
+            status,
+            opened,
+            "Restoring gave the vault a new recovery key. The one it had when the backup was made no longer opens it.",
+          );
         },
         onExists: () => void route(),
       },

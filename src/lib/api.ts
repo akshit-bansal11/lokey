@@ -67,7 +67,7 @@ export const api = {
     call<Opened>("recover", { recoveryKey, newMaster }),
   /** Shows the Open dialog; resolves to the chosen path, or null if cancelled. */
   chooseBackup: () => call<string | null>("choose_backup"),
-  restore: (master: string) => call<Snapshot>("restore", { master }),
+  restore: (master: string) => call<Opened>("restore", { master }),
   /** Shows the Save dialog; resolves to the path written, or null if cancelled. */
   exportBackup: (master: string) => call<string | null>("export_backup", { master }),
   lock: () => call<null>("lock"),

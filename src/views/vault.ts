@@ -605,7 +605,11 @@ export function showVault(initial: Snapshot, vaultOptions: VaultOptions): void {
 export function leaveVault(): void {
   document.removeEventListener("keydown", onGlobalKey);
   document.removeEventListener("pointerdown", touch);
-  for (const dialog of document.querySelectorAll("dialog")) dialog.close();
+  // Except a new recovery key: it is shown once and must be confirmed, so it
+  // stays up over the unlock screen when the vault locks meanwhile.
+  for (const dialog of document.querySelectorAll("dialog")) {
+    if (dialog.id !== "recovery-dialog") dialog.close();
+  }
   revealed = undefined;
   editing = false;
   showShortcuts(false);

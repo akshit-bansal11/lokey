@@ -125,15 +125,26 @@ impl Store {
 
     /// Makes the backup at `backup` this PC's vault, if its master password
     /// opens it. Only when there is no vault here, so nothing is overwritten.
-    pub fn restore(&self, backup: &Path, master: &str) -> Result<(Session, Report)> {
+    ///
+    /// The restored vault gets a new data key, and a new recovery key (returned)
+    /// when the backup had one. A recovery key replaced after the backup was
+    /// made, perhaps because it leaked, so never opens the restored vault.
+    pub fn restore(
+        &self,
+        backup: &Path,
+        master: &str,
+    ) -> Result<(Session, Report, Option<RecoveryKey>)> {
         let mut file = VaultFile::parse(&fs::read(backup)?)?;
         self.locked(|store| {
             if store.exists() {
                 return Err(Error::VaultExists);
             }
-            let (session, report, _) = store.open_with(&mut file, master)?;
+            let recovery = file.recovery.is_some();
+            let (mut session, report, _) = store.open_with(&mut file, master)?;
+            let (dek, recovery_key) = rekey(&mut file, &session.kek, &session.body, recovery)?;
+            session.dek = dek;
             store.write(&file, History::Keep)?;
-            Ok((session, report))
+            Ok((session, report, recovery_key))
         })
     }
 
@@ -939,10 +950,29 @@ mod tests {
 
         session.export(&backup).unwrap();
         let elsewhere = TempDir::new();
-        let (restored, _) = elsewhere.store().restore(&backup, MASTER).unwrap();
+        let (restored, _, recovery_key) = elsewhere.store().restore(&backup, MASTER).unwrap();
 
         assert_eq!(restored.get("web", "TOKEN").unwrap().value, "t-1");
+        assert!(recovery_key.is_none());
         assert!(elsewhere.store().unlock(MASTER).is_ok());
+    }
+
+    #[test]
+    fn restore_replaces_the_recovery_key_the_backup_carried() {
+        let (dir, store, first) = new_vault_with_recovery();
+        let (mut session, _) = store.unlock(MASTER).unwrap();
+        let backup = dir.0.join("backup.lokey");
+        session.export(&backup).unwrap();
+        let elsewhere = TempDir::new();
+
+        let (_, _, second) = elsewhere.store().restore(&backup, MASTER).unwrap();
+
+        let second = second.unwrap();
+        assert!(matches!(
+            elsewhere.store().recover(&first, NEW_MASTER),
+            Err(Error::WrongPassword { .. })
+        ));
+        assert!(elsewhere.store().recover(&second, NEW_MASTER).is_ok());
     }
 
     #[test]

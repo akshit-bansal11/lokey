@@ -205,20 +205,24 @@ fn choose_backup(
 }
 
 /// Restores the backup chosen in `choose_backup`, if its password opens it.
+/// A backup that had a recovery key comes back with a new one, shown once.
 #[tauri::command(async)]
-fn restore(state: State<'_, AppState>, master: String) -> Result<Snapshot, Failure> {
+fn restore(state: State<'_, AppState>, master: String) -> Result<Opened, Failure> {
     let result = restore_chosen(&mut state.lock(), &master);
     served(result)
 }
 
-fn restore_chosen(inner: &mut Inner, master: &str) -> Result<Snapshot, Failure> {
+fn restore_chosen(inner: &mut Inner, master: &str) -> Result<Opened, Failure> {
     let backup = inner
         .restore_from
         .clone()
         .ok_or_else(|| Failure::io("choose a backup file first"))?;
-    let (session, report) = inner.store()?.restore(&backup, master)?;
+    let (session, report, recovery_key) = inner.store()?.restore(&backup, master)?;
     inner.restore_from = None;
-    Ok(inner.enter(session, &report))
+    Ok(Opened {
+        snapshot: inner.enter(session, &report),
+        recovery_key: recovery_key.map(shown),
+    })
 }
 
 /// Asks for the master password again, then where to save, then writes the

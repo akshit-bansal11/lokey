@@ -131,7 +131,14 @@ overwrite each other.
 - **Someone at your PC while the vault is unlocked** can read and delete
   entries. The 5-minute idle lock and Ctrl+L are the protection.
 - **Old copies.** A backup, or `vault.lokey.bak`, opens with the password and
-  recovery key it had. Delete old backups after changing either.
+  recovery key it had. Delete old backups after changing either. Restoring a
+  backup gives it a new data key and recovery key, so a key you replaced after
+  making the backup does not come back with it.
+- **Someone who can replace your vault file.** lokey cannot tell an older copy
+  of its own file from the current one. Anyone able to swap an old copy back
+  in, who also holds a recovery key you have since replaced, could get that key
+  working again for whatever you save afterwards. That takes write access to
+  your files, which is the malware case above.
 - **SSDs can keep old blocks** after a file is rewritten. Full-disk encryption
   (BitLocker) covers that, and the stolen-laptop case.
 

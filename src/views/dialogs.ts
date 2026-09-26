@@ -2,7 +2,7 @@
 // focus trap, Escape to close, the inert background and focus return (UI-10).
 
 import { api, toFailure } from "@/lib/api.ts";
-import { busy, byId, field, setFieldError, setFormError } from "@/lib/dom.ts";
+import { busy, byId, field, find, setFieldError, setFormError } from "@/lib/dom.ts";
 import { sameRecoveryKey } from "@/lib/recovery.ts";
 import { nameProblem } from "@/lib/rows.ts";
 import { announce } from "@/lib/status.ts";
@@ -102,7 +102,16 @@ type MasterPrompt = { title: string; text: string; action: string; busyLabel: st
 const confirmMasterDialog = byId("confirm-master-dialog", HTMLDialogElement);
 const confirmMasterForm = byId("confirm-master-form", HTMLFormElement);
 const confirmMasterSubmit = byId("confirm-master-submit", HTMLButtonElement);
+const confirmMasterCancel = find(confirmMasterForm, "[data-close]", HTMLButtonElement);
 let pendingMaster: { run: (master: string) => Promise<void>; busyLabel: string } | undefined;
+let masterRunning = false;
+
+// Once the password is sent, the change goes through whatever happens to the
+// dialog. Closing it then would drop the result, such as a new recovery key
+// whose predecessor already stopped working, so it stays open until done.
+confirmMasterDialog.addEventListener("cancel", (event) => {
+  if (masterRunning) event.preventDefault();
+});
 
 confirmMasterForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -115,14 +124,18 @@ confirmMasterForm.addEventListener("submit", async (event) => {
   }
   setFormError(confirmMasterForm, "");
   const restore = busy(confirmMasterSubmit, pending.busyLabel);
+  masterRunning = true;
+  confirmMasterCancel.disabled = true;
   try {
     await pending.run(input.value);
-    restore();
     confirmMasterDialog.close();
   } catch (error) {
-    restore();
     setFormError(confirmMasterForm, toFailure(error).message);
     input.select();
+  } finally {
+    masterRunning = false;
+    confirmMasterCancel.disabled = false;
+    restore();
   }
 });
 
