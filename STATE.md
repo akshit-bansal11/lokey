@@ -1,6 +1,6 @@
 # STATE.md — lokey
 
-**Updated:** 2026-09-24 · **Branch:** `main` · **Last release:** `v0.0.1` (the only release; earlier ones deleted)
+**Updated:** 2026-09-27 · **Branch:** `release/0.0.2` · **Last release:** `v0.0.1` (v0.0.2 in flight)
 
 ## Bootstrap record
 
@@ -13,7 +13,7 @@
 
 ## Where the work is right now
 
-- **In flight:** Nothing. PR #6 removed the deletion password (vault format v2), set the idle lock to 5 minutes, and shipped as v0.0.1 on 2026-09-24, a clean-slate first release. Releases v0.1.0 to v1.0.0 and their tags were deleted the same day by the maintainer; `legacy-powershell` stays.
+- **In flight:** v0.0.2 on `release/0.0.2`: `release.yml` now writes `SHA256SUMS.txt` with LF endings; no app change. v0.0.1 (2026-09-24) was the clean-slate first release; v0.1.0 to v1.0.0 were deleted.
 - **Blocked on:** Nothing.
 - **Next action:** in the real window, press every shortcut once (whether WebView2 lets the page have `Ctrl+N`, `Ctrl+F` and `F1` is unverified), and open a vault made by an earlier build to see it upgrade.
 
@@ -65,7 +65,7 @@
 | `DIRECTORY-STRUCTURE.md` | yes | 2026-09-20 | yes |
 | `DECISIONS.md` | no | | decisions to date are on the Notion page |
 | `DRIFT.md` | no | | no known drift |
-| `OPEN_ITEMS.md` | yes | 2026-09-20 | yes |
+| `OPEN_ITEMS.md` | yes | 2026-09-27 | yes |
 
 ## Session handoff
 
