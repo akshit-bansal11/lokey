@@ -16,7 +16,7 @@
 
 | Layer | Chosen | Version | Chosen over | Because |
 | --- | --- | --- | --- | --- |
-| Desktop shell | Tauri | 2.11.5 (`@tauri-apps/api` 2.11.1, CLI 2.11.4) | C#/.NET WPF, Electron | Owner's choice; small binaries using the system WebView2 |
+| Desktop shell | Tauri | 2.11.6 (`@tauri-apps/api` 2.11.1, CLI 2.11.5) | C#/.NET WPF, Electron | Owner's choice; small binaries using the system WebView2 |
 | Language | Rust (edition 2024) + TypeScript | TS 7.0.2 | PowerShell (the original) | a compiled engine, and a typed page over it |
 | Page build | Vite | 8.3.0 | a framework (React etc.) | four screens; 22 KB of JS without one |
 | Styling | plain CSS with custom-property tokens | n/a | Tailwind | one tokens file, no build plugin |

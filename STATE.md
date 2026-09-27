@@ -1,6 +1,6 @@
 # STATE.md — lokey
 
-**Updated:** 2026-09-27 · **Branch:** `main` · **Last release:** `v0.1.0`
+**Updated:** 2026-09-27 · **Branch:** `release/0.3.0` · **Last release:** `v0.1.0`
 
 ## Bootstrap record
 
@@ -13,10 +13,10 @@
 
 ## Where the work is right now
 
-- **In flight:** Nothing. The password generator (PR #15: `generator.rs` in lokey-core, the `generate` and `copy_text` commands, the dialog behind the dice button and Ctrl+G) is merged to `main` and listed under Unreleased; no release made yet.
+- **In flight:** release 0.3.0 on `release/0.3.0`: the password generator (PR #15), the settings dialog's missing icons, the SEC-03 command register in `main.rs`, `"type": "module"`, and Tauri 2.11.6 / CLI 2.11.5 from dependabot. 0.2.0 is skipped by the maintainer's choice. Tagged `v0.3.0` once merged.
 - **Last shipped:** v0.1.0 (2026-09-27, PR #13) shipped vault format v3 (random data key, optional recovery key, inbox dropped), encrypted backup export and restore, the master password re-asked before export, password change and recovery-key changes, and every GitHub Action pinned to a commit SHA. v0.0.2 fixed the checksum file's line endings.
 - **Blocked on:** Nothing.
-- **Next action:** decide when to release the generator (0.2.0: a new feature). Then the manual pass in the built exe listed in `OPEN_ITEMS.md` (recovery, export, restore, the Save/Open dialogs), plus the older items: every shortcut once, and opening a vault made by an earlier build to see it upgrade to v3.
+- **Next action:** merge, tag `v0.3.0`, verify the release files. Then the manual pass in the built exe listed in `OPEN_ITEMS.md` (recovery, export, restore, the Save/Open dialogs), plus the older items: every shortcut once, and opening a vault made by an earlier build to see it upgrade to v3.
 
 ## Verified facts
 

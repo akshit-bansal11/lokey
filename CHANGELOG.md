@@ -6,6 +6,11 @@ All notable changes to lokey are recorded here, following
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-27
+
+There is no 0.2.0: the maintainer chose to number this release 0.3.0.
+The vault format is unchanged (v3): nothing to upgrade.
+
 ### Added
 
 - A password generator: the dice button or Ctrl+G. A slider sets the length
@@ -13,6 +18,15 @@ All notable changes to lokey are recorded here, following
   every chosen kind appears at least once. Copy it (kept out of clipboard
   history, cleared after 30 seconds), or **Use as new key** to put it in the
   add row.
+
+### Changed
+
+- Built with Tauri 2.11.6 (was 2.11.5) and Tauri CLI 2.11.5 (was 2.11.4).
+
+### Fixed
+
+- The settings dialog's **Delete project** and **Delete all keys** buttons now
+  show their trash icons; they were never drawn.
 
 ## [0.1.0] - 2026-09-27
 
@@ -81,7 +95,8 @@ A vault made by an earlier build opens as before with its master password. Its
 deletion password is no longer asked for and is dropped the next time the
 vault is saved. After that, the earlier builds cannot open the vault.
 
-[Unreleased]: https://github.com/akshit-bansal11/lokey/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/akshit-bansal11/lokey/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/akshit-bansal11/lokey/compare/v0.1.0...v0.3.0
 [0.1.0]: https://github.com/akshit-bansal11/lokey/compare/v0.0.2...v0.1.0
 [0.0.2]: https://github.com/akshit-bansal11/lokey/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/akshit-bansal11/lokey/releases/tag/v0.0.1

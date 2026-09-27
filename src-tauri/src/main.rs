@@ -460,6 +460,21 @@ fn main() {
             thread::spawn(move || watch(&handle));
             Ok(())
         })
+        // Every command the page can call, and what stands in front of it
+        // (SECURITY-SPEC SEC-03). A new command gets a line here.
+        //
+        //   status, check_password, lock, touch  none: read no vault data
+        //   choose_backup                        none: only remembers a path
+        //   create                               refused when a vault exists
+        //   unlock                               master password, lockout
+        //   recover                              recovery key, lockout
+        //   restore                              the backup's password, lockout;
+        //                                        refused when a vault exists
+        //   reveal, copy, copy_text, generate,   unlocked session
+        //   save, delete_key, delete_project,
+        //   truncate
+        //   export_backup, change_master,        unlocked session and the master
+        //   set_recovery                         password asked again
         .invoke_handler(tauri::generate_handler![
             status,
             check_password,
