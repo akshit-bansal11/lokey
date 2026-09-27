@@ -148,6 +148,9 @@
             <input class="input" type="search" id="search" placeholder="Search keys" autocomplete="off" spellcheck="false" />
           </label>
           <span class="spacer"></span>
+          <button type="button" class="btn icon" id="generate-open" aria-label="Generate a password" title="Generate a password (Ctrl+G)">
+            <span data-icon="dices"></span>
+          </button>
           <button type="button" class="btn icon" id="keys-open" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (F1)">
             <span data-icon="keyboard"></span>
           </button>
@@ -332,6 +335,41 @@
       </form>
     </dialog>
 
+    <dialog id="generate-dialog" aria-labelledby="generate-title">
+      <div class="dialog-form">
+        <h2 class="dialog-title" id="generate-title">Generate a password</h2>
+        <div class="generated">
+          <p class="generated-value mono"><span class="visually-hidden">Password: </span><span id="generated"></span></p>
+          <button type="button" class="btn" id="generate-again">New password</button>
+        </div>
+        <p class="field-hint" id="generate-status" role="status"></p>
+        <div class="length">
+          <label class="length-slider">
+            <span class="field-label">Length</span>
+            <input type="range" id="generate-length-slider" min="8" max="128" step="1" value="20" />
+          </label>
+          <label>
+            <span class="visually-hidden">Length in characters</span>
+            <input class="input mono length-number" type="number" id="generate-length" min="8" max="128" step="1" value="20" />
+          </label>
+        </div>
+        <fieldset class="choices charsets">
+          <legend>Characters</legend>
+          <label class="choice"><input type="checkbox" name="upper" checked /><span>Uppercase A–Z</span></label>
+          <label class="choice"><input type="checkbox" name="lower" checked /><span>Lowercase a–z</span></label>
+          <label class="choice"><input type="checkbox" name="digits" checked /><span>Digits 0–9</span></label>
+          <label class="choice"><input type="checkbox" name="symbols" checked /><span>Symbols !@#$%…</span></label>
+          <span class="field-hint">At least one kind stays on.</span>
+        </fieldset>
+        <p class="notice" role="alert" id="generate-error"></p>
+        <div class="dialog-actions">
+          <button type="button" class="btn" data-close>Close</button>
+          <button type="button" class="btn" id="generate-copy">Copy</button>
+          <button type="button" class="btn primary" id="generate-use">Use as new key</button>
+        </div>
+      </div>
+    </dialog>
+
     <!-- Every shortcut the vault binds; commandFor and onSheetKey in vault.ts. -->
     <dialog id="keys-dialog" aria-labelledby="keys-title">
       <div class="dialog-form">
@@ -341,6 +379,7 @@
           <dl class="keys">
             <dt><kbd>Ctrl+N</kbd></dt><dd>Add a key</dd>
             <dt><kbd>Ctrl+Shift+N</kbd></dt><dd>New project</dd>
+            <dt><kbd>Ctrl+G</kbd></dt><dd>Generate a password</dd>
             <dt><kbd>Ctrl+PgUp</kbd> <kbd>Ctrl+PgDn</kbd></dt><dd>Previous or next project</dd>
             <dt><kbd>Ctrl+F</kbd> <kbd>Ctrl+K</kbd> <kbd>/</kbd></dt><dd>Search</dd>
             <dt><kbd>Ctrl+,</kbd></dt><dd>Settings</dd>

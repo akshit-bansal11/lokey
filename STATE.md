@@ -1,6 +1,6 @@
 # STATE.md — lokey
 
-**Updated:** 2026-09-27 · **Branch:** `feat/recovery-key-and-export` · **Last release:** `v0.0.2` (v0.1.0 in flight)
+**Updated:** 2026-09-27 · **Branch:** `main` · **Last release:** `v0.1.0`
 
 ## Bootstrap record
 
@@ -13,19 +13,21 @@
 
 ## Where the work is right now
 
-- **In flight:** v0.1.0 on `feat/recovery-key-and-export` (PR #13): vault format v3 (random data key, optional recovery key, inbox dropped), encrypted backup export and restore, the master password re-asked before export, password change and recovery-key changes, and every GitHub Action pinned to a commit SHA. v0.0.2 (2026-09-27) fixed the checksum file's line endings.
+- **In flight:** Nothing. The password generator (PR #15: `generator.rs` in lokey-core, the `generate` and `copy_text` commands, the dialog behind the dice button and Ctrl+G) is merged to `main` and listed under Unreleased; no release made yet.
+- **Last shipped:** v0.1.0 (2026-09-27, PR #13) shipped vault format v3 (random data key, optional recovery key, inbox dropped), encrypted backup export and restore, the master password re-asked before export, password change and recovery-key changes, and every GitHub Action pinned to a commit SHA. v0.0.2 fixed the checksum file's line endings.
 - **Blocked on:** Nothing.
-- **Next action:** the manual pass in the built exe listed in `OPEN_ITEMS.md` (recovery, export, restore, the Save/Open dialogs), plus the older items: every shortcut once, and opening a vault made by an earlier build to see it upgrade to v3.
+- **Next action:** decide when to release the generator (0.2.0: a new feature). Then the manual pass in the built exe listed in `OPEN_ITEMS.md` (recovery, export, restore, the Save/Open dialogs), plus the older items: every shortcut once, and opening a vault made by an earlier build to see it upgrade to v3.
 
 ## Verified facts
 
 | Fact | Proved by | Verified |
 | --- | --- | --- |
-| v0.0.2 ships `lokey.exe` 8,139,776 B and `SHA256SUMS.txt` 76 B (LF, no CR); both download with 200 | `gh release view v0.0.2 --json assets`; `curl` on `releases/download/v0.0.2/`; `od -c`; release run 36266056743 green | 2026-09-27 |
-| `sha256sum -c SHA256SUMS.txt` passes on the v0.0.2 file as downloaded, unmodified, in Git Bash | ran it: `lokey.exe: OK` | 2026-09-27 |
-| v0.0.2 `lokey.exe` carries a valid attestation | `gh attestation verify` exit 0 | 2026-09-27 |
-| `releases/latest/download/lokey.exe` serves the v0.0.2 exe | `curl` 200, `cmp` equal to the v0.0.2 download | 2026-09-27 |
-| A v1 vault carrying a deletion check opens and is re-sealed as v2 | `v1_vault_with_a_deletion_check_opens_and_is_upgraded`, CI gate on PR #6 | 2026-09-24 |
+| The generator dialog works in the built app: dice button and Ctrl+G, slider and typed length with clamping, the last checkbox staying on, Copy and Ctrl+C kept out of Win+V and cleared after 30 s, Use as new key, the narrow window, the dialog clearing on lock | the maintainer's 8-step manual pass on the CI artifact of `b3548a6` (run 36321419186), reported "all passed" | 2026-09-27 |
+| v0.1.0 ships `lokey.exe` 8,315,904 B and `SHA256SUMS.txt` 76 B; both download with 200 | `gh release view v0.1.0 --json assets`; `curl` on `releases/download/v0.1.0/`; release run 36299500102 green | 2026-09-27 |
+| `sha256sum -c SHA256SUMS.txt` passes on the v0.1.0 files as downloaded, and the exe carries a valid attestation | ran both: `lokey.exe: OK`, `gh attestation verify` exit 0 | 2026-09-27 |
+| `releases/latest/download/lokey.exe` serves the v0.1.0 exe | `curl` 200, `cmp` equal to the v0.1.0 download | 2026-09-27 |
+| The release and CI workflows run with every action pinned to a commit SHA | CI run 36299178654 and release run 36299500102 green on the pinned workflows | 2026-09-27 |
+| v1 and v2 vaults (with a deletion check, with inbox records) open and are re-sealed as v3 | `v1_vault_with_a_deletion_check_opens_and_is_upgraded`, `v2_vault_with_an_inbox_is_merged_and_upgraded_to_v3`, CI gate on PR #13 | 2026-09-27 |
 | Removing `lokey-cli` costs the lock exactly three packages (`lokey-cli`, `rpassword`, `rtoolbox`) and moves no version | `lockfile.yml` run 35504833456, diff read | 2026-09-20 |
 | The workspace without `lokey-cli` passes the whole gate, and `--no-bundle` builds one exe named `lokey.exe` | CI run 35505074478, all four jobs green; artifact downloaded and listed | 2026-09-20 |
 | The release pipeline still gates on the tag matching all three version files | `release.yml` run 35506826668, step "Tag matches the version the binaries report" green | 2026-09-20 |
@@ -53,8 +55,8 @@
 | Suite | Status | Note |
 | --- | --- | --- |
 | page logic (node:test) | green | 17 tests, CI gate on PR #13; 5 new for recovery-key matching |
-| Rust unit / integration | green | CI gate on PR #13; covers recovery, rotation (an old password or recovery key with an old copy reads nothing newer), export and restore, v1/v2 upgrade with an inbox, header tampering, the re-asked password counting toward the lockout |
-| desktop window | never run | no automated UI test; needs a manual pass: every shortcut, setup with and without a recovery key, recover, export and restore through the Windows dialogs, the delete confirm, the 5-minute lock |
+| Rust unit / integration | green | CI gate on PR #15 (run 36320973747); covers password generation (length, every chosen set present, unchosen sets absent, bad input refused, the index draw staying in range and reaching every index), recovery, rotation (an old password or recovery key with an old copy reads nothing newer), export and restore, v1/v2 upgrade with an inbox, header tampering, the re-asked password counting toward the lockout |
+| desktop window | partly run | no automated UI test. The generator dialog passed the maintainer's manual pass on the CI build of `b3548a6`, against a real vault (2026-09-27). Still needs a manual pass: every shortcut, setup with and without a recovery key, recover, export and restore through the Windows dialogs, the delete confirm, the 5-minute lock |
 | the app opens a vault written by the old CLI | unit-tested only | a v2 vault with inbox records, built in the test from the old format, opens and upgrades; a real 0.2.0 vault has not been tried |
 
 ## Continuity file health

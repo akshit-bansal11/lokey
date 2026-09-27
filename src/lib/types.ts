@@ -51,5 +51,11 @@ export type FailureCode =
 
 export type Failure = { code: FailureCode; message: string; waitMs: number };
 
+/** Which kinds of character a generated password may contain. */
+export type Charsets = { upper: boolean; lower: boolean; digits: boolean; symbols: boolean };
+
+/** A generated password and its strength in bits. */
+export type Generated = { value: string; bits: number };
+
 /** Why the vault locked itself, pushed by the watcher. */
 export type LockReason = "idle" | "stale" | "missing";
