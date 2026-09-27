@@ -1,6 +1,6 @@
 # STATE.md — lokey
 
-**Updated:** 2026-09-27 · **Branch:** `main` · **Last release:** `v0.0.2`
+**Updated:** 2026-09-27 · **Branch:** `feat/recovery-key-and-export` · **Last release:** `v0.0.2` (v0.1.0 in flight)
 
 ## Bootstrap record
 
@@ -13,9 +13,9 @@
 
 ## Where the work is right now
 
-- **In flight:** Nothing. v0.0.2 (2026-09-27, PR #11) changed only `release.yml`: `SHA256SUMS.txt` is now written with LF endings. v0.0.1 (2026-09-24) was the clean-slate first release; v0.1.0 to v1.0.0 were deleted.
+- **In flight:** v0.1.0 on `feat/recovery-key-and-export` (PR #13): vault format v3 (random data key, optional recovery key, inbox dropped), encrypted backup export and restore, the master password re-asked before export, password change and recovery-key changes, and every GitHub Action pinned to a commit SHA. v0.0.2 (2026-09-27) fixed the checksum file's line endings.
 - **Blocked on:** Nothing.
-- **Next action:** in the real window, press every shortcut once (whether WebView2 lets the page have `Ctrl+N`, `Ctrl+F` and `F1` is unverified), and open a vault made by an earlier build to see it upgrade.
+- **Next action:** the manual pass in the built exe listed in `OPEN_ITEMS.md` (recovery, export, restore, the Save/Open dialogs), plus the older items: every shortcut once, and opening a vault made by an earlier build to see it upgrade to v3.
 
 ## Verified facts
 
@@ -52,18 +52,18 @@
 
 | Suite | Status | Note |
 | --- | --- | --- |
-| page logic (node:test) | green | 12 tests, CI gate on PR #6 |
-| Rust unit / integration | green | 48 tests, CI gate on PR #6; deletion-password tests replaced by a no-password delete test and a v1-upgrade test; the 9 end-to-end CLI tests went with the crate |
-| desktop window | never run | no automated UI test; needs a manual pass: every shortcut, one-password setup, the delete confirm, the 5-minute lock |
-| the app opens a vault written by the old CLI | never run | the inbox merge is the path that matters; needs a manual pass with a 0.2.0 vault |
+| page logic (node:test) | green | 17 tests, CI gate on PR #13; 5 new for recovery-key matching |
+| Rust unit / integration | green | CI gate on PR #13; covers recovery, rotation (an old password or recovery key with an old copy reads nothing newer), export and restore, v1/v2 upgrade with an inbox, header tampering, the re-asked password counting toward the lockout |
+| desktop window | never run | no automated UI test; needs a manual pass: every shortcut, setup with and without a recovery key, recover, export and restore through the Windows dialogs, the delete confirm, the 5-minute lock |
+| the app opens a vault written by the old CLI | unit-tested only | a v2 vault with inbox records, built in the test from the old format, opens and upgrades; a real 0.2.0 vault has not been tried |
 
 ## Continuity file health
 
 | File | Exists | Last updated | Current? |
 | --- | --- | --- | --- |
-| `TECH-STACK.md` | yes | 2026-09-20 | yes |
-| `DIRECTORY-STRUCTURE.md` | yes | 2026-09-20 | yes |
-| `DECISIONS.md` | no | | decisions to date are on the Notion page |
+| `TECH-STACK.md` | yes | 2026-09-27 | yes |
+| `DIRECTORY-STRUCTURE.md` | yes | 2026-09-27 | yes |
+| `DECISIONS.md` | yes | 2026-09-27 | yes; earlier decisions are on the Notion page |
 | `DRIFT.md` | no | | no known drift |
 | `OPEN_ITEMS.md` | yes | 2026-09-27 | yes |
 
