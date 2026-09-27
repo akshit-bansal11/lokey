@@ -54,7 +54,7 @@
 | Suite | Status | Note |
 | --- | --- | --- |
 | page logic (node:test) | green | 17 tests, CI gate on PR #13; 5 new for recovery-key matching |
-| Rust unit / integration | green | CI gate on PR #13; covers recovery, rotation (an old password or recovery key with an old copy reads nothing newer), export and restore, v1/v2 upgrade with an inbox, header tampering, the re-asked password counting toward the lockout |
+| Rust unit / integration | green | CI gate on PR #15 (run 36320973747); covers password generation (length, every chosen set present, unchosen sets absent, bad input refused, the index draw staying in range and reaching every index), recovery, rotation (an old password or recovery key with an old copy reads nothing newer), export and restore, v1/v2 upgrade with an inbox, header tampering, the re-asked password counting toward the lockout |
 | desktop window | never run | no automated UI test; needs a manual pass: the generator dialog, every shortcut, setup with and without a recovery key, recover, export and restore through the Windows dialogs, the delete confirm, the 5-minute lock |
 | the app opens a vault written by the old CLI | unit-tested only | a v2 vault with inbox records, built in the test from the old format, opens and upgrades; a real 0.2.0 vault has not been tried |
 

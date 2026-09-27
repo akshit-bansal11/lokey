@@ -64,9 +64,10 @@ a time.
   then name the key and press Enter. Generated passwords are copied the same
   way as saved ones: kept out of Win+V history and cleared after 30 seconds.
 - Everything works from the keyboard. Press **F1** (or `?`) for the full
-  list: Ctrl+N adds a key, Ctrl+Shift+N makes a project, Ctrl+G generates a
-  password, Ctrl+PgUp/PgDn switch projects, Ctrl+F searches, Ctrl+, opens settings, Ctrl+L locks; in the rows,
-  Up/Down/Home/End move, Enter shows, Ctrl+C copies, F2 edits, Del deletes.
+  list: Ctrl+N adds a key, Ctrl+Shift+N makes a project, Ctrl+PgUp/PgDn switch
+  projects, Ctrl+F searches, Ctrl+G opens the generator, Ctrl+, opens settings,
+  Ctrl+L locks; in the rows, Up/Down/Home/End move, Enter shows, Ctrl+C copies,
+  F2 edits, Del deletes.
 - **Projects** keep the same key name apart: `DATABASE_URL` can exist once in
   `web` and once in `api`. New keys go to `default` unless you pick another.
 - **Names** use letters, digits and `_ - . /`, and match regardless of case.
