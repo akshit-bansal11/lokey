@@ -1,6 +1,6 @@
 # STATE.md — lokey
 
-**Updated:** 2026-09-27 · **Branch:** `feat/recovery-key-and-export` · **Last release:** `v0.0.2` (v0.1.0 in flight)
+**Updated:** 2026-09-27 · **Branch:** `main` · **Last release:** `v0.1.0`
 
 ## Bootstrap record
 
@@ -13,7 +13,7 @@
 
 ## Where the work is right now
 
-- **In flight:** v0.1.0 on `feat/recovery-key-and-export` (PR #13): vault format v3 (random data key, optional recovery key, inbox dropped), encrypted backup export and restore, the master password re-asked before export, password change and recovery-key changes, and every GitHub Action pinned to a commit SHA. v0.0.2 (2026-09-27) fixed the checksum file's line endings.
+- **In flight:** Nothing. v0.1.0 (2026-09-27, PR #13) shipped vault format v3 (random data key, optional recovery key, inbox dropped), encrypted backup export and restore, the master password re-asked before export, password change and recovery-key changes, and every GitHub Action pinned to a commit SHA. v0.0.2 fixed the checksum file's line endings.
 - **Blocked on:** Nothing.
 - **Next action:** the manual pass in the built exe listed in `OPEN_ITEMS.md` (recovery, export, restore, the Save/Open dialogs), plus the older items: every shortcut once, and opening a vault made by an earlier build to see it upgrade to v3.
 
@@ -21,11 +21,11 @@
 
 | Fact | Proved by | Verified |
 | --- | --- | --- |
-| v0.0.2 ships `lokey.exe` 8,139,776 B and `SHA256SUMS.txt` 76 B (LF, no CR); both download with 200 | `gh release view v0.0.2 --json assets`; `curl` on `releases/download/v0.0.2/`; `od -c`; release run 36266056743 green | 2026-09-27 |
-| `sha256sum -c SHA256SUMS.txt` passes on the v0.0.2 file as downloaded, unmodified, in Git Bash | ran it: `lokey.exe: OK` | 2026-09-27 |
-| v0.0.2 `lokey.exe` carries a valid attestation | `gh attestation verify` exit 0 | 2026-09-27 |
-| `releases/latest/download/lokey.exe` serves the v0.0.2 exe | `curl` 200, `cmp` equal to the v0.0.2 download | 2026-09-27 |
-| A v1 vault carrying a deletion check opens and is re-sealed as v2 | `v1_vault_with_a_deletion_check_opens_and_is_upgraded`, CI gate on PR #6 | 2026-09-24 |
+| v0.1.0 ships `lokey.exe` 8,315,904 B and `SHA256SUMS.txt` 76 B; both download with 200 | `gh release view v0.1.0 --json assets`; `curl` on `releases/download/v0.1.0/`; release run 36299500102 green | 2026-09-27 |
+| `sha256sum -c SHA256SUMS.txt` passes on the v0.1.0 files as downloaded, and the exe carries a valid attestation | ran both: `lokey.exe: OK`, `gh attestation verify` exit 0 | 2026-09-27 |
+| `releases/latest/download/lokey.exe` serves the v0.1.0 exe | `curl` 200, `cmp` equal to the v0.1.0 download | 2026-09-27 |
+| The release and CI workflows run with every action pinned to a commit SHA | CI run 36299178654 and release run 36299500102 green on the pinned workflows | 2026-09-27 |
+| v1 and v2 vaults (with a deletion check, with inbox records) open and are re-sealed as v3 | `v1_vault_with_a_deletion_check_opens_and_is_upgraded`, `v2_vault_with_an_inbox_is_merged_and_upgraded_to_v3`, CI gate on PR #13 | 2026-09-27 |
 | Removing `lokey-cli` costs the lock exactly three packages (`lokey-cli`, `rpassword`, `rtoolbox`) and moves no version | `lockfile.yml` run 35504833456, diff read | 2026-09-20 |
 | The workspace without `lokey-cli` passes the whole gate, and `--no-bundle` builds one exe named `lokey.exe` | CI run 35505074478, all four jobs green; artifact downloaded and listed | 2026-09-20 |
 | The release pipeline still gates on the tag matching all three version files | `release.yml` run 35506826668, step "Tag matches the version the binaries report" green | 2026-09-20 |
