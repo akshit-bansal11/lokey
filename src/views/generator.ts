@@ -85,8 +85,10 @@ byId("generate-use", HTMLButtonElement).addEventListener("click", () => {
 });
 
 // Selecting the password and pressing Ctrl+C would copy it the browser's way,
-// into clipboard history; take that copy over.
-find(dialog, ".generated-value", HTMLElement).addEventListener("copy", (event) => {
+// into clipboard history; take that copy over. Checked on the dialog, since a
+// selection dragged in from the title fires the event there, not on the value.
+dialog.addEventListener("copy", (event) => {
+  if (!document.getSelection()?.containsNode(output, true)) return;
   event.preventDefault();
   void copyCurrent();
 });
