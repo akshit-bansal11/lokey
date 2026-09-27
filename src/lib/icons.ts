@@ -62,6 +62,14 @@ const ICONS = {
     },
     { tag: "circle", cx: 12, cy: 12, r: 3 },
   ],
+  dices: [
+    { tag: "rect", x: 2, y: 10, width: 12, height: 12, rx: 2 },
+    { tag: "path", d: "m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6" },
+    { tag: "path", d: "M6 18h.01" },
+    { tag: "path", d: "M10 14h.01" },
+    { tag: "path", d: "M15 6h.01" },
+    { tag: "path", d: "M18 9h.01" },
+  ],
   keyboard: [
     { tag: "path", d: "M10 8h.01" },
     { tag: "path", d: "M12 12h.01" },

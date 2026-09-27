@@ -25,3 +25,21 @@ account gets the vault.
 
 **Maintainer's words:** "decide for yourself. Just make it as safe and secure
 as possible."
+
+## 2026-09-27 — The password generator draws its randomness in lokey-core
+
+**Decided:** the generator dialog asks the Rust side for each password
+(`generator.rs`, on the operating system's random number generator through
+`getrandom`, already a dependency). The page shows the result and can copy it
+through the same clipboard code as a saved value, so it stays out of Win+V
+history and is cleared after 30 seconds. "Use as new key" fills the existing
+add row; nothing new saves a value.
+
+**Rejected:** generating in the page with `crypto.getRandomValues`. It is
+equally random and could be tested locally without a Rust toolchain, but
+`lokey-core` is the one place randomness and secrets are made, and a second
+source would be one more thing to review.
+
+**Also rejected:** keeping the password on the Rust side and never sending it
+to the page. The dialog exists to show the password before it is used, and a
+revealed saved value already reaches the page the same way.
