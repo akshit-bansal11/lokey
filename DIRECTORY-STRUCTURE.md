@@ -28,6 +28,7 @@ lokey/
 │       │   ├── crypto.rs
 │       │   ├── error.rs
 │       │   ├── format.rs
+│       │   ├── generator.rs
 │       │   ├── lib.rs
 │       │   ├── lockout.rs
 │       │   ├── names.rs
