@@ -69,7 +69,9 @@ fn below(bound: usize) -> usize {
 /// Generates a password of `length` characters from `sets`.
 pub fn generate(length: usize, sets: Charsets) -> Result<Zeroizing<String>> {
     if !(MIN_LENGTH..=MAX_LENGTH).contains(&length) {
-        return Err(Error::Unsupported("a generated password is 8 to 128 characters long"));
+        return Err(Error::Unsupported(
+            "a generated password is 8 to 128 characters long",
+        ));
     }
     let chosen = sets.chosen();
     if chosen.is_empty() {
@@ -87,7 +89,9 @@ pub fn generate(length: usize, sets: Charsets) -> Result<Zeroizing<String>> {
     for i in (1..chars.len()).rev() {
         chars.swap(i, below(i + 1));
     }
-    Ok(Zeroizing::new(chars.iter().map(|&b| char::from(b)).collect()))
+    Ok(Zeroizing::new(
+        chars.iter().map(|&b| char::from(b)).collect(),
+    ))
 }
 
 #[cfg(test)]
