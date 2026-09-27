@@ -52,6 +52,7 @@ lokey/
 │   │   └── tokens.css
 │   ├── views/
 │   │   ├── dialogs.ts
+│   │   ├── generator.ts
 │   │   ├── setup.ts
 │   │   ├── unlock.ts
 │   │   └── vault.ts

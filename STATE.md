@@ -1,6 +1,6 @@
 # STATE.md — lokey
 
-**Updated:** 2026-09-27 · **Branch:** `main` · **Last release:** `v0.1.0`
+**Updated:** 2026-09-27 · **Branch:** `feat/password-generator` (PR #15) · **Last release:** `v0.1.0`
 
 ## Bootstrap record
 
@@ -13,9 +13,10 @@
 
 ## Where the work is right now
 
-- **In flight:** Nothing. v0.1.0 (2026-09-27, PR #13) shipped vault format v3 (random data key, optional recovery key, inbox dropped), encrypted backup export and restore, the master password re-asked before export, password change and recovery-key changes, and every GitHub Action pinned to a commit SHA. v0.0.2 fixed the checksum file's line endings.
+- **In flight:** the password generator on `feat/password-generator`, draft PR #15: `generator.rs` in lokey-core, the `generate` and `copy_text` commands, and the dialog (dice button, Ctrl+G). Merges when the CI gate is green.
+- **Last shipped:** v0.1.0 (2026-09-27, PR #13) shipped vault format v3 (random data key, optional recovery key, inbox dropped), encrypted backup export and restore, the master password re-asked before export, password change and recovery-key changes, and every GitHub Action pinned to a commit SHA. v0.0.2 fixed the checksum file's line endings.
 - **Blocked on:** Nothing.
-- **Next action:** the manual pass in the built exe listed in `OPEN_ITEMS.md` (recovery, export, restore, the Save/Open dialogs), plus the older items: every shortcut once, and opening a vault made by an earlier build to see it upgrade to v3.
+- **Next action:** a green gate on PR #15, then the manual passes in the built exe listed in `OPEN_ITEMS.md` (the generator dialog; recovery, export, restore, the Save/Open dialogs), plus the older items: every shortcut once, and opening a vault made by an earlier build to see it upgrade to v3.
 
 ## Verified facts
 
@@ -54,7 +55,7 @@
 | --- | --- | --- |
 | page logic (node:test) | green | 17 tests, CI gate on PR #13; 5 new for recovery-key matching |
 | Rust unit / integration | green | CI gate on PR #13; covers recovery, rotation (an old password or recovery key with an old copy reads nothing newer), export and restore, v1/v2 upgrade with an inbox, header tampering, the re-asked password counting toward the lockout |
-| desktop window | never run | no automated UI test; needs a manual pass: every shortcut, setup with and without a recovery key, recover, export and restore through the Windows dialogs, the delete confirm, the 5-minute lock |
+| desktop window | never run | no automated UI test; needs a manual pass: the generator dialog, every shortcut, setup with and without a recovery key, recover, export and restore through the Windows dialogs, the delete confirm, the 5-minute lock |
 | the app opens a vault written by the old CLI | unit-tested only | a v2 vault with inbox records, built in the test from the old format, opens and upgrades; a real 0.2.0 vault has not been tried |
 
 ## Continuity file health
