@@ -3,12 +3,16 @@
 
 import { api, toFailure } from "@/lib/api.ts";
 import { busy, byId, field, find, setFieldError, setFormError } from "@/lib/dom.ts";
+import { fillIcons } from "@/lib/icons.ts";
 import { sameRecoveryKey } from "@/lib/recovery.ts";
 import { nameProblem } from "@/lib/rows.ts";
 import { announce } from "@/lib/status.ts";
 import type { Snapshot } from "@/lib/types.ts";
 
+// Dialogs live in the page, not in a template, so mount() never fills their
+// icon placeholders; fill them once here.
 for (const dialog of document.querySelectorAll("dialog")) {
+  fillIcons(dialog);
   for (const close of dialog.querySelectorAll<HTMLButtonElement>("[data-close]")) {
     close.addEventListener("click", () => dialog.close());
   }
