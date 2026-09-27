@@ -6,6 +6,14 @@ All notable changes to lokey are recorded here, following
 
 ## [Unreleased]
 
+### Added
+
+- A password generator: the dice button or Ctrl+G. A slider sets the length
+  (8 to 128), checkboxes choose uppercase, lowercase, digits and symbols, and
+  every chosen kind appears at least once. Copy it (kept out of clipboard
+  history, cleared after 30 seconds), or **Use as new key** to put it in the
+  add row.
+
 ## [0.1.0] - 2026-09-27
 
 ### Added

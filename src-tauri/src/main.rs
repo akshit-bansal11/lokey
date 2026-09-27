@@ -6,8 +6,9 @@
 //! changes the vault and pushes a fresh snapshot, which is how an edit made in
 //! a second window appears here within a quarter of a second.
 //!
-//! The one secret the page does receive is a new recovery key, once, so the
-//! owner can write it down.
+//! The secrets the page does receive are a new recovery key, once, so the
+//! owner can write it down, and a generated password, so it can be shown
+//! before it is used.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
@@ -21,9 +22,10 @@ use std::{
     time::{Duration, Instant, SystemTime},
 };
 
-use dto::{Failure, Opened, Snapshot, Status};
+use dto::{Failure, Generated, Opened, Snapshot, Status};
 use lokey_core::{
-    ChangeKind, Error, RecoveryKey, Report, Session, Store, check_new_password, clipboard,
+    ChangeKind, Charsets, Error, RecoveryKey, Report, Session, Store, check_new_password,
+    clipboard, generate_password,
 };
 use tauri::{AppHandle, Emitter, Manager, RunEvent, State, WebviewWindow};
 
@@ -258,11 +260,9 @@ fn reveal(state: State<'_, AppState>, project: String, key: String) -> Result<St
     Ok(inner.session()?.get(&project, &key)?.value.clone())
 }
 
-/// Copies a value and schedules the clear. Returns the clear delay in seconds.
-#[tauri::command(async)]
-fn copy(state: State<'_, AppState>, project: String, key: String) -> Result<u64, Failure> {
-    let mut inner = state.lock();
-    let sequence = clipboard::copy_secret(&inner.session()?.get(&project, &key)?.value)?;
+/// Remembers our copy for the clear on exit and schedules the timed clear.
+/// Returns the clear delay in seconds.
+fn clear_later(inner: &mut Inner, sequence: u32) -> u64 {
     inner.copied = Some(sequence);
     thread::spawn(move || {
         thread::sleep(clipboard::CLEAR_AFTER);
@@ -270,7 +270,50 @@ fn copy(state: State<'_, AppState>, project: String, key: String) -> Result<u64,
         // failure here means another program holds the clipboard right now.
         let _ = clipboard::clear_if_unchanged(sequence);
     });
-    Ok(clipboard::CLEAR_AFTER.as_secs())
+    clipboard::CLEAR_AFTER.as_secs()
+}
+
+/// Copies a saved value and schedules the clear. Returns the clear delay in seconds.
+#[tauri::command(async)]
+fn copy(state: State<'_, AppState>, project: String, key: String) -> Result<u64, Failure> {
+    let mut inner = state.lock();
+    let sequence = clipboard::copy_secret(&inner.session()?.get(&project, &key)?.value)?;
+    Ok(clear_later(&mut inner, sequence))
+}
+
+/// Copies a value the page holds (a generated password) the same way as a
+/// saved one. Only while unlocked, like everything in the vault screen.
+#[tauri::command(async)]
+fn copy_text(state: State<'_, AppState>, value: String) -> Result<u64, Failure> {
+    let mut inner = state.lock();
+    inner.session()?;
+    let sequence = clipboard::copy_secret(&value)?;
+    Ok(clear_later(&mut inner, sequence))
+}
+
+/// Generates a password for the generator dialog. Only while unlocked, and it
+/// counts as activity for the idle lock.
+#[tauri::command(async)]
+fn generate(
+    state: State<'_, AppState>,
+    length: usize,
+    upper: bool,
+    lower: bool,
+    digits: bool,
+    symbols: bool,
+) -> Result<Generated, Failure> {
+    state.lock().session()?;
+    let sets = Charsets {
+        upper,
+        lower,
+        digits,
+        symbols,
+    };
+    let value = generate_password(length, sets)?;
+    Ok(Generated {
+        value: value.as_str().to_owned(),
+        bits: sets.bits(length),
+    })
 }
 
 /// Adds a key or replaces its value. Returns whether it was new.
@@ -430,6 +473,8 @@ fn main() {
             touch,
             reveal,
             copy,
+            copy_text,
+            generate,
             save,
             delete_key,
             delete_project,

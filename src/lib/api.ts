@@ -3,7 +3,15 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import type { Failure, LockReason, Opened, Snapshot, Status } from "@/lib/types.ts";
+import type {
+  Charsets,
+  Failure,
+  Generated,
+  LockReason,
+  Opened,
+  Snapshot,
+  Status,
+} from "@/lib/types.ts";
 
 const FAILURE_CODES = new Set([
   "wrong-password",
@@ -74,6 +82,9 @@ export const api = {
   touch: () => call<null>("touch"),
   reveal: (project: string, key: string) => call<string>("reveal", { project, key }),
   copy: (project: string, key: string) => call<number>("copy", { project, key }),
+  /** Copies a value the page holds; resolves to the seconds until the clear. */
+  copyText: (value: string) => call<number>("copy_text", { value }),
+  generate: (length: number, sets: Charsets) => call<Generated>("generate", { length, ...sets }),
   save: (project: string, key: string, value: string) =>
     call<Snapshot>("save", { project, key, value }),
   deleteKey: (project: string, key: string) => call<Snapshot>("delete_key", { project, key }),

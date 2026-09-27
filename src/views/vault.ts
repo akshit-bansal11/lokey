@@ -19,6 +19,7 @@ import {
 import { announce, showShortcuts, startClipboardTimer } from "@/lib/status.ts";
 import type { Row, Snapshot } from "@/lib/types.ts";
 import { askProjectName, confirmDelete, openSettings, showKeys } from "@/views/dialogs.ts";
+import { openGenerator } from "@/views/generator.ts";
 
 const MASK = "••••••••••••";
 const NEW_PROJECT = "\u0000new";
@@ -508,6 +509,15 @@ function settings(): void {
   });
 }
 
+/** Opens the generator; "Use as new key" puts the password in the add row. */
+function generatePassword(): void {
+  openGenerator((value) => {
+    byId("new-value", HTMLInputElement).value = value;
+    byId("new-key", HTMLInputElement).focus();
+    announce("The password is in the new key's value. Name the key and press Enter.");
+  });
+}
+
 /** The page-wide shortcuts; the shortcuts dialog lists every one of them. */
 function commandFor(event: KeyboardEvent): (() => void) | undefined {
   const inField =
@@ -524,6 +534,8 @@ function commandFor(event: KeyboardEvent): (() => void) | undefined {
       return focusSearch;
     case ",":
       return settings;
+    case "g":
+      return generatePassword;
     case "pageup":
       return () => stepProject(-1);
     case "pagedown":
@@ -594,6 +606,7 @@ export function showVault(initial: Snapshot, vaultOptions: VaultOptions): void {
   find(root, "#lock", HTMLButtonElement).addEventListener("click", () => options.onLock());
   find(root, "#settings-open", HTMLButtonElement).addEventListener("click", settings);
   find(root, "#keys-open", HTMLButtonElement).addEventListener("click", showKeys);
+  find(root, "#generate-open", HTMLButtonElement).addEventListener("click", generatePassword);
 
   document.addEventListener("keydown", onGlobalKey);
   document.addEventListener("pointerdown", touch);

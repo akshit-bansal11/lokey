@@ -28,6 +28,7 @@ lokey/
 │       │   ├── crypto.rs
 │       │   ├── error.rs
 │       │   ├── format.rs
+│       │   ├── generator.rs
 │       │   ├── lib.rs
 │       │   ├── lockout.rs
 │       │   ├── names.rs
@@ -51,6 +52,7 @@ lokey/
 │   │   └── tokens.css
 │   ├── views/
 │   │   ├── dialogs.ts
+│   │   ├── generator.ts
 │   │   ├── setup.ts
 │   │   ├── unlock.ts
 │   │   └── vault.ts
