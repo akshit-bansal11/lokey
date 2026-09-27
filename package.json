@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "description": "Local-only encrypted key/value vault: a desktop app for Windows",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
