@@ -1,5 +1,5 @@
-//! What crosses to the page. Values never appear here; the page asks for one
-//! at a time through `reveal`. Lengths are sent so the masked cell can be
+//! What crosses to the page. Saved values never appear here; the page asks
+//! for one at a time through `reveal`. Lengths are sent so the masked cell can be
 //! drawn without the value.
 
 use lokey_core::{ChangeKind, Error, Report, Session};
@@ -96,6 +96,13 @@ impl Snapshot {
 pub struct Opened {
     pub snapshot: Snapshot,
     pub recovery_key: Option<String>,
+}
+
+/// A generated password and its strength in bits, for the generator dialog.
+#[derive(Serialize)]
+pub struct Generated {
+    pub value: String,
+    pub bits: u32,
 }
 
 /// An error the page can branch on (`code`) and show (`message`).
