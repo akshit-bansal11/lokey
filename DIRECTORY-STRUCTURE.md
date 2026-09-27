@@ -1,6 +1,6 @@
 # DIRECTORY-STRUCTURE.md — lokey
 
-**Generated:** 2026-09-20 · **Command:** `git ls-files`, rendered as a tree by a short Python loop (no `tree` binary on the machine)
+**Generated:** 2026-09-27 · **Command:** `git ls-files`, rendered as a tree by a short Python loop (no `tree` binary on the machine)
 
 ## Excluded from the walk
 
@@ -40,6 +40,8 @@ lokey/
 │   │   ├── api.ts
 │   │   ├── dom.ts
 │   │   ├── icons.ts
+│   │   ├── recovery.test.ts
+│   │   ├── recovery.ts
 │   │   ├── rows.test.ts
 │   │   ├── rows.ts
 │   │   ├── status.ts
@@ -64,6 +66,7 @@ lokey/
 │   │   └── icon.png
 │   ├── src/
 │   │   ├── dto.rs
+│   │   ├── file_dialog.rs
 │   │   └── main.rs
 │   ├── build.rs
 │   ├── Cargo.toml
@@ -75,6 +78,7 @@ lokey/
 ├── Cargo.lock
 ├── Cargo.toml
 ├── CHANGELOG.md
+├── DECISIONS.md
 ├── DIRECTORY-STRUCTURE.md
 ├── index.html
 ├── LICENSE

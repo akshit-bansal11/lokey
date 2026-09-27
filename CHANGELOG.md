@@ -6,6 +6,39 @@ All notable changes to lokey are recorded here, following
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-27
+
+### Added
+
+- A recovery key. Setup asks what should happen if you forget the master
+  password: get a recovery key (the default), shown once and typed back to
+  confirm, or have no recovery at all. "Forgot the master password?" on the
+  unlock screen uses the key to set a new password, then issues a new key; the
+  used one stops working. Settings can turn it on, replace it or remove it.
+- Encrypted backups. Settings, Export backup, asks for the master password and
+  then where to save a copy of the encrypted vault. On a PC with no vault,
+  Restore from a backup opens one with the password it was exported under.
+
+### Changed
+
+- **Vault format v3.** Entries are encrypted under a random data key, which is
+  sealed under the master password's key and, optionally, the recovery key's.
+  Changing the password or the recovery key replaces the data key, so an old
+  password or recovery key opens only copies of the vault made before the
+  change. A vault from an earlier build is upgraded the first time it is
+  unlocked; earlier builds cannot open it afterwards.
+- Changing the master password, exporting a backup and making or removing a
+  recovery key now ask for the current master password, even with the vault
+  open.
+- Every GitHub Action in the build and release workflows is pinned to a full
+  commit SHA.
+
+### Removed
+
+- The sealed inbox and the vault's public key. Only the command-line tool,
+  removed before 0.0.1, ever wrote to it. A vault that still holds inbox
+  records has them merged in on its first unlock.
+
 ## [0.0.2] - 2026-09-27
 
 ### Fixed
@@ -40,6 +73,7 @@ A vault made by an earlier build opens as before with its master password. Its
 deletion password is no longer asked for and is dropped the next time the
 vault is saved. After that, the earlier builds cannot open the vault.
 
-[Unreleased]: https://github.com/akshit-bansal11/lokey/compare/v0.0.2...HEAD
+[Unreleased]: https://github.com/akshit-bansal11/lokey/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/akshit-bansal11/lokey/compare/v0.0.2...v0.1.0
 [0.0.2]: https://github.com/akshit-bansal11/lokey/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/akshit-bansal11/lokey/releases/tag/v0.0.1

@@ -1,10 +1,10 @@
 //! Every cryptographic primitive lokey uses, in one file.
 //!
-//! - AES-256-GCM seals the vault body under a key derived from the master password.
-//! - Argon2id derives that key.
-//! - HPKE (RFC 9180, DHKEM-X25519 / HKDF-SHA256 / AES-256-GCM) seals `set`
-//!   records to the vault's public key, which is how a value can be added
-//!   without the master password while only the master password can read it.
+//! - AES-256-GCM seals the vault body under a random data key, and seals that
+//!   data key under each key allowed to open the vault.
+//! - Argon2id derives those keys from the master password and the recovery key.
+//! - HPKE (RFC 9180, DHKEM-X25519 / HKDF-SHA256 / AES-256-GCM) only opens the
+//!   sealed inbox of a v1/v2 vault, written by the removed command line.
 
 use aes_gcm::{
     Aes256Gcm, Nonce,
@@ -12,16 +12,15 @@ use aes_gcm::{
 };
 use argon2::{Algorithm, Argon2, Params, Version};
 use base64::{Engine, engine::general_purpose::STANDARD};
-use hpke::{
-    Deserializable, Kem as _, OpModeR, OpModeS, Serializable, aead::AesGcm256, kdf::HkdfSha256,
-    kem::X25519HkdfSha256,
-};
+use hpke::{Deserializable, OpModeR, aead::AesGcm256, kdf::HkdfSha256, kem::X25519HkdfSha256};
 use serde::{Deserialize, Serialize};
 use zeroize::Zeroizing;
 
 use crate::{Error, Result};
 
 pub const KEY_LEN: usize = 32;
+/// A key held in memory, zeroed when dropped.
+pub type Key = Zeroizing<[u8; KEY_LEN]>;
 pub const SALT_LEN: usize = 16;
 const NONCE_LEN: usize = 12;
 /// An X25519 encapsulated key is 32 bytes; it prefixes every inbox record.
@@ -87,7 +86,7 @@ pub fn derive_key(
 }
 
 /// AES-256-GCM output: a fresh random nonce and the ciphertext with its tag.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Sealed {
     pub nonce: String,
     pub ct: String,
@@ -130,36 +129,6 @@ pub fn open(
         .map(Zeroizing::new))
 }
 
-pub struct KeyPair {
-    pub secret: Zeroizing<Vec<u8>>,
-    pub public: Vec<u8>,
-}
-
-pub fn gen_keypair() -> KeyPair {
-    let (sk, pk) = Kem::gen_keypair();
-    KeyPair {
-        secret: Zeroizing::new(sk.to_bytes().to_vec()),
-        public: pk.to_bytes().to_vec(),
-    }
-}
-
-/// Seals one inbox record to the vault's public key: `encapped_key || ciphertext`.
-pub fn inbox_seal(public_key: &[u8], plaintext: &[u8]) -> Result<Vec<u8>> {
-    let pk = <Kem as hpke::Kem>::PublicKey::from_bytes(public_key)
-        .map_err(|_| Error::Corrupt("vault public key is malformed".into()))?;
-    let (encapped, ct) = hpke::single_shot_seal::<AesGcm256, HkdfSha256, Kem>(
-        &OpModeS::Base,
-        &pk,
-        HPKE_INFO,
-        plaintext,
-        b"",
-    )
-    .map_err(|err| Error::Corrupt(format!("could not seal the value: {err}")))?;
-    let mut record = encapped.to_bytes().to_vec();
-    record.extend_from_slice(&ct);
-    Ok(record)
-}
-
 /// `None` means the record was not sealed to this key or was modified.
 pub fn inbox_open(secret_key: &[u8], record: &[u8]) -> Option<Zeroizing<Vec<u8>>> {
     if record.len() <= ENCAPPED_LEN {
@@ -180,6 +149,76 @@ pub fn inbox_open(secret_key: &[u8], record: &[u8]) -> Option<Zeroizing<Vec<u8>>
     .map(Zeroizing::new)
 }
 
+pub fn new_key() -> Key {
+    Zeroizing::new(random())
+}
+
+/// Opens a sealed key. `None` means `kek` is the wrong key or the file was
+/// modified, exactly as for `open`.
+pub fn open_key(kek: &[u8; KEY_LEN], sealed: &Sealed, aad: &[u8]) -> Result<Option<Key>> {
+    let Some(plain) = open(kek, sealed, aad)? else {
+        return Ok(None);
+    };
+    if plain.len() != KEY_LEN {
+        return Err(Error::Corrupt("vault data key has the wrong length".into()));
+    }
+    let mut key = Zeroizing::new([0u8; KEY_LEN]);
+    key.copy_from_slice(&plain);
+    Ok(Some(key))
+}
+
+/// 160 random bits, written as 32 Crockford base32 characters in groups of
+/// four. At that size it needs no slow derivation to resist guessing; it goes
+/// through Argon2id anyway, so one code path derives every key.
+pub const RECOVERY_BYTES: usize = 20;
+const CROCKFORD: &[u8; 32] = b"0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+pub fn new_recovery_key() -> (Zeroizing<[u8; RECOVERY_BYTES]>, Zeroizing<String>) {
+    let bytes = Zeroizing::new(random::<RECOVERY_BYTES>());
+    let mut text = Zeroizing::new(String::with_capacity(39));
+    let (mut acc, mut bits, mut written) = (0u32, 0u32, 0usize);
+    for &byte in bytes.iter() {
+        acc = ((acc << 8) | u32::from(byte)) & 0x1FFF;
+        bits += 8;
+        while bits >= 5 {
+            bits -= 5;
+            if written > 0 && written % 4 == 0 {
+                text.push('-');
+            }
+            text.push(char::from(CROCKFORD[((acc >> bits) & 31) as usize]));
+            written += 1;
+        }
+    }
+    (bytes, text)
+}
+
+/// Reads a recovery key as a person types it: any case, with or without the
+/// dashes and spaces, and O, I or L read as 0, 1 and 1. `None` when it is not
+/// 32 such characters.
+pub fn parse_recovery_key(text: &str) -> Option<Zeroizing<[u8; RECOVERY_BYTES]>> {
+    let mut bytes = Zeroizing::new([0u8; RECOVERY_BYTES]);
+    let (mut acc, mut bits, mut len, mut chars) = (0u32, 0u32, 0usize, 0usize);
+    for c in text.chars() {
+        let c = match c.to_ascii_uppercase() {
+            '-' => continue,
+            c if c.is_whitespace() => continue,
+            'O' => '0',
+            'I' | 'L' => '1',
+            c => c,
+        };
+        let value = CROCKFORD.iter().position(|&known| char::from(known) == c)?;
+        chars += 1;
+        acc = ((acc << 5) | u32::try_from(value).ok()?) & 0x1FFF;
+        bits += 5;
+        if bits >= 8 {
+            bits -= 8;
+            *bytes.get_mut(len)? = ((acc >> bits) & 0xFF) as u8;
+            len += 1;
+        }
+    }
+    (chars == 32 && len == RECOVERY_BYTES).then_some(bytes)
+}
+
 pub fn b64(bytes: &[u8]) -> String {
     STANDARD.encode(bytes)
 }
@@ -190,9 +229,46 @@ pub fn unb64(text: &str) -> Result<Vec<u8>> {
         .map_err(|_| Error::Corrupt("vault contains invalid base64".into()))
 }
 
+/// What the removed command line did, kept so tests can build a v2 vault
+/// with an inbox and prove the app still opens it.
+#[cfg(test)]
+pub mod legacy {
+    use hpke::{Kem as _, OpModeS, Serializable};
+
+    use super::*;
+
+    pub struct KeyPair {
+        pub secret: Vec<u8>,
+        pub public: Vec<u8>,
+    }
+
+    pub fn gen_keypair() -> KeyPair {
+        let (sk, pk) = Kem::gen_keypair();
+        KeyPair {
+            secret: sk.to_bytes().to_vec(),
+            public: pk.to_bytes().to_vec(),
+        }
+    }
+
+    pub fn inbox_seal(public_key: &[u8], plaintext: &[u8]) -> Vec<u8> {
+        let pk = <Kem as hpke::Kem>::PublicKey::from_bytes(public_key).unwrap();
+        let (encapped, ct) = hpke::single_shot_seal::<AesGcm256, HkdfSha256, Kem>(
+            &OpModeS::Base,
+            &pk,
+            HPKE_INFO,
+            plaintext,
+            b"",
+        )
+        .unwrap();
+        let mut record = encapped.to_bytes().to_vec();
+        record.extend_from_slice(&ct);
+        record
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{legacy::*, *};
 
     const AAD: &[u8] = b"header";
 
@@ -241,7 +317,7 @@ mod tests {
     fn inbox_record_opens_only_with_matching_secret_key() {
         let pair = gen_keypair();
         let other = gen_keypair();
-        let record = inbox_seal(&pair.public, b"API_KEY=1").unwrap();
+        let record = inbox_seal(&pair.public, b"API_KEY=1");
 
         let opened = inbox_open(&pair.secret, &record);
         let wrong = inbox_open(&other.secret, &record);
@@ -253,11 +329,43 @@ mod tests {
     #[test]
     fn inbox_record_with_flipped_bit_is_rejected() {
         let pair = gen_keypair();
-        let mut record = inbox_seal(&pair.public, b"value").unwrap();
+        let mut record = inbox_seal(&pair.public, b"value");
         let last = record.len() - 1;
         record[last] ^= 1;
 
         assert!(inbox_open(&pair.secret, &record).is_none());
+    }
+
+    #[test]
+    fn recovery_key_reads_back_as_typed_carelessly() {
+        let (bytes, text) = new_recovery_key();
+        let sloppy = text.to_lowercase().replace('-', " ").replace('0', "o");
+
+        let parsed = parse_recovery_key(&sloppy).unwrap();
+
+        assert_eq!(text.len(), 39);
+        assert_eq!(*parsed, *bytes);
+    }
+
+    #[test]
+    fn recovery_key_with_a_character_missing_or_extra_is_refused() {
+        let (_, text) = new_recovery_key();
+
+        assert!(parse_recovery_key(&text[1..]).is_none());
+        assert!(parse_recovery_key(&format!("{}A", text.as_str())).is_none());
+        assert!(parse_recovery_key("not a recovery key at all, no way").is_none());
+    }
+
+    #[test]
+    fn open_key_with_the_wrong_key_is_none() {
+        let data_key = new_key();
+        let sealed = seal(&[7u8; KEY_LEN], &data_key[..], AAD);
+
+        let right = open_key(&[7u8; KEY_LEN], &sealed, AAD).unwrap().unwrap();
+        let wrong = open_key(&[8u8; KEY_LEN], &sealed, AAD).unwrap();
+
+        assert_eq!(*right, *data_key);
+        assert!(wrong.is_none());
     }
 
     #[test]

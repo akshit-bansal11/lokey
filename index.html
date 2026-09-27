@@ -39,11 +39,46 @@
             <input class="input" type="password" name="master2" autocomplete="new-password" required />
             <span class="field-error" data-error-for="master2"></span>
           </label>
+          <fieldset class="choices">
+            <legend>If you forget the master password</legend>
+            <label class="choice">
+              <input type="radio" name="recovery" value="key" checked />
+              <span>Give me a recovery key (recommended)</span>
+              <span class="field-hint">A one-time key you write down and keep somewhere safe. It opens the vault if you forget the password.</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="recovery" value="none" />
+              <span>No recovery</span>
+              <span class="field-hint">Only the master password opens the vault. Forget it and everything in the vault is lost for good.</span>
+            </label>
+            <label class="choice" data-accept hidden>
+              <input type="checkbox" name="accept" />
+              <span>I understand that nobody, not even lokey, can open the vault without the master password.</span>
+            </label>
+            <span class="field-error" data-error-for="accept"></span>
+          </fieldset>
           <p class="notice" role="alert" data-form-error></p>
           <button type="submit" class="btn primary">Create vault</button>
-          <p class="gate-note">
-            There is no recovery. If you forget the master password, the vault cannot be opened.
-          </p>
+          <button type="button" class="btn" data-restore>Restore from a backup…</button>
+        </form>
+      </section>
+    </template>
+
+    <!-- Setup, from a backup exported on this or another PC. -->
+    <template id="tpl-restore">
+      <section class="gate">
+        <form class="gate-form" id="restore-form" novalidate>
+          <h1 class="gate-title">Restore a backup</h1>
+          <p class="gate-note mono" data-backup-path></p>
+          <label class="field">
+            <span class="field-label">The backup's master password</span>
+            <input class="input" type="password" name="master" autocomplete="current-password" required />
+            <span class="field-hint">The master password the vault had when the backup was made.</span>
+          </label>
+          <p class="notice" role="alert" data-form-error></p>
+          <button type="submit" class="btn primary">Restore</button>
+          <button type="button" class="btn" data-choose>Choose another file…</button>
+          <button type="button" class="btn" data-back>Back</button>
         </form>
       </section>
     </template>
@@ -60,7 +95,40 @@
           </label>
           <p class="notice" role="alert" data-form-error></p>
           <button type="submit" class="btn primary">Unlock</button>
+          <button type="button" class="btn" data-forgot hidden>Forgot the master password?</button>
           <p class="gate-note mono" data-vault-path></p>
+        </form>
+      </section>
+    </template>
+
+    <!-- Forgot the master password: the recovery key sets a new one. -->
+    <template id="tpl-recover">
+      <section class="gate">
+        <form class="gate-form" id="recover-form" novalidate>
+          <h1 class="gate-title">Recover the vault</h1>
+          <p class="gate-lede">
+            Enter the recovery key you wrote down, then choose a new master password. You get a new recovery key afterwards; the one you use here stops working.
+          </p>
+          <label class="field">
+            <span class="field-label">Recovery key</span>
+            <input class="input mono" name="recoveryKey" autocomplete="off" spellcheck="false" required />
+            <span class="field-hint">32 letters and digits. Dashes, spaces and case do not matter.</span>
+            <span class="field-error" data-error-for="recoveryKey"></span>
+          </label>
+          <label class="field">
+            <span class="field-label">New master password</span>
+            <input class="input" type="password" name="master" autocomplete="new-password" required />
+            <span class="field-hint">15 or more characters; a few random words work well.</span>
+            <span class="field-error" data-error-for="master"></span>
+          </label>
+          <label class="field">
+            <span class="field-label">New master password again</span>
+            <input class="input" type="password" name="master2" autocomplete="new-password" required />
+            <span class="field-error" data-error-for="master2"></span>
+          </label>
+          <p class="notice" role="alert" data-form-error></p>
+          <button type="submit" class="btn primary">Recover vault</button>
+          <button type="button" class="btn" data-back>Back</button>
         </form>
       </section>
     </template>
@@ -170,11 +238,31 @@
           <h3 id="settings-file">Vault file</h3>
           <p class="gate-note" id="settings-path"></p>
           <p class="dialog-text">
-            This one file is the whole vault. Copy it to back it up; lokey never sends it anywhere.
+            This one file is the whole vault. lokey never sends it anywhere.
           </p>
+        </section>
+        <section class="settings-section" aria-labelledby="settings-backup">
+          <h3 id="settings-backup">Backup</h3>
+          <p class="dialog-text">
+            Saves an encrypted copy of the vault wherever you choose, such as a USB drive. It opens with the master password, or the recovery key, you have now. A folder synced by OneDrive or similar uploads the copy.
+          </p>
+          <div class="dialog-actions">
+            <button type="button" class="btn" id="export">Export backup…</button>
+          </div>
+        </section>
+        <section class="settings-section" aria-labelledby="settings-recovery">
+          <h3 id="settings-recovery">Recovery key</h3>
+          <p class="dialog-text" id="recovery-state"></p>
+          <div class="dialog-actions">
+            <button type="button" class="btn" id="recovery-off">Remove recovery key</button>
+            <button type="button" class="btn" id="recovery-new"></button>
+          </div>
         </section>
         <form class="settings-section" id="master-form" aria-labelledby="settings-master" novalidate>
           <h3 id="settings-master">Change master password</h3>
+          <p class="dialog-text">
+            If the vault has a recovery key, you get a new one and the old one stops working.
+          </p>
           <label class="field">
             <span class="field-label">New master password</span>
             <input class="input" type="password" name="master" autocomplete="new-password" required />
@@ -206,6 +294,44 @@
         </div>
       </div>
     </dialog>
+    <!-- Asks for the master password again before exporting, changing it, or
+         adding or removing a recovery key. -->
+    <dialog id="confirm-master-dialog" aria-labelledby="confirm-master-title" aria-describedby="confirm-master-text">
+      <form class="dialog-form" method="dialog" id="confirm-master-form" novalidate>
+        <h2 class="dialog-title" id="confirm-master-title">Confirm it is you</h2>
+        <p class="dialog-text" id="confirm-master-text"></p>
+        <label class="field">
+          <span class="field-label">Current master password</span>
+          <input class="input" type="password" name="master" autocomplete="current-password" required />
+        </label>
+        <p class="notice" role="alert" data-form-error></p>
+        <div class="dialog-actions">
+          <button type="button" class="btn" data-close>Cancel</button>
+          <button type="submit" class="btn primary" id="confirm-master-submit"></button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- A new recovery key, shown once. It closes only once typed back. -->
+    <dialog id="recovery-dialog" aria-labelledby="recovery-title" aria-describedby="recovery-text">
+      <form class="dialog-form" method="dialog" id="recovery-form" novalidate>
+        <h2 class="dialog-title" id="recovery-title">Your recovery key</h2>
+        <p class="dialog-text" id="recovery-text"></p>
+        <p class="recovery-key" id="recovery-key"></p>
+        <p class="dialog-text">
+          Write it on paper and keep it somewhere safe, away from this PC. Anyone who has it can open the vault. lokey never shows it again.
+        </p>
+        <label class="field">
+          <span class="field-label">Type the recovery key to confirm you have it</span>
+          <input class="input mono" name="typed" autocomplete="off" spellcheck="false" required />
+          <span class="field-error" data-error-for="typed"></span>
+        </label>
+        <div class="dialog-actions">
+          <button type="submit" class="btn primary">I have saved it</button>
+        </div>
+      </form>
+    </dialog>
+
     <!-- Every shortcut the vault binds; commandFor and onSheetKey in vault.ts. -->
     <dialog id="keys-dialog" aria-labelledby="keys-title">
       <div class="dialog-form">

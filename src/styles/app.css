@@ -222,6 +222,51 @@ main {
   display: none;
 }
 
+/* Radio and checkbox rows: the control, then its label and hint. */
+.choices {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.choices legend {
+  padding: 0;
+  margin-block-end: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.choice {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-2);
+  align-items: start;
+}
+
+.choice input {
+  margin: var(--space-1) 0 0;
+  accent-color: var(--color-text-primary);
+}
+
+.choice .field-hint {
+  grid-column: 2;
+}
+
+/* A recovery key, shown once: large and monospaced, to copy by hand. */
+.recovery-key {
+  margin: 0;
+  padding: var(--space-3);
+  border: var(--hairline) solid var(--color-border-control);
+  border-radius: var(--radius-control);
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  text-align: center;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
 /* Vault: toolbar, sheet, footer ------------------------------------------ */
 
 .vault {

@@ -6,6 +6,8 @@ export type Status = {
   exists: boolean;
   unlocked: boolean;
   lockoutSecs: number;
+  /** Whether a recovery key also opens the vault. */
+  recovery: boolean;
 };
 
 export type Row = {
@@ -24,14 +26,18 @@ export type Snapshot = {
   projects: Project[];
   arrivals: Arrival[];
   rejected: number;
-  headerRestored: boolean;
   saved: boolean | null;
 };
+
+/** A vault just created, recovered or restored, and the recovery key to show once. */
+export type Opened = { snapshot: Snapshot; recoveryKey: string | null };
 
 export type FailureCode =
   | "wrong-password"
   | "locked-out"
   | "stale"
+  | "no-recovery"
+  | "bad-recovery-key"
   | "no-vault"
   | "exists"
   | "not-found"

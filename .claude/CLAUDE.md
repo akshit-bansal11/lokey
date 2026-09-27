@@ -27,9 +27,13 @@ front-end without asking.
   maintainer's choice; deletes only confirm in a dialog (a chosen exception to
   UX-05). Do not reintroduce a second password without asking. The app locks
   after 5 minutes idle and on exit.
-- **The sealed inbox has no writer** since the CLI went. The read and merge
-  path stays so vaults written by it still open; see `OPEN_ITEMS.md` before
-  touching `hpke`, `Store::set` or `merge_inbox`.
+- **Recovery is a recovery key or nothing** (2026-09-27, `DECISIONS.md`): no
+  hints, no security questions. Exporting, changing the master password and
+  making or removing a recovery key re-ask the master password. Any change to
+  the password or the recovery key must replace the data key (`rekey` in
+  `vault.rs`).
+- **Vault format v3 has no inbox.** `hpke` and `merge_inbox` remain only to
+  upgrade v1/v2 vaults; see `OPEN_ITEMS.md` before removing them.
 
 ## Gate
 

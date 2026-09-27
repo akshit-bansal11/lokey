@@ -3,12 +3,14 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import type { Failure, LockReason, Snapshot, Status } from "@/lib/types.ts";
+import type { Failure, LockReason, Opened, Snapshot, Status } from "@/lib/types.ts";
 
 const FAILURE_CODES = new Set([
   "wrong-password",
   "locked-out",
   "stale",
+  "no-recovery",
+  "bad-recovery-key",
   "no-vault",
   "exists",
   "not-found",
@@ -59,8 +61,15 @@ export const api = {
   status: () => call<Status>("status"),
   checkPassword: (label: string, password: string) =>
     call<null>("check_password", { label, password }),
-  create: (master: string) => call<Snapshot>("create", { master }),
+  create: (master: string, recovery: boolean) => call<Opened>("create", { master, recovery }),
   unlock: (master: string) => call<Snapshot>("unlock", { master }),
+  recover: (recoveryKey: string, newMaster: string) =>
+    call<Opened>("recover", { recoveryKey, newMaster }),
+  /** Shows the Open dialog; resolves to the chosen path, or null if cancelled. */
+  chooseBackup: () => call<string | null>("choose_backup"),
+  restore: (master: string) => call<Opened>("restore", { master }),
+  /** Shows the Save dialog; resolves to the path written, or null if cancelled. */
+  exportBackup: (master: string) => call<string | null>("export_backup", { master }),
   lock: () => call<null>("lock"),
   touch: () => call<null>("touch"),
   reveal: (project: string, key: string) => call<string>("reveal", { project, key }),
@@ -70,7 +79,11 @@ export const api = {
   deleteKey: (project: string, key: string) => call<Snapshot>("delete_key", { project, key }),
   deleteProject: (project: string) => call<Snapshot>("delete_project", { project }),
   truncate: () => call<Snapshot>("truncate"),
-  changeMaster: (newMaster: string) => call<null>("change_master", { newMaster }),
+  /** Resolves to the replacement recovery key when the vault has one. */
+  changeMaster: (currentMaster: string, newMaster: string) =>
+    call<string | null>("change_master", { currentMaster, newMaster }),
+  /** Resolves to the new recovery key when turning it on. */
+  setRecovery: (master: string, on: boolean) => call<string | null>("set_recovery", { master, on }),
 };
 
 export function onVaultChanged(handler: (snapshot: Snapshot) => void): Promise<UnlistenFn> {

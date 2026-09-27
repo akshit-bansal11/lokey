@@ -12,6 +12,8 @@ pub struct Status {
     pub exists: bool,
     pub unlocked: bool,
     pub lockout_secs: u64,
+    /// Whether a recovery key also opens the vault. Read from the header.
+    pub recovery: bool,
 }
 
 #[derive(Clone, Serialize)]
@@ -42,17 +44,20 @@ pub struct Arrival {
 pub struct Snapshot {
     pub rows: Vec<Row>,
     pub projects: Vec<Project>,
-    /// Values merged out of the vault's sealed inbox. Only the removed
-    /// command line ever wrote one, so this is empty for a vault made here.
+    /// Values merged out of an old vault's sealed inbox on its first unlock.
+    /// Only the removed command line ever wrote one.
     pub arrivals: Vec<Arrival>,
     pub rejected: usize,
-    pub header_restored: bool,
     /// Set by `save`: true when the key was new, false when it was replaced.
     pub saved: Option<bool>,
 }
 
 impl Snapshot {
-    pub fn new(session: &Session, report: &Report) -> Self {
+    pub fn new(session: &Session) -> Self {
+        Self::with_report(session, &Report::default())
+    }
+
+    pub fn with_report(session: &Session, report: &Report) -> Self {
         Self {
             rows: session
                 .entries()
@@ -79,10 +84,18 @@ impl Snapshot {
                 })
                 .collect(),
             rejected: report.rejected,
-            header_restored: report.header_restored,
             saved: None,
         }
     }
+}
+
+/// A vault just opened by creating, recovering or restoring it, with the
+/// recovery key to show once, when one was issued.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Opened {
+    pub snapshot: Snapshot,
+    pub recovery_key: Option<String>,
 }
 
 /// An error the page can branch on (`code`) and show (`message`).
@@ -108,6 +121,10 @@ impl Failure {
         Self::new("locked", "The vault is locked. Unlock it to continue.")
     }
 
+    pub fn io(message: impl Into<String>) -> Self {
+        Self::new("io", message)
+    }
+
     pub fn no_data_folder() -> Self {
         Self::new(
             "unsupported",
@@ -127,6 +144,8 @@ impl From<Error> for Failure {
             },
             Error::LockedOut { .. } => Self::new("locked-out", message),
             Error::Stale => Self::new("stale", message),
+            Error::NoRecovery => Self::new("no-recovery", message),
+            Error::BadRecoveryKey => Self::new("bad-recovery-key", message),
             Error::NoVault => Self::new("no-vault", message),
             Error::VaultExists => Self::new("exists", message),
             Error::NotFound { .. } => Self::new("not-found", message),

@@ -23,12 +23,12 @@
 | Icons | Lucide geometry, inlined | lucide-static 1.47.0 | an icon package | no dependency, no request |
 | Cipher | aes-gcm | 0.11.1 | ChaCha20-Poly1305 | hardware AES on x64; standard |
 | Password KDF | argon2 (Argon2id) | 0.6.0 | PBKDF2 (the original) | memory-hard; SECURITY-SPEC SEC-05 |
-| Sealed inbox (unused, see `OPEN_ITEMS.md`) | hpke (RFC 9180, X25519/HKDF-SHA256/AES-256-GCM) | 0.14.1 | hand-rolled ECIES | a standard, reviewed construction |
+| Upgrading v1/v2 vaults' sealed inbox (see `OPEN_ITEMS.md`) | hpke (RFC 9180, X25519/HKDF-SHA256/AES-256-GCM) | 0.14.1 | hand-rolled ECIES | a standard, reviewed construction |
 | Secret wiping | zeroize | 1.9.0 | nothing | zeroes keys and values on drop |
 | Serialisation | serde + serde_json | 1.0.229 / 1.0.151 | a binary format | readable header, simple versioning |
 | Randomness | getrandom | 0.4.3 | rand | OS RNG directly, smallest API |
 | Encoding | base64 | 0.23.1 | hex | shorter vault file |
-| Windows API | windows-sys | 0.61.2 | the `windows` crate, arboard | raw clipboard calls needed for the history-exclusion formats |
+| Windows API | windows-sys | 0.61.2 | the `windows` crate, arboard, tauri-plugin-dialog | raw clipboard calls needed for the history-exclusion formats; the app crate also calls the Save/Open file dialogs through it, which keeps the page without filesystem access and adds no crate |
 | Unit / integration tests | cargo test, node:test | built in | Vitest | no extra dependency |
 | Browser tests | none | n/a | Playwright | see "Deliberately not used" |
 | Formatter | rustfmt, Biome | Biome 2.5.14 | Prettier | Biome also lints JS and CSS |
@@ -78,4 +78,4 @@
 
 ## Dead dependency sweep
 
-**Last run:** never. Every runtime dependency above has a named importer as of 2026-09-20 (read from source), but no tool has run. `hpke` is the exception: it is imported by `format.rs` for a vault feature nothing writes any more.
+**Last run:** never. Every runtime dependency above has a named importer as of 2026-09-20 (read from source), but no tool has run. `hpke` is the exception: `crypto.rs` imports it only to open the inbox of a v1/v2 vault while upgrading it.

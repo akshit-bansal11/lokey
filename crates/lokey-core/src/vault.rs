@@ -1,25 +1,35 @@
-//! Vault operations. `Store::set` seals a value into the inbox and needs no
-//! password; everything else starts from `Store::unlock` and runs on the
-//! returned `Session`. Nothing shipping calls `set` since the command line was
-//! removed, but a vault written by one can still hold inbox records, so the
-//! merge on unlock stays.
+//! Vault operations. Everything starts from `Store::unlock` (or `recover`, or
+//! `restore`) and runs on the returned `Session`.
 //!
-//! A `Session` holds the derived master key in memory. Each operation re-reads
-//! the file under the lock, so a change made meanwhile by another process (an
-//! edit in a second window) is merged rather than overwritten.
+//! The body is sealed under a random data key. The data key is sealed under
+//! the master password's key and, when the owner chose one, under a recovery
+//! key's key. Changing either one replaces the data key, so a leaked old
+//! password or recovery key opens only copies of the file made before the
+//! change.
+//!
+//! A `Session` holds the password's key and the data key in memory. Each
+//! operation re-reads the file under the lock, so a change made meanwhile by
+//! another process (an edit in a second window) is merged, not overwritten.
 
-use std::path::PathBuf;
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use zeroize::{Zeroize, Zeroizing};
 
 pub use crate::format::Entry;
 use crate::{
     Error, Result,
-    crypto::{self, KEY_LEN, KdfParams, SALT_LEN, b64, unb64},
-    format::{Body, Record, VERSION, VaultFile},
+    crypto::{self, KdfParams, Key, SALT_LEN, b64, unb64},
+    format::{Body, Record, Recovery, VERSION, VaultFile},
     lockout, names, password,
     store::{History, Store},
 };
+
+/// A recovery key as the owner writes it down: `ABCD-EFGH-…`. It is shown
+/// once and never stored.
+pub type RecoveryKey = Zeroizing<String>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ChangeKind {
@@ -34,131 +44,154 @@ pub struct Change {
     pub kind: ChangeKind,
 }
 
-/// What happened to the vault since this process last looked: values that
-/// arrived through password-less `set`, records that failed to open, and
-/// whether the header's public key had been swapped and was put back.
+/// What an unlock found in a v1/v2 vault's sealed inbox: the values merged in,
+/// and the records that failed to open. Always empty for a v3 vault.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Report {
     pub changes: Vec<Change>,
     pub rejected: usize,
-    pub header_restored: bool,
-}
-
-impl Report {
-    fn touched(&self) -> bool {
-        !self.changes.is_empty() || self.rejected > 0 || self.header_restored
-    }
 }
 
 impl Store {
-    /// Creates a new vault. Fails if one already exists.
-    pub fn create(&self, master: &str) -> Result<()> {
+    /// Creates a new vault. With `recovery`, returns the recovery key that
+    /// also opens it. Fails if a vault already exists.
+    pub fn create(&self, master: &str, recovery: bool) -> Result<Option<RecoveryKey>> {
         password::check_new("master", master)?;
-
-        let kdf = KdfParams::DEFAULT;
-        let salt: [u8; SALT_LEN] = crypto::random();
-        let key = crypto::derive_key(master.as_bytes(), &salt, kdf)?;
-        let pair = crypto::gen_keypair();
-        let public_key = b64(&pair.public);
-        let body = Body {
-            secret_key: b64(&pair.secret),
-            public_key: public_key.clone(),
-            entries: Vec::new(),
-        };
-
-        let placeholder = crypto::Sealed {
-            nonce: String::new(),
-            ct: String::new(),
-        };
-        let mut file = VaultFile::new(kdf, b64(&salt), public_key, placeholder);
-        reseal(&key, &body, &mut file)?;
+        let mut file = VaultFile::new(KdfParams::DEFAULT);
+        let kek = new_password_key(&mut file, master)?;
+        let (_, recovery_key) = rekey(&mut file, &kek, &Body::default(), recovery)?;
 
         self.locked(|store| {
             if store.exists() {
                 return Err(Error::VaultExists);
             }
             store.write(&file, History::Keep)
-        })
+        })?;
+        Ok(recovery_key)
     }
 
-    /// Adds or replaces a value without any password. The value is sealed to
-    /// the vault's public key; only the master password can read it back.
-    pub fn set(&self, project: &str, key: &str, value: &str) -> Result<()> {
-        self.set_many(project, &[(key, value)])
-    }
-
-    /// `set` for many pairs in one locked write. Every name and value is
-    /// checked first, so either all pairs land or none do.
-    pub fn set_many(&self, project: &str, pairs: &[(&str, &str)]) -> Result<()> {
-        names::check_name("project", project)?;
-        for (key, value) in pairs {
-            names::check_name("key", key)?;
-            names::check_value(value)?;
-        }
-        let at = lockout::now();
-        let plains: Vec<Zeroizing<Vec<u8>>> = pairs
-            .iter()
-            .map(|(key, value)| {
-                let record = Record {
-                    project: project.into(),
-                    key: (*key).into(),
-                    value: (*value).into(),
-                    at,
-                };
-                Zeroizing::new(serde_json::to_vec(&record).expect("record serialises"))
-            })
-            .collect();
-
-        self.locked(|store| {
-            let mut file = store.read()?;
-            let public_key = unb64(&file.public_key)?;
-            for plain in &plains {
-                file.inbox
-                    .push(b64(&crypto::inbox_seal(&public_key, plain)?));
-            }
-            store.write(&file, History::Keep)
-        })
-    }
-
-    /// Opens the vault with the master password and merges pending `set`s.
+    /// Opens the vault with the master password. A v1/v2 vault is upgraded to
+    /// v3 here, merging its inbox.
     ///
     /// On a wrong password this returns `Error::WrongPassword` with a `wait`
     /// the caller must sleep before answering. The sleep is the caller's so
     /// that it never holds the file lock and blocks other processes.
     pub fn unlock(&self, master: &str) -> Result<(Session, Report)> {
         self.locked(|store| {
-            lockout::check(store.dir())?;
-            let file = store.read()?;
-            let key = crypto::derive_key(master.as_bytes(), &unb64(&file.salt)?, file.kdf)?;
-            let Some(plain) = crypto::open(&key, &file.body, &file.aad())? else {
-                return Err(lockout::fail(store.dir()));
-            };
-            lockout::clear(store.dir())?;
-
-            let mut session = Session {
-                store: store.clone(),
-                key,
-                salt: file.salt.clone(),
-                kdf: file.kdf,
-                body: parse_body(&plain)?,
-            };
-            let mut file = file;
-            let report = session.merge_inbox(&mut file);
-            if report.touched() {
-                reseal(&session.key, &session.body, &mut file)?;
+            let mut file = store.read()?;
+            let (session, report, upgraded) = store.open_with(&mut file, master)?;
+            if upgraded {
                 store.write(&file, History::Keep)?;
             }
             Ok((session, report))
         })
     }
+
+    /// Opens the vault with its recovery key and sets a new master password.
+    /// Returns a new recovery key; the one used stops working.
+    pub fn recover(&self, recovery_key: &str, new_master: &str) -> Result<(Session, RecoveryKey)> {
+        password::check_new("master", new_master)?;
+        let secret = crypto::parse_recovery_key(recovery_key).ok_or(Error::BadRecoveryKey)?;
+        self.locked(|store| {
+            lockout::check(store.dir())?;
+            let mut file = store.read()?;
+            let Some(recovery) = file.recovery.clone() else {
+                return Err(Error::NoRecovery);
+            };
+            let rkek = crypto::derive_key(&secret[..], &unb64(&recovery.salt)?, file.kdf)?;
+            let aad = file.recovery_aad(&recovery.salt);
+            let body = match crypto::open_key(&rkek, &recovery.key, &aad)? {
+                Some(dek) => open_body(&dek, &file)?,
+                None => None,
+            };
+            let Some(body) = body else {
+                return Err(lockout::fail(store.dir()));
+            };
+            lockout::clear(store.dir())?;
+
+            let kek = new_password_key(&mut file, new_master)?;
+            let (dek, _) = rekey(&mut file, &kek, &body, false)?;
+            let fresh = seal_recovery(&mut file, &dek)?;
+            store.write(&file, History::Forget)?;
+            let session = Session {
+                store: store.clone(),
+                kek,
+                dek,
+                body,
+            };
+            Ok((session, fresh))
+        })
+    }
+
+    /// Makes the backup at `backup` this PC's vault, if its master password
+    /// opens it. Only when there is no vault here, so nothing is overwritten.
+    ///
+    /// The restored vault gets a new data key, and a new recovery key (returned)
+    /// when the backup had one. A recovery key replaced after the backup was
+    /// made, perhaps because it leaked, so never opens the restored vault.
+    pub fn restore(
+        &self,
+        backup: &Path,
+        master: &str,
+    ) -> Result<(Session, Report, Option<RecoveryKey>)> {
+        let mut file = VaultFile::parse(&fs::read(backup)?)?;
+        self.locked(|store| {
+            if store.exists() {
+                return Err(Error::VaultExists);
+            }
+            let recovery = file.recovery.is_some();
+            let (mut session, report, _) = store.open_with(&mut file, master)?;
+            let (dek, recovery_key) = rekey(&mut file, &session.kek, &session.body, recovery)?;
+            session.dek = dek;
+            store.write(&file, History::Keep)?;
+            Ok((session, report, recovery_key))
+        })
+    }
+
+    /// Opens `file` with the master password; a wrong one counts toward the
+    /// lockout. A v1/v2 file is upgraded to v3 in place, and `true` says the
+    /// caller must write it.
+    fn open_with(&self, file: &mut VaultFile, master: &str) -> Result<(Session, Report, bool)> {
+        lockout::check(self.dir())?;
+        let kek = crypto::derive_key(master.as_bytes(), &unb64(&file.salt)?, file.kdf)?;
+
+        if file.is_legacy() {
+            let Some(plain) = crypto::open(&kek, &file.body, &file.legacy_aad())? else {
+                return Err(lockout::fail(self.dir()));
+            };
+            lockout::clear(self.dir())?;
+            let mut body = parse_body(&plain)?;
+            let report = merge_inbox(&mut body, file);
+            let (dek, _) = rekey(file, &kek, &body, false)?;
+            let session = Session {
+                store: self.clone(),
+                kek,
+                dek,
+                body,
+            };
+            return Ok((session, report, true));
+        }
+
+        let Some((dek, body)) = open_current(&kek, file)? else {
+            return Err(lockout::fail(self.dir()));
+        };
+        lockout::clear(self.dir())?;
+        let session = Session {
+            store: self.clone(),
+            kek,
+            dek,
+            body,
+        };
+        Ok((session, Report::default(), false))
+    }
 }
 
-/// An unlocked vault. Dropping it zeroes the key and every value.
+/// An unlocked vault. Dropping it zeroes both keys and every value.
 pub struct Session {
     store: Store,
-    key: Zeroizing<[u8; KEY_LEN]>,
-    salt: String,
-    kdf: KdfParams,
+    /// The master password's key. It opens the sealed data key.
+    kek: Key,
+    dek: Key,
     body: Body,
 }
 
@@ -208,24 +241,14 @@ impl Session {
             })
     }
 
-    /// Re-reads the file and merges anything added since. Writes only when
-    /// something changed, so polling this is cheap.
-    pub fn refresh(&mut self) -> Result<Report> {
+    /// Re-reads the file, picking up changes made by another process.
+    pub fn refresh(&mut self) -> Result<()> {
         let store = self.store.clone();
-        store.locked(|store| {
-            let mut file = store.read()?;
-            self.reload(&file)?;
-            let report = self.merge_inbox(&mut file);
-            if report.touched() {
-                reseal(&self.key, &self.body, &mut file)?;
-                store.write(&file, History::Keep)?;
-            }
-            Ok(report)
-        })
+        store.locked(|store| self.reload(&store.read()?))
     }
 
-    /// Adds or replaces a value with the vault already unlocked.
-    pub fn put(&mut self, project: &str, key: &str, value: &str) -> Result<(ChangeKind, Report)> {
+    /// Adds or replaces a value.
+    pub fn put(&mut self, project: &str, key: &str, value: &str) -> Result<ChangeKind> {
         names::check_name("project", project)?;
         names::check_name("key", key)?;
         names::check_value(value)?;
@@ -235,8 +258,8 @@ impl Session {
         })
     }
 
-    pub fn delete_key(&mut self, project: &str, key: &str) -> Result<Report> {
-        let (_, report) = self.transact(History::Forget, |body| {
+    pub fn delete_key(&mut self, project: &str, key: &str) -> Result<()> {
+        self.transact(History::Forget, |body| {
             let before = body.entries.len();
             body.entries.retain(|entry| {
                 !(names::same(&entry.project, project) && names::same(&entry.key, key))
@@ -248,12 +271,11 @@ impl Session {
                 });
             }
             Ok(())
-        })?;
-        Ok(report)
+        })
     }
 
     /// Removes a project and every key in it. Returns how many keys went.
-    pub fn delete_project(&mut self, project: &str) -> Result<(usize, Report)> {
+    pub fn delete_project(&mut self, project: &str) -> Result<usize> {
         self.transact(History::Forget, |body| {
             let before = body.entries.len();
             body.entries
@@ -269,7 +291,7 @@ impl Session {
     }
 
     /// Removes every key in every project. The vault and its password stay.
-    pub fn truncate(&mut self) -> Result<(usize, Report)> {
+    pub fn truncate(&mut self) -> Result<usize> {
         self.transact(History::Forget, |body| {
             let removed = body.entries.len();
             body.entries.clear();
@@ -277,82 +299,197 @@ impl Session {
         })
     }
 
-    /// Changes the master password. Other sessions go `Stale`.
-    pub fn change_master(&mut self, new_master: &str) -> Result<()> {
+    /// Changes the master password. Other sessions go `Stale`. When the vault
+    /// has a recovery key, returns its replacement: the old one stops working,
+    /// because the data key it opened is replaced.
+    pub fn change_master(&mut self, new_master: &str) -> Result<Option<RecoveryKey>> {
         password::check_new("master", new_master)?;
         let store = self.store.clone();
         store.locked(|store| {
             let mut file = store.read()?;
             self.reload(&file)?;
-            self.merge_inbox(&mut file);
-            let salt: [u8; SALT_LEN] = crypto::random();
-            self.key = crypto::derive_key(new_master.as_bytes(), &salt, self.kdf)?;
-            self.salt = b64(&salt);
-            file.salt = self.salt.clone();
-            reseal(&self.key, &self.body, &mut file)?;
-            store.write(&file, History::Forget)
+            let recovery = file.recovery.is_some();
+            let kek = new_password_key(&mut file, new_master)?;
+            let (dek, recovery_key) = rekey(&mut file, &kek, &self.body, recovery)?;
+            store.write(&file, History::Forget)?;
+            self.kek = kek;
+            self.dek = dek;
+            Ok(recovery_key)
         })
     }
 
-    /// Lock, re-read, merge, apply, write. `apply` sees the freshest body.
-    fn transact<T>(
-        &mut self,
-        history: History,
-        apply: impl FnOnce(&mut Body) -> Result<T>,
-    ) -> Result<(T, Report)> {
+    /// Issues a new recovery key (`on`) or removes it. The data key is
+    /// replaced either way, so a previous recovery key opens nothing saved
+    /// from now on.
+    pub fn set_recovery(&mut self, on: bool) -> Result<Option<RecoveryKey>> {
         let store = self.store.clone();
         store.locked(|store| {
             let mut file = store.read()?;
             self.reload(&file)?;
-            let report = self.merge_inbox(&mut file);
-            let out = apply(&mut self.body)?;
-            reseal(&self.key, &self.body, &mut file)?;
-            store.write(&file, history)?;
-            Ok((out, report))
+            let (dek, recovery_key) = rekey(&mut file, &self.kek, &self.body, on)?;
+            store.write(&file, History::Forget)?;
+            self.dek = dek;
+            Ok(recovery_key)
         })
     }
 
-    /// Replaces the in-memory body with the file's. `Stale` when the file was
-    /// re-keyed elsewhere, since this session's key no longer opens it.
-    fn reload(&mut self, file: &VaultFile) -> Result<()> {
-        if file.salt != self.salt || file.kdf != self.kdf {
-            return Err(Error::Stale);
-        }
-        let plain = crypto::open(&self.key, &file.body, &file.aad())?.ok_or(Error::Stale)?;
-        self.body = parse_body(&plain)?;
-        Ok(())
+    pub fn has_recovery(&self) -> bool {
+        self.store.has_recovery()
     }
 
-    fn merge_inbox(&mut self, file: &mut VaultFile) -> Report {
-        let mut report = Report::default();
-        if file.public_key != self.body.public_key {
-            file.public_key = self.body.public_key.clone();
-            report.header_restored = true;
-        }
-        let secret = Zeroizing::new(unb64(&self.body.secret_key).unwrap_or_default());
-        for sealed in file.inbox.drain(..) {
-            let record = unb64(&sealed)
-                .ok()
-                .and_then(|bytes| crypto::inbox_open(&secret, &bytes))
-                .and_then(|plain| serde_json::from_slice::<Record>(&plain).ok())
-                .filter(|record| {
-                    names::check_name("project", &record.project).is_ok()
-                        && names::check_name("key", &record.key).is_ok()
-                        && names::check_value(&record.value).is_ok()
-                });
-            match record {
-                Some(record) => report.changes.push(upsert(
-                    &mut self.body.entries,
-                    &record.project,
-                    &record.key,
-                    &record.value,
-                    record.at,
-                )),
-                None => report.rejected += 1,
+    /// Asks for the master password again, for actions that take a copy of
+    /// the vault away. A wrong one counts toward the lockout like an unlock.
+    pub fn verify_master(&self, master: &str) -> Result<()> {
+        self.store.locked(|store| {
+            lockout::check(store.dir())?;
+            let file = store.read()?;
+            let kek = crypto::derive_key(master.as_bytes(), &unb64(&file.salt)?, file.kdf)?;
+            if open_data_key(&kek, &file)?.is_none() {
+                return Err(lockout::fail(store.dir()));
             }
-        }
-        report
+            lockout::clear(store.dir())
+        })
     }
+
+    /// Writes a backup to `dest`: the vault file as it is, still encrypted,
+    /// opened later by the master password or the recovery key current now.
+    pub fn export(&mut self, dest: &Path) -> Result<()> {
+        let store = self.store.clone();
+        store.locked(|store| {
+            self.reload(&store.read()?)?;
+            store.copy_to(dest)
+        })
+    }
+
+    /// Lock, re-read, apply, write. `apply` sees the freshest body.
+    fn transact<T>(
+        &mut self,
+        history: History,
+        apply: impl FnOnce(&mut Body) -> Result<T>,
+    ) -> Result<T> {
+        let store = self.store.clone();
+        store.locked(|store| {
+            let mut file = store.read()?;
+            self.reload(&file)?;
+            let out = apply(&mut self.body)?;
+            reseal(&self.dek, &self.body, &mut file)?;
+            store.write(&file, history)?;
+            Ok(out)
+        })
+    }
+
+    /// Takes the data key and body from the file. `Stale` when the master
+    /// password was changed elsewhere, since this session's key no longer
+    /// opens it. A new recovery key made elsewhere is picked up silently.
+    fn reload(&mut self, file: &VaultFile) -> Result<()> {
+        if file.is_legacy() {
+            return Err(Error::Stale);
+        }
+        let (dek, body) = open_current(&self.kek, file)?.ok_or(Error::Stale)?;
+        self.dek = dek;
+        self.body = body;
+        Ok(())
+    }
+}
+
+/// Derives the key for a new master password under a fresh salt, which is
+/// recorded in `file`.
+fn new_password_key(file: &mut VaultFile, master: &str) -> Result<Key> {
+    let salt: [u8; SALT_LEN] = crypto::random();
+    file.salt = b64(&salt);
+    crypto::derive_key(master.as_bytes(), &salt, file.kdf)
+}
+
+/// Seals `body` into `file` as v3 under a fresh data key, sealed for `kek`
+/// and, with `recovery`, for a fresh recovery key, which is returned.
+fn rekey(
+    file: &mut VaultFile,
+    kek: &Key,
+    body: &Body,
+    recovery: bool,
+) -> Result<(Key, Option<RecoveryKey>)> {
+    file.version = VERSION;
+    file.public_key.clear();
+    file.inbox.clear();
+    let dek = crypto::new_key();
+    file.key = Some(crypto::seal(kek, &dek[..], &file.password_aad()));
+    file.recovery = None;
+    let recovery_key = recovery.then(|| seal_recovery(file, &dek)).transpose()?;
+    reseal(&dek, body, file)?;
+    Ok((dek, recovery_key))
+}
+
+/// Seals `dek` under a new recovery key and returns that key for the owner
+/// to write down.
+fn seal_recovery(file: &mut VaultFile, dek: &Key) -> Result<RecoveryKey> {
+    let (secret, text) = crypto::new_recovery_key();
+    let salt: [u8; SALT_LEN] = crypto::random();
+    let rkek = crypto::derive_key(&secret[..], &salt, file.kdf)?;
+    let salt = b64(&salt);
+    let key = crypto::seal(&rkek, &dek[..], &file.recovery_aad(&salt));
+    file.recovery = Some(Recovery { salt, key });
+    Ok(text)
+}
+
+fn reseal(dek: &Key, body: &Body, file: &mut VaultFile) -> Result<()> {
+    let plain = Zeroizing::new(
+        serde_json::to_vec(body).map_err(|err| Error::Corrupt(format!("cannot save: {err}")))?,
+    );
+    file.body = crypto::seal(dek, &plain, &file.body_aad());
+    Ok(())
+}
+
+/// The data key, if `kek` is the master password's key for this v3 file.
+fn open_data_key(kek: &Key, file: &VaultFile) -> Result<Option<Key>> {
+    let sealed = file
+        .key
+        .as_ref()
+        .ok_or_else(|| Error::Corrupt("vault file has no data key".into()))?;
+    crypto::open_key(kek, sealed, &file.password_aad())
+}
+
+/// The data key and body of a v3 file, if `kek` opens it.
+fn open_current(kek: &Key, file: &VaultFile) -> Result<Option<(Key, Body)>> {
+    let Some(dek) = open_data_key(kek, file)? else {
+        return Ok(None);
+    };
+    Ok(open_body(&dek, file)?.map(|body| (dek, body)))
+}
+
+fn open_body(dek: &Key, file: &VaultFile) -> Result<Option<Body>> {
+    crypto::open(dek, &file.body, &file.body_aad())?
+        .map(|plain| parse_body(&plain))
+        .transpose()
+}
+
+/// Moves the values in a v1/v2 inbox into the body, then forgets the key
+/// that opened them. Only the removed command line wrote inbox records.
+fn merge_inbox(body: &mut Body, file: &mut VaultFile) -> Report {
+    let mut report = Report::default();
+    let secret = Zeroizing::new(unb64(&body.inbox_secret).unwrap_or_default());
+    body.inbox_secret.zeroize();
+    for sealed in file.inbox.drain(..) {
+        let record = unb64(&sealed)
+            .ok()
+            .and_then(|bytes| crypto::inbox_open(&secret, &bytes))
+            .and_then(|plain| serde_json::from_slice::<Record>(&plain).ok())
+            .filter(|record| {
+                names::check_name("project", &record.project).is_ok()
+                    && names::check_name("key", &record.key).is_ok()
+                    && names::check_value(&record.value).is_ok()
+            });
+        match record {
+            Some(record) => report.changes.push(upsert(
+                &mut body.entries,
+                &record.project,
+                &record.key,
+                &record.value,
+                record.at,
+            )),
+            None => report.rejected += 1,
+        }
+    }
+    report
 }
 
 fn upsert(entries: &mut Vec<Entry>, project: &str, key: &str, value: &str, at: u64) -> Change {
@@ -384,17 +521,6 @@ fn upsert(entries: &mut Vec<Entry>, project: &str, key: &str, value: &str, at: u
     }
 }
 
-/// Seals `body` into `file` as the current format version. The version is in
-/// the associated data, so it is set before sealing.
-fn reseal(key: &[u8; KEY_LEN], body: &Body, file: &mut VaultFile) -> Result<()> {
-    let plain = Zeroizing::new(
-        serde_json::to_vec(body).map_err(|err| Error::Corrupt(format!("cannot save: {err}")))?,
-    );
-    file.version = VERSION;
-    file.body = crypto::seal(key, &plain, &file.aad());
-    Ok(())
-}
-
 fn parse_body(plain: &[u8]) -> Result<Body> {
     serde_json::from_slice(plain)
         .map_err(|err| Error::Corrupt(format!("vault body is not valid: {err}")))
@@ -402,11 +528,12 @@ fn parse_body(plain: &[u8]) -> Result<Body> {
 
 #[cfg(test)]
 mod tests {
-    use std::{env, fs, thread};
+    use std::{env, fs};
 
     use super::*;
 
     const MASTER: &str = "velvet otter plumbing ninety";
+    const NEW_MASTER: &str = "brand new master phrase";
 
     struct TempDir(PathBuf);
 
@@ -433,79 +560,57 @@ mod tests {
     fn new_vault() -> (TempDir, Store) {
         let dir = TempDir::new();
         let store = dir.store();
-        store.create(MASTER).unwrap();
+        store.create(MASTER, false).unwrap();
         (dir, store)
+    }
+
+    fn new_vault_with_recovery() -> (TempDir, Store, RecoveryKey) {
+        let dir = TempDir::new();
+        let store = dir.store();
+        let recovery_key = store.create(MASTER, true).unwrap().unwrap();
+        (dir, store, recovery_key)
     }
 
     fn keys(session: &Session) -> Vec<String> {
         session.entries().iter().map(|e| e.key.clone()).collect()
     }
 
-    fn set_many_in_parallel(store: &Store, threads: usize, per_thread: usize) {
-        let handles: Vec<_> = (0..threads)
-            .map(|t| {
-                let store = store.clone();
-                thread::spawn(move || {
-                    for i in 0..per_thread {
-                        store.set("default", &format!("K_{t}_{i}"), "v").unwrap();
-                    }
-                })
-            })
-            .collect();
-        for handle in handles {
-            handle.join().unwrap();
+    /// Writes a vault as 0.0.2 or earlier left it: the body sealed straight
+    /// under the password's key, holding `OLD`, and an inbox sealed to the
+    /// vault's public key.
+    fn write_legacy(store: &Store, version: u32, deletion: bool, inbox: &[&[u8]]) {
+        let pair = crypto::legacy::gen_keypair();
+        let salt: [u8; SALT_LEN] = crypto::random();
+        let mut file = VaultFile::new(KdfParams::DEFAULT);
+        file.version = version;
+        file.salt = b64(&salt);
+        file.public_key = b64(&pair.public);
+        let key = crypto::derive_key(MASTER.as_bytes(), &salt, file.kdf).unwrap();
+        let mut body = serde_json::json!({
+            "secret_key": b64(&pair.secret),
+            "public_key": b64(&pair.public),
+            "entries": [{ "project": "default", "key": "OLD", "value": "1", "updated": 0 }],
+        });
+        if deletion {
+            body["deletion"] = serde_json::json!({ "salt": "c2FsdA==", "hash": "aGFzaA==" });
         }
+        let plain = serde_json::to_vec(&body).unwrap();
+        file.body = crypto::seal(&key, &plain, &file.legacy_aad());
+        for record in inbox {
+            let sealed = crypto::legacy::inbox_seal(&pair.public, record);
+            file.inbox.push(b64(&sealed));
+        }
+        store.write(&file, History::Keep).unwrap();
     }
 
-    #[test]
-    fn set_then_unlock_returns_value() {
-        let (_dir, store) = new_vault();
-        store.set("web", "API_KEY", "sk-123").unwrap();
-
-        let (session, _) = store.unlock(MASTER).unwrap();
-
-        assert_eq!(session.get("web", "api_key").unwrap().value, "sk-123");
-    }
-
-    #[test]
-    fn set_same_key_twice_keeps_newest_and_reports_replaced() {
-        let (_dir, store) = new_vault();
-        store.set("default", "TOKEN", "old").unwrap();
-        store.set("default", "TOKEN", "new").unwrap();
-
-        let (session, report) = store.unlock(MASTER).unwrap();
-
-        assert_eq!(session.get("default", "TOKEN").unwrap().value, "new");
-        assert_eq!(report.changes[1].kind, ChangeKind::Replaced);
-    }
-
-    #[test]
-    fn set_many_with_one_bad_name_saves_nothing() {
-        let (_dir, store) = new_vault();
-
-        let result = store.set_many("default", &[("GOOD", "1"), ("BAD=NAME", "2")]);
-
-        assert!(matches!(result, Err(Error::InvalidName(_))));
-        assert_eq!(store.pending().unwrap(), 0);
-    }
-
-    #[test]
-    fn set_without_vault_returns_no_vault() {
-        let dir = TempDir::new();
-
-        let result = dir.store().set("default", "A", "1");
-
-        assert!(matches!(result, Err(Error::NoVault)));
-    }
-
-    #[test]
-    fn set_writes_no_plaintext_to_disk() {
-        let (_dir, store) = new_vault();
-
-        store.set("default", "A", "plain-marker-7731").unwrap();
-
-        let raw = fs::read_to_string(store.vault_path()).unwrap();
-        assert!(!raw.contains("plain-marker-7731"));
+    fn inbox_record(key: &str, value: &str) -> Vec<u8> {
+        let record = Record {
+            project: "default".into(),
+            key: key.into(),
+            value: value.into(),
+            at: 1,
+        };
+        serde_json::to_vec(&record).unwrap()
     }
 
     #[test]
@@ -540,7 +645,7 @@ mod tests {
     fn create_twice_returns_vault_exists() {
         let (_dir, store) = new_vault();
 
-        let result = store.create(MASTER);
+        let result = store.create(MASTER, false);
 
         assert!(matches!(result, Err(Error::VaultExists)));
     }
@@ -554,21 +659,32 @@ mod tests {
 
         let (fresh, _) = store.unlock(MASTER).unwrap();
         assert_eq!(
-            fresh.get("api", "DATABASE_URL").unwrap().value,
+            fresh.get("api", "database_url").unwrap().value,
             "postgres://x"
         );
     }
 
     #[test]
-    fn refresh_picks_up_set_from_another_writer() {
+    fn put_writes_no_plaintext_to_disk() {
         let (_dir, store) = new_vault();
         let (mut session, _) = store.unlock(MASTER).unwrap();
-        store.set("default", "FROM_CLI", "1").unwrap();
 
-        let report = session.refresh().unwrap();
+        session.put("default", "A", "plain-marker-7731").unwrap();
 
-        assert_eq!(report.changes[0].key, "FROM_CLI");
-        assert_eq!(keys(&session), vec!["FROM_CLI".to_string()]);
+        let raw = fs::read_to_string(store.vault_path()).unwrap();
+        assert!(!raw.contains("plain-marker-7731"));
+    }
+
+    #[test]
+    fn refresh_picks_up_a_put_from_another_session() {
+        let (_dir, store) = new_vault();
+        let (mut app, _) = store.unlock(MASTER).unwrap();
+        let (mut other, _) = store.unlock(MASTER).unwrap();
+        other.put("default", "FROM_OTHER", "1").unwrap();
+
+        app.refresh().unwrap();
+
+        assert_eq!(keys(&app), vec!["FROM_OTHER".to_string()]);
     }
 
     #[test]
@@ -608,7 +724,7 @@ mod tests {
         session.put("web", "A", "1").unwrap();
         session.put("api", "B", "2").unwrap();
 
-        let (removed, _) = session.delete_project("WEB").unwrap();
+        let removed = session.delete_project("WEB").unwrap();
 
         assert_eq!(removed, 1);
         assert_eq!(keys(&session), vec!["B".to_string()]);
@@ -621,7 +737,7 @@ mod tests {
         session.put("web", "A", "1").unwrap();
         session.put("api", "B", "2").unwrap();
 
-        let (removed, _) = session.truncate().unwrap();
+        let removed = session.truncate().unwrap();
 
         assert_eq!(removed, 2);
         assert!(session.entries().is_empty());
@@ -631,9 +747,9 @@ mod tests {
     fn change_master_password_makes_other_sessions_stale() {
         let (_dir, store) = new_vault();
         let (mut app, _) = store.unlock(MASTER).unwrap();
-        let (mut cli, _) = store.unlock(MASTER).unwrap();
+        let (mut other, _) = store.unlock(MASTER).unwrap();
 
-        cli.change_master("brand new master phrase").unwrap();
+        other.change_master(NEW_MASTER).unwrap();
 
         assert!(matches!(app.refresh(), Err(Error::Stale)));
     }
@@ -642,58 +758,286 @@ mod tests {
     fn change_master_password_old_password_stops_working() {
         let (_dir, store) = new_vault();
         let (mut session, _) = store.unlock(MASTER).unwrap();
-        session.change_master("brand new master phrase").unwrap();
+        session.change_master(NEW_MASTER).unwrap();
 
         let old = store.unlock(MASTER);
 
         assert!(matches!(old, Err(Error::WrongPassword { .. })));
-        assert!(store.unlock("brand new master phrase").is_ok());
+        assert!(store.unlock(NEW_MASTER).is_ok());
+    }
+
+    #[test]
+    fn old_password_with_an_old_copy_cannot_read_what_is_saved_after_a_change() {
+        let (_dir, store) = new_vault();
+        let old_copy = store.read().unwrap();
+        let (mut session, _) = store.unlock(MASTER).unwrap();
+        session.change_master(NEW_MASTER).unwrap();
+        session.put("default", "AFTER", "secret").unwrap();
+        let old_kek = crypto::derive_key(
+            MASTER.as_bytes(),
+            &unb64(&old_copy.salt).unwrap(),
+            old_copy.kdf,
+        )
+        .unwrap();
+        let old_dek = open_data_key(&old_kek, &old_copy).unwrap().unwrap();
+
+        let new_file = store.read().unwrap();
+
+        assert!(open_body(&old_dek, &new_file).unwrap().is_none());
+    }
+
+    #[test]
+    fn create_with_recovery_leaves_the_password_working() {
+        let (_dir, store, recovery_key) = new_vault_with_recovery();
+
+        let (session, _) = store.unlock(MASTER).unwrap();
+
+        assert_eq!(recovery_key.len(), 39);
+        assert!(session.has_recovery());
+    }
+
+    #[test]
+    fn recover_sets_a_new_password_and_replaces_the_recovery_key() {
+        let (_dir, store, first) = new_vault_with_recovery();
+        let (mut session, _) = store.unlock(MASTER).unwrap();
+        session.put("default", "KEPT", "1").unwrap();
+
+        let (recovered, second) = store.recover(&first, NEW_MASTER).unwrap();
+
+        assert_eq!(keys(&recovered), vec!["KEPT".to_string()]);
+        assert!(matches!(
+            store.unlock(MASTER),
+            Err(Error::WrongPassword { .. })
+        ));
+        assert!(store.unlock(NEW_MASTER).is_ok());
+        assert!(matches!(
+            store.recover(&first, MASTER),
+            Err(Error::WrongPassword { .. })
+        ));
+        assert!(store.recover(&second, MASTER).is_ok());
+    }
+
+    #[test]
+    fn recover_with_another_key_counts_as_a_wrong_password() {
+        let (_dir, store, _) = new_vault_with_recovery();
+        let (_, stranger) = crypto::new_recovery_key();
+
+        let result = store.recover(&stranger, NEW_MASTER);
+
+        assert!(matches!(
+            result,
+            Err(Error::WrongPassword {
+                attempts_left: 9,
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    fn recover_with_a_mistyped_key_says_so_and_counts_nothing() {
+        let (_dir, store, recovery_key) = new_vault_with_recovery();
+
+        let result = store.recover(&recovery_key[2..], NEW_MASTER);
+
+        assert!(matches!(result, Err(Error::BadRecoveryKey)));
+        assert!(store.lockout_remaining().is_none());
+        assert!(matches!(
+            store.unlock("still not it"),
+            Err(Error::WrongPassword {
+                attempts_left: 9,
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    fn recover_without_a_recovery_key_returns_no_recovery() {
+        let (_dir, store) = new_vault();
+        let (_, some_key) = crypto::new_recovery_key();
+
+        let result = store.recover(&some_key, NEW_MASTER);
+
+        assert!(matches!(result, Err(Error::NoRecovery)));
+    }
+
+    #[test]
+    fn change_master_replaces_the_recovery_key() {
+        let (_dir, store, first) = new_vault_with_recovery();
+        let (mut session, _) = store.unlock(MASTER).unwrap();
+
+        let second = session.change_master(NEW_MASTER).unwrap().unwrap();
+
+        assert!(matches!(
+            store.recover(&first, MASTER),
+            Err(Error::WrongPassword { .. })
+        ));
+        assert!(store.recover(&second, MASTER).is_ok());
+    }
+
+    #[test]
+    fn change_master_without_recovery_issues_none() {
+        let (_dir, store) = new_vault();
+        let (mut session, _) = store.unlock(MASTER).unwrap();
+
+        let issued = session.change_master(NEW_MASTER).unwrap();
+
+        assert!(issued.is_none());
+        assert!(!store.has_recovery());
+    }
+
+    #[test]
+    fn set_recovery_turns_it_on_and_off() {
+        let (_dir, store) = new_vault();
+        let (mut session, _) = store.unlock(MASTER).unwrap();
+
+        let issued = session.set_recovery(true).unwrap().unwrap();
+        let on = store.has_recovery();
+        session.set_recovery(false).unwrap();
+
+        assert!(on);
+        assert!(!store.has_recovery());
+        assert!(matches!(
+            store.recover(&issued, NEW_MASTER),
+            Err(Error::NoRecovery)
+        ));
+    }
+
+    #[test]
+    fn a_new_recovery_key_from_another_session_does_not_lock_this_one() {
+        let (_dir, store, _) = new_vault_with_recovery();
+        let (mut app, _) = store.unlock(MASTER).unwrap();
+        let (mut other, _) = store.unlock(MASTER).unwrap();
+        other.set_recovery(true).unwrap();
+
+        app.put("default", "STILL_OPEN", "1").unwrap();
+
+        assert_eq!(keys(&app), vec!["STILL_OPEN".to_string()]);
+    }
+
+    #[test]
+    fn stripping_the_recovery_block_leaves_the_password_working() {
+        let (_dir, store, _) = new_vault_with_recovery();
+        let mut file = store.read().unwrap();
+        file.recovery = None;
+        store.write(&file, History::Keep).unwrap();
+
+        assert!(store.unlock(MASTER).is_ok());
+    }
+
+    #[test]
+    fn verify_master_with_a_wrong_password_counts_toward_the_lockout() {
+        let (_dir, store) = new_vault();
+        let (session, _) = store.unlock(MASTER).unwrap();
+
+        let wrong = session.verify_master("wrong password entirely");
+
+        assert!(matches!(
+            wrong,
+            Err(Error::WrongPassword {
+                attempts_left: 9,
+                ..
+            })
+        ));
+        assert!(session.verify_master(MASTER).is_ok());
+    }
+
+    #[test]
+    fn export_writes_a_backup_that_restores_on_another_pc() {
+        let (dir, store) = new_vault();
+        let (mut session, _) = store.unlock(MASTER).unwrap();
+        session.put("web", "TOKEN", "t-1").unwrap();
+        let backup = dir.0.join("backup.lokey");
+
+        session.export(&backup).unwrap();
+        let elsewhere = TempDir::new();
+        let (restored, _, recovery_key) = elsewhere.store().restore(&backup, MASTER).unwrap();
+
+        assert_eq!(restored.get("web", "TOKEN").unwrap().value, "t-1");
+        assert!(recovery_key.is_none());
+        assert!(elsewhere.store().unlock(MASTER).is_ok());
+    }
+
+    #[test]
+    fn restore_replaces_the_recovery_key_the_backup_carried() {
+        let (dir, store, first) = new_vault_with_recovery();
+        let (mut session, _) = store.unlock(MASTER).unwrap();
+        let backup = dir.0.join("backup.lokey");
+        session.export(&backup).unwrap();
+        let elsewhere = TempDir::new();
+
+        let (_, _, second) = elsewhere.store().restore(&backup, MASTER).unwrap();
+
+        let second = second.unwrap();
+        assert!(matches!(
+            elsewhere.store().recover(&first, NEW_MASTER),
+            Err(Error::WrongPassword { .. })
+        ));
+        assert!(elsewhere.store().recover(&second, NEW_MASTER).is_ok());
+    }
+
+    #[test]
+    fn restore_never_overwrites_an_existing_vault() {
+        let (dir, store) = new_vault();
+        let (mut session, _) = store.unlock(MASTER).unwrap();
+        let backup = dir.0.join("backup.lokey");
+        session.export(&backup).unwrap();
+
+        let result = store.restore(&backup, MASTER);
+
+        assert!(matches!(result, Err(Error::VaultExists)));
+    }
+
+    #[test]
+    fn restore_with_a_wrong_password_writes_nothing() {
+        let (dir, store) = new_vault();
+        let (mut session, _) = store.unlock(MASTER).unwrap();
+        let backup = dir.0.join("backup.lokey");
+        session.export(&backup).unwrap();
+        let elsewhere = TempDir::new();
+
+        let result = elsewhere
+            .store()
+            .restore(&backup, "wrong password entirely");
+
+        assert!(matches!(result, Err(Error::WrongPassword { .. })));
+        assert!(!elsewhere.store().exists());
+    }
+
+    #[test]
+    fn v2_vault_with_an_inbox_is_merged_and_upgraded_to_v3() {
+        let dir = TempDir::new();
+        let store = dir.store();
+        write_legacy(&store, 2, false, &[&inbox_record("NEW", "2")]);
+
+        let (session, report) = store.unlock(MASTER).unwrap();
+
+        assert_eq!(report.changes.len(), 1);
+        assert_eq!(keys(&session), vec!["OLD".to_string(), "NEW".to_string()]);
+        let raw = fs::read_to_string(store.vault_path()).unwrap();
+        assert!(!raw.contains("inbox") && !raw.contains("public_key"));
+        assert_eq!(store.read().unwrap().version, VERSION);
+        assert_eq!(keys(&store.unlock(MASTER).unwrap().0).len(), 2);
     }
 
     #[test]
     fn v1_vault_with_a_deletion_check_opens_and_is_upgraded() {
-        let (_dir, store) = new_vault();
-        let mut file = store.read().unwrap();
-        // Rewrite the vault as 1.0.0 left it: version 1, a deletion check in the body.
-        let salt = unb64(&file.salt).unwrap();
-        let key = crypto::derive_key(MASTER.as_bytes(), &salt, file.kdf).unwrap();
-        let plain = crypto::open(&key, &file.body, &file.aad())
-            .unwrap()
-            .unwrap();
-        let mut body: serde_json::Value = serde_json::from_slice(&plain).unwrap();
-        body["deletion"] = serde_json::json!({ "salt": "c2FsdA==", "hash": "aGFzaA==" });
-        file.version = 1;
-        file.body = crypto::seal(&key, &serde_json::to_vec(&body).unwrap(), &file.aad());
-        store.write(&file, History::Keep).unwrap();
+        let dir = TempDir::new();
+        let store = dir.store();
+        write_legacy(&store, 1, true, &[]);
 
-        let (mut session, _) = store.unlock(MASTER).unwrap();
-        session.put("default", "A", "1").unwrap();
+        let (session, _) = store.unlock(MASTER).unwrap();
 
-        assert_eq!(store.read().unwrap().version, VERSION);
+        assert_eq!(keys(&session), vec!["OLD".to_string()]);
         let raw = fs::read_to_string(store.vault_path()).unwrap();
         assert!(!raw.contains("deletion"));
-        assert_eq!(
-            keys(&store.unlock(MASTER).unwrap().0),
-            vec!["A".to_string()]
-        );
-    }
-
-    #[test]
-    fn swapped_header_public_key_is_restored_and_reported() {
-        let (_dir, store) = new_vault();
-        let mut file = store.read().unwrap();
-        file.public_key = b64(&crypto::gen_keypair().public);
-        store.write(&file, History::Keep).unwrap();
-
-        let (_, report) = store.unlock(MASTER).unwrap();
-
-        assert!(report.header_restored);
-        assert_ne!(store.read().unwrap().public_key, file.public_key);
+        assert_eq!(store.read().unwrap().version, VERSION);
     }
 
     #[test]
     fn garbage_inbox_record_is_rejected_not_merged() {
-        let (_dir, store) = new_vault();
+        let dir = TempDir::new();
+        let store = dir.store();
+        write_legacy(&store, 2, false, &[]);
         let mut file = store.read().unwrap();
         file.inbox
             .push(b64(b"not a sealed record at all, just junk bytes"));
@@ -702,7 +1046,7 @@ mod tests {
         let (session, report) = store.unlock(MASTER).unwrap();
 
         assert_eq!(report.rejected, 1);
-        assert!(session.entries().is_empty());
+        assert_eq!(keys(&session), vec!["OLD".to_string()]);
     }
 
     #[test]
@@ -720,13 +1064,15 @@ mod tests {
     }
 
     #[test]
-    fn parallel_sets_from_many_writers_all_arrive() {
+    fn raised_cost_in_the_header_reads_as_wrong_password() {
         let (_dir, store) = new_vault();
-        set_many_in_parallel(&store, 8, 5);
+        let mut file = store.read().unwrap();
+        file.kdf.t += 1;
+        store.write(&file, History::Keep).unwrap();
 
-        let (session, _) = store.unlock(MASTER).unwrap();
+        let result = store.unlock(MASTER);
 
-        assert_eq!(session.entries().len(), 40);
+        assert!(matches!(result, Err(Error::WrongPassword { .. })));
     }
 
     #[test]
