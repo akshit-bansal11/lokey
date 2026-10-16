@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ICON, SITE } from "@/lib/nav";
+import { SITE, SOCIAL_IMAGE } from "@/lib/nav";
 import "./globals.css";
 
 /*
@@ -28,11 +28,11 @@ export const metadata: Metadata = {
     type: "website",
     url: "/",
     siteName: "Saltcellar",
-    images: [ICON],
+    images: [SOCIAL_IMAGE],
   },
   twitter: {
-    card: "summary",
-    images: [ICON],
+    card: "summary_large_image",
+    images: [SOCIAL_IMAGE],
   },
 };
 

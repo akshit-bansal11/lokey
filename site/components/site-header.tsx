@@ -1,4 +1,5 @@
 import { Menu } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { GithubMark } from "@/components/icons/github";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -67,6 +68,8 @@ export function SiteHeader({ variant = "landing" }: { variant?: "landing" | "doc
             href="/"
             className="flex min-h-11 items-center gap-2 rounded-lg text-xl font-black tracking-[-0.01em]"
           >
+            {/* The small drawing: at 28px the full icon's cap holes and grains blur. */}
+            <Image src="/icon-small.svg" width={28} height={28} unoptimized alt="" />
             Saltcellar
             {docs ? (
               <span className="text-dim hidden text-[0.9375rem] font-bold sm:inline">
