@@ -4,7 +4,7 @@ import type { Project, Row } from "./types.ts";
 
 export const DEFAULT_PROJECT = "default";
 
-/** Names match case-insensitively, as they do in lokey-core. */
+/** Names match case-insensitively, as they do in saltcellar-core. */
 export function sameName(a: string, b: string): boolean {
   return a.toLowerCase() === b.toLowerCase();
 }
@@ -36,7 +36,7 @@ export function wouldReplace(rows: Row[], project: string, key: string): boolean
   return rows.some((row) => sameName(row.project, project) && sameName(row.key, key.trim()));
 }
 
-/** The name rule from lokey-core, checked here only to give instant feedback. */
+/** The name rule from saltcellar-core, checked here only to give instant feedback. */
 export function nameProblem(kind: string, name: string): string {
   if (name === "") return `Enter a ${kind} name.`;
   if ([...name].length > 128) return `The ${kind} name is longer than 128 characters.`;

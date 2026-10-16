@@ -1,4 +1,4 @@
-// The password generator dialog. Passwords come from lokey-core
+// The password generator dialog. Passwords come from saltcellar-core
 // (generator.rs). Copying goes through the Rust clipboard code, like a saved
 // value, so it stays out of Win+V history and is cleared after 30 seconds.
 

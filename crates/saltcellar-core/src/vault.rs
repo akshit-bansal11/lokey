@@ -541,7 +541,7 @@ mod tests {
         fn new() -> Self {
             let suffix: [u8; 8] = crypto::random();
             let name: String = suffix.iter().map(|b| format!("{b:02x}")).collect();
-            let dir = env::temp_dir().join(format!("lokey-test-{name}"));
+            let dir = env::temp_dir().join(format!("saltcellar-test-{name}"));
             fs::create_dir_all(&dir).unwrap();
             Self(dir)
         }

@@ -1,6 +1,6 @@
-# TECH-STACK.md — lokey
+# TECH-STACK.md — Saltcellar
 
-**Last verified:** 2026-09-20 · **Verified with:** `Cargo.lock`, `package-lock.json`
+**Last verified:** 2026-10-16 · **Verified with:** `Cargo.lock`, `package-lock.json`
 
 ## Runtime target
 
@@ -36,13 +36,14 @@
 | Linter — stylesheets | Biome | 2.5.14 | Stylelint | Biome covers CSS |
 | Types for tooling | @types/node | 26.6.2 | none | node:test and vite.config typing |
 | CI | GitHub Actions | n/a | default | |
-| Hosting | GitHub Releases | n/a | Vercel (the pipeline default) | a native app has nothing to host |
+| Hosting | GitHub Releases for the app; Vercel (static export) for the website | n/a | Vercel for the app | a native app has nothing to host; the site is plain files |
+| Website | Next.js static export, Tailwind, shadcn-style components, Biome + ESLint + tsc (`site/`) | Next 16.3.8, React 19.3.0, Tailwind 4.3.3, TS 5.9.3 | a separate stack | copied with Edgepad's exact versions, so both sites are maintained the same way; system fonts instead of Edgepad's `next/font/google`, so nothing is fetched |
 
 ## Services and their environment variables
 
 | Service | What it does | Env vars | Set in | Rotation owner |
 | --- | --- | --- | --- | --- |
-| none | lokey has no network service | `LOKEY_DIR` (optional: vault folder, read by the app) | user's environment | n/a |
+| none | Saltcellar has no network service | `SALTCELLAR_DIR` (optional: vault folder, read by the app); `LOKEY_DIR` is still read after it, from before the rename | user's environment | n/a |
 
 ## Scripts
 
@@ -61,6 +62,8 @@
 | Argon2id | 64 MiB, t=3, p=1 | SECURITY-SPEC SEC-05; stored per vault in the header |
 | Master password minimum | 15 characters, max 1024, leaked-list check | SECURITY-SPEC SEC-06 (NIST SP 800-63B-4) |
 | Lockout | 10 wrong passwords then 15 minutes; backoff 1s doubling to 30s | `lockout.json`, beside the vault |
+| Vault folder | `%LOCALAPPDATA%\saltcellar`; a vault in `%LOCALAPPDATA%\lokey` is copied there once | `DIR`, `OLD_DIR` and `Migration` in `store.rs` |
+| Names kept from lokey | format tag `"lokey"`, HPKE label `lokey inbox v1`, `vault.lokey*` and `.lokey` | changing any of them makes existing vaults or backups unreadable |
 | App idle lock | 5 minutes | `IDLE_LOCK` in `src-tauri/src/main.rs` |
 | Clipboard clear | 30 seconds, only if unchanged | `CLEAR_AFTER` in `clipboard.rs` |
 | Value size cap | 64 KiB | keeps the file every change re-reads small |
@@ -71,7 +74,7 @@
 
 | Not used | Why | Revisit when |
 | --- | --- | --- |
-| Any network service (Better Stack, analytics, update check) | "No network, ever" is the product | never, without a new product decision |
+| Any network service (Better Stack, analytics, update check), including on the website | "No network, ever" is the product, and the site keeps to it: no analytics, trackers or remote fonts | never, without a new product decision |
 | Code signing | the certificate costs money yearly | there are enough users that SmartScreen warnings cost adoption |
 | Browser/UI tests (Playwright, WebDriver) | Tauri WebDriver on Windows adds a driver dependency | the app grows past a handful of screens |
 | Any installer (NSIS, MSI) | the release is one portable exe; `tauri build --no-bundle` | an organisation asks for a managed install |

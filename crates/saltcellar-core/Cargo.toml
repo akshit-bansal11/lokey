@@ -1,6 +1,6 @@
 [package]
-name = "lokey-core"
-description = "Vault engine behind the lokey desktop app"
+name = "saltcellar-core"
+description = "Vault engine behind the Saltcellar desktop app"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
