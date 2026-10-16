@@ -36,7 +36,8 @@
 | Linter — stylesheets | Biome | 2.5.14 | Stylelint | Biome covers CSS |
 | Types for tooling | @types/node | 26.6.2 | none | node:test and vite.config typing |
 | CI | GitHub Actions | n/a | default | |
-| Hosting | GitHub Releases | n/a | Vercel (the pipeline default) | a native app has nothing to host |
+| Hosting | GitHub Releases for the app; Vercel (static export) for the website | n/a | Vercel for the app | a native app has nothing to host; the site is plain files |
+| Website | Next.js static export, Tailwind, shadcn-style components, Biome + ESLint + tsc (`site/`) | Next 16.3.8, React 19.3.0, Tailwind 4.3.3, TS 5.9.3 | a separate stack | copied with Edgepad's exact versions, so both sites are maintained the same way; system fonts instead of Edgepad's `next/font/google`, so nothing is fetched |
 
 ## Services and their environment variables
 
@@ -73,7 +74,7 @@
 
 | Not used | Why | Revisit when |
 | --- | --- | --- |
-| Any network service (Better Stack, analytics, update check) | "No network, ever" is the product | never, without a new product decision |
+| Any network service (Better Stack, analytics, update check), including on the website | "No network, ever" is the product, and the site keeps to it: no analytics, trackers or remote fonts | never, without a new product decision |
 | Code signing | the certificate costs money yearly | there are enough users that SmartScreen warnings cost adoption |
 | Browser/UI tests (Playwright, WebDriver) | Tauri WebDriver on Windows adds a driver dependency | the app grows past a handful of screens |
 | Any installer (NSIS, MSI) | the release is one portable exe; `tauri build --no-bundle` | an organisation asks for a managed install |

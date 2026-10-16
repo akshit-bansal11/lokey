@@ -44,6 +44,11 @@ front-end without asking.
   (copy, never move; see `Migration` in `store.rs`). `LOKEY_DIR` is still read
   after `SALTCELLAR_DIR`.
 
+- **`site/` is the website** (saltcellar.vercel.app), a separate Next.js app
+  with its own lockfile and gate (`cd site && npm run check:ci`, `site.yml`).
+  It follows the same rule: no analytics, trackers, remote fonts or third-party
+  requests.
+
 ## Gate
 
 - `npm run check` fixes formatting in place; `npm run check:ci` is the

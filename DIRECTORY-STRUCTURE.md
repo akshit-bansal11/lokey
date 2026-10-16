@@ -4,7 +4,7 @@
 
 ## Excluded from the walk
 
-Untracked paths: `.git` · `node_modules` · `target` · `dist` · `src-tauri/gen`
+Untracked paths: `.git` · `node_modules` · `target` · `dist` · `src-tauri/gen` · `site/.next` · `site/out` · `site/node_modules`
 
 ## Tree
 
@@ -18,7 +18,8 @@ saltcellar/
 │   ├── workflows/
 │   │   ├── ci.yml
 │   │   ├── lockfile.yml
-│   │   └── release.yml
+│   │   ├── release.yml
+│   │   └── site.yml
 │   └── dependabot.yml
 ├── crates/
 │   └── saltcellar-core/
@@ -36,6 +37,54 @@ saltcellar/
 │       │   ├── store.rs
 │       │   └── vault.rs
 │       └── Cargo.toml
+├── site/
+│   ├── app/
+│   │   ├── docs/
+│   │   │   └── page.tsx
+│   │   ├── globals.css
+│   │   ├── icon.png
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   ├── robots.ts
+│   │   └── sitemap.ts
+│   ├── components/
+│   │   ├── icons/
+│   │   │   └── github.tsx
+│   │   ├── sections/
+│   │   │   └── docs.tsx
+│   │   ├── ui/
+│   │   │   ├── animated-shiny-text.tsx
+│   │   │   ├── badge.tsx
+│   │   │   ├── blur-fade.tsx
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── grid-pattern.tsx
+│   │   │   └── tabs.tsx
+│   │   ├── code-block.tsx
+│   │   ├── copy-button.tsx
+│   │   ├── section.tsx
+│   │   ├── site-footer.tsx
+│   │   ├── site-header.tsx
+│   │   ├── theme-provider.tsx
+│   │   ├── theme-toggle.tsx
+│   │   └── toc.tsx
+│   ├── lib/
+│   │   ├── nav.ts
+│   │   └── utils.ts
+│   ├── public/
+│   │   ├── github.svg
+│   │   └── icon.png
+│   ├── .editorconfig
+│   ├── .gitignore
+│   ├── biome.json
+│   ├── components.json
+│   ├── eslint.config.mjs
+│   ├── next.config.ts
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.mjs
+│   ├── README.md
+│   └── tsconfig.json
 ├── src/
 │   ├── lib/
 │   │   ├── api.ts
@@ -93,6 +142,7 @@ saltcellar/
 ├── STATE.md
 ├── TECH-STACK.md
 ├── tsconfig.json
+├── vercel.json
 └── vite.config.ts
 ```
 
@@ -108,7 +158,10 @@ saltcellar/
 | `src/lib/` | Page modules without screens: the typed IPC client, DOM helpers, icons, status bar, pure row logic. |
 | `src/views/` | One module per screen or dialog group. |
 | `src/styles/` | The token file and the stylesheet that consumes it. |
-| `.github/workflows/` | CI (`ci.yml`), release on tag (`release.yml`), lockfile resolution (`lockfile.yml`). |
+| `.github/workflows/` | CI (`ci.yml`), release on tag or as a hand-run draft (`release.yml`), lockfile resolution (`lockfile.yml`), the website's gate (`site.yml`). |
+| `site/` | The website at saltcellar.vercel.app: landing page and one-page docs. Its own Next.js app, lockfile and gate, copied from Edgepad's site; the app's gate never reads it. |
+| `site/app/` | The two routes (`/`, `/docs`), the layout, robots and sitemap. |
+| `site/components/` | Page parts: header, footer, sidebar, the docs sections; `ui/` holds the shadcn-style primitives. |
 | `.cargo/` | `audit.toml`: accepted RustSec warnings with reasons and expiry. |
 | `.claude/` | Project rules for agents. |
 
