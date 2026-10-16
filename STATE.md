@@ -13,7 +13,7 @@
 
 ## Where the work is right now
 
-- **In flight:** 0.4.0, bumped and not tagged: the rename from lokey to Saltcellar: crates, identifier and UI renamed, and a one-time copy of `%LOCALAPPDATA%\lokey` into `%LOCALAPPDATA%\saltcellar` (`Migration` in `store.rs`). The vault format and file names are unchanged. Also a website in `site/` (landing page and `/docs`), served at https://saltcellar.akshitbansal.me (Vercel project `saltcellar-o3dr`).
+- **In flight:** 0.4.0, bumped and not tagged: the rename from lokey to Saltcellar: crates, identifier and UI renamed, and a one-time copy of `%LOCALAPPDATA%\lokey` into `%LOCALAPPDATA%\saltcellar` (`Migration` in `store.rs`). The vault format and file names are unchanged. Also a website in `site/` (landing page and `/docs`), served at https://saltcellar.akshitbansal.dev (Vercel project `saltcellar`).
 - **Last shipped:** v0.3.0 (2026-09-27, PR #17, tag on `009679a`): the password generator (PR #15), the settings dialog's delete buttons drawing their icons, the SEC-03 command register above `generate_handler!`, `"type": "module"`, and Tauri 2.11.6 / CLI 2.11.5. There is no 0.2.0, by the maintainer's choice. v0.1.0 before it shipped vault format v3, the recovery key, and encrypted backup export and restore.
 - **Blocked on:** Nothing.
 - **Next action:** after the rename merges, rename the GitHub repo to `akshit-bansal11/saltcellar`, then run a draft release on a PC with a lokey vault to see the migration work (`OPEN_ITEMS.md`). Still open: the manual pass in the built exe listed in `OPEN_ITEMS.md` (recovery, export, restore, the Save/Open dialogs, the settings dialog's icons), plus the older items: every shortcut once, and opening a vault made by an earlier build to see it upgrade to v3.
