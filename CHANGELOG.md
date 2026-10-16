@@ -6,6 +6,13 @@ All notable changes to Saltcellar (called lokey until 0.4.0) are recorded here, 
 
 ## [Unreleased]
 
+### Changed
+
+- A new icon: a salt shaker with a keyhole, on a blue tile, replacing the
+  plain key. The 16, 24 and 32 px sizes come from a simpler drawing
+  (`icon-small.svg`) so they stay legible.
+- The website has a link preview (`og.png`, 1200×630) instead of the bare icon.
+
 ## [0.4.0] - 2026-10-16
 
 lokey is now Saltcellar. The vault format is unchanged (v3): a lokey vault is

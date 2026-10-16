@@ -73,7 +73,8 @@ saltcellar/
 │   │   └── utils.ts
 │   ├── public/
 │   │   ├── github.svg
-│   │   └── icon.png
+│   │   ├── icon.png
+│   │   └── og.png
 │   ├── .editorconfig
 │   ├── .gitignore
 │   ├── biome.json
@@ -113,8 +114,10 @@ saltcellar/
 │   │   ├── 128x128.png
 │   │   ├── 128x128@2x.png
 │   │   ├── 32x32.png
+│   │   ├── icon-small.svg
 │   │   ├── icon.ico
-│   │   └── icon.png
+│   │   ├── icon.png
+│   │   └── icon.svg
 │   ├── src/
 │   │   ├── dto.rs
 │   │   ├── file_dialog.rs
