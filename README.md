@@ -1,7 +1,7 @@
-# lokey
+# Saltcellar
 
-**lo**cal **key**: an encrypted vault for your passwords, environment keys and
-backup codes, on your own Windows PC. One window, one file.
+An encrypted vault for your passwords, environment keys and backup codes, on
+your own Windows PC. One window, one file. It was called lokey until 0.4.0.
 
 - **No network code, ever.** No account, no sync, no telemetry, no update
   check. The app's content security policy forbids every connection.
@@ -12,31 +12,31 @@ backup codes, on your own Windows PC. One window, one file.
 
 ## Install
 
-Download `lokey.exe` from
-[Releases](https://github.com/akshit-bansal11/lokey/releases/latest) and run
+Download `saltcellar.exe` from
+[Releases](https://github.com/akshit-bansal11/saltcellar/releases/latest) and run
 it. That is the whole install: one portable exe, no setup program, no
 administrator rights, nothing written outside your own user folder. Put it
-wherever you keep your tools; to remove lokey, delete it.
+wherever you keep your tools; to remove Saltcellar, delete it.
 
 > **Windows SmartScreen** may warn that the app is from an unknown publisher:
-> lokey's builds are not code-signed yet. Check the file you downloaded instead:
+> Saltcellar's builds are not code-signed yet. Check the file you downloaded instead:
 >
 > ```text
 > sha256sum -c SHA256SUMS.txt
-> gh attestation verify lokey.exe --repo akshit-bansal11/lokey
+> gh attestation verify saltcellar.exe --repo akshit-bansal11/saltcellar
 > ```
 
 ## First use
 
 The first run offers to create the vault. You choose one **master password**.
-It must be at least 15 characters, and lokey refuses passwords that appear in
+It must be at least 15 characters, and Saltcellar refuses passwords that appear in
 public lists of leaked passwords. A few random words make a strong password
 that is easy to remember. Once it is entered, everything is open: reading,
 adding, editing, copying and deleting. Deleting asks you to confirm.
 
 Then you choose what happens if you forget it:
 
-- **A recovery key (recommended).** lokey shows a 32-character key once, and
+- **A recovery key (recommended).** Saltcellar shows a 32-character key once, and
   asks you to type it back to prove you saved it. Write it on paper and keep it
   away from the PC. If you forget the master password, the recovery key opens
   the vault and you choose a new password; you then get a new recovery key and
@@ -45,7 +45,7 @@ Then you choose what happens if you forget it:
   everything in it is gone, for you and for anyone else.
 
 There are no password hints and no security questions. Either would become the
-easiest way into the vault, so lokey offers neither.
+easiest way into the vault, so Saltcellar offers neither.
 
 You can turn the recovery key on, replace it or remove it later in Settings.
 
@@ -85,16 +85,16 @@ Keep one on a USB drive or another disk; the vault on your PC is a single file,
 and a dead disk takes it with it. A folder synced by OneDrive or a similar
 service uploads whatever you save there.
 
-To move to a new PC, or after losing the disk, start lokey with no vault and
-choose **Restore from a backup…**. lokey never restores over an existing vault.
+To move to a new PC, or after losing the disk, start Saltcellar with no vault and
+choose **Restore from a backup…**. Saltcellar never restores over an existing vault.
 
 ## Where the vault lives
 
-`%LOCALAPPDATA%\lokey\vault.lokey`, with a small `lockout.json` beside it and
-`vault.lokey.bak`, the version before the last change. Set `LOKEY_DIR` to keep
+`%LOCALAPPDATA%\saltcellar\vault.lokey`, with a small `lockout.json` beside it and
+`vault.lokey.bak`, the version before the last change. Set `SALTCELLAR_DIR` (or the older `LOKEY_DIR`) to keep
 them somewhere else. Local, not roaming: Windows never syncs the folder.
 
-Two lokey windows can be open at once: every change takes a lock on the file,
+Two Saltcellar windows can be open at once: every change takes a lock on the file,
 reads it fresh, applies one change and writes it back whole, so the two never
 overwrite each other.
 
@@ -122,11 +122,11 @@ overwrite each other.
   clipboard, and are cleared after 30 seconds unless you copied something
   else.
 
-### What lokey cannot protect you from
+### What Saltcellar cannot protect you from
 
 - **Malware already running as you.** Such a program can record your password
   as you type it, or read the screen, as it could for any password manager.
-  lokey cannot defend a PC that is already compromised.
+  Saltcellar cannot defend a PC that is already compromised.
 - **A weak or reused master password.** Anyone with a copy of the file can
   guess offline for as long as they like; only the password's strength and
   Argon2id's cost stand in the way. The length rule and the leaked-password
@@ -140,7 +140,7 @@ overwrite each other.
   recovery key it had. Delete old backups after changing either. Restoring a
   backup gives it a new data key and recovery key, so a key you replaced after
   making the backup does not come back with it.
-- **Someone who can replace your vault file.** lokey cannot tell an older copy
+- **Someone who can replace your vault file.** Saltcellar cannot tell an older copy
   of its own file from the current one. Anyone able to swap an old copy back
   in, who also holds a recovery key you have since replaced, could get that key
   working again for whatever you save afterwards. That takes write access to
@@ -150,14 +150,14 @@ overwrite each other.
 
 ### What you can check yourself
 
-- The source: every file that handles your data is in `crates/lokey-core` and
+- The source: every file that handles your data is in `crates/saltcellar-core` and
   `src-tauri`.
 - The build: releases are built by GitHub Actions from a tagged commit that
   passed every check, with each third-party action pinned to an exact commit.
   Each release carries a checksum file and a signed build attestation.
-- What has not happened: **no independent security audit** of lokey has been
+- What has not happened: **no independent security audit** of Saltcellar has been
   done yet. The encryption comes from widely used Rust libraries (RustCrypto's
-  `aes-gcm` and `argon2`); how lokey combines them has been reviewed only by its
+  `aes-gcm` and `argon2`); how Saltcellar combines them has been reviewed only by its
   own maintainers.
 
 **Windows only**, for now.
@@ -169,7 +169,7 @@ You need Rust (stable) and Node.js 24 or newer.
 ```powershell
 npm ci
 npm run check                 # format, lint, type-check, all tests, build the page
-npx tauri build --no-bundle   # target/release/lokey.exe
+npx tauri build --no-bundle   # target/release/saltcellar.exe
 ```
 
 `npm run check:ci` runs the same checks without changing any file; CI runs that.

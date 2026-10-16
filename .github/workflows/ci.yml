@@ -48,10 +48,10 @@ jobs:
       - run: npx tauri build --ci --no-bundle
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: lokey-windows-x64
+          name: saltcellar-windows-x64
           retention-days: 14
           if-no-files-found: error
-          path: target/release/lokey.exe
+          path: target/release/saltcellar.exe
 
   audit:
     name: dependency advisories

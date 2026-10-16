@@ -1,5 +1,5 @@
 {
-  "name": "lokey",
+  "name": "saltcellar",
   "private": true,
   "version": "0.3.0",
   "description": "Local-only encrypted key/value vault: a desktop app for Windows",

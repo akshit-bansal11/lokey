@@ -1,6 +1,6 @@
 // Icon geometry from Lucide (lucide-static 1.47.0, ISC licence,
 // https://lucide.dev). Inlined so the app ships no icon package and makes no
-// request. One set only: every icon in lokey comes from this table.
+// request. One set only: every icon in Saltcellar comes from this table.
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 

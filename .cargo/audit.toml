@@ -1,6 +1,6 @@
 # Accepted RustSec findings (CI-SPEC CI-13 / CI-D12). None is a vulnerability:
 # `npm audit` and `cargo audit` both report 0 vulnerabilities. Each entry is a
-# warning pulled in by Tauri 2.11.5, not by lokey's own code. Revisit every
+# warning pulled in by Tauri 2.11.5, not by Saltcellar's own code. Revisit every
 # entry by its expiry date, or sooner when a Tauri update drops the crate.
 # Accepted 2026-09-19. Expiry for all entries: 2026-12-19.
 

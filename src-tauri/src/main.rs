@@ -1,4 +1,4 @@
-//! lokey desktop app: a thin Tauri shell over `lokey-core`.
+//! Saltcellar desktop app: a thin Tauri shell over `saltcellar-core`.
 //!
 //! The page never sees a key or the vault file. It asks for one value at a
 //! time (`reveal`), and copying happens here, so a copied value never passes
@@ -23,9 +23,9 @@ use std::{
 };
 
 use dto::{Failure, Generated, Opened, Snapshot, Status};
-use lokey_core::{
-    ChangeKind, Charsets, Error, RecoveryKey, Report, Session, Store, check_new_password,
-    clipboard, generate_password,
+use saltcellar_core::{
+    ChangeKind, Charsets, Error, Migration, RecoveryKey, Report, Session, Store,
+    check_new_password, clipboard, generate_password,
 };
 use tauri::{AppHandle, Emitter, Manager, RunEvent, State, WebviewWindow};
 
@@ -35,10 +35,15 @@ const IDLE_LOCK: Duration = Duration::from_secs(5 * 60);
 /// call per tick; nothing is read unless the time changed.
 const WATCH_EVERY: Duration = Duration::from_millis(250);
 /// What the Save dialog suggests for a backup's file name.
-const BACKUP_NAME: &str = "lokey-backup.lokey";
+const BACKUP_NAME: &str = "saltcellar-backup.lokey";
 
 struct Inner {
     store: Option<Store>,
+    /// Why `store` is `None`, when it is not a missing LOCALAPPDATA.
+    problem: Option<String>,
+    /// The lokey folder the vault was copied from at this start, until the
+    /// page has been told.
+    migrated_from: Option<PathBuf>,
     session: Option<Session>,
     /// The vault's modified time as of this process's last read or write.
     seen: Option<SystemTime>,
@@ -63,7 +68,11 @@ impl AppState {
 
 impl Inner {
     fn store(&self) -> Result<&Store, Failure> {
-        self.store.as_ref().ok_or_else(Failure::no_data_folder)
+        self.store.as_ref().ok_or_else(|| {
+            self.problem
+                .clone()
+                .map_or_else(Failure::no_data_folder, Failure::io)
+        })
     }
 
     fn session(&mut self) -> Result<&mut Session, Failure> {
@@ -127,7 +136,12 @@ fn on_main_thread<T: Send + 'static>(
 
 #[tauri::command(async)]
 fn status(state: State<'_, AppState>) -> Status {
-    let inner = state.lock();
+    let mut inner = state.lock();
+    let migrated_from = inner
+        .migrated_from
+        .take()
+        .map(|from| from.display().to_string())
+        .unwrap_or_default();
     match &inner.store {
         Some(store) => Status {
             vault_path: store.vault_path().display().to_string(),
@@ -135,8 +149,13 @@ fn status(state: State<'_, AppState>) -> Status {
             unlocked: inner.session.is_some(),
             lockout_secs: store.lockout_remaining().map_or(0, |left| left.as_secs()),
             recovery: store.has_recovery(),
+            problem: String::new(),
+            migrated_from,
         },
-        None => Status::default(),
+        None => Status {
+            problem: inner.problem.clone().unwrap_or_default(),
+            ..Status::default()
+        },
     }
 }
 
@@ -386,7 +405,7 @@ fn set_recovery(
 /// Runs a change and returns the new snapshot.
 fn mutate(
     state: &State<'_, AppState>,
-    change: impl FnOnce(&mut Session) -> lokey_core::Result<()>,
+    change: impl FnOnce(&mut Session) -> saltcellar_core::Result<()>,
 ) -> Result<Snapshot, Failure> {
     let mut inner = state.lock();
     let session = inner.session()?;
@@ -445,10 +464,37 @@ fn watch(app: &AppHandle) {
     }
 }
 
+/// Finds the vault folder, first copying over a vault the app left there
+/// under its previous name, lokey. A copy that failed leaves no folder to use,
+/// with the reason: offering to create a vault instead would make an empty
+/// vault that stops the copy for good.
+fn open_store() -> (Option<Store>, Option<String>, Option<PathBuf>) {
+    let Ok((store, migration)) = Store::open_default() else {
+        return (None, None, None);
+    };
+    match migration {
+        Migration::Copied { from } => (Some(store), None, Some(from)),
+        Migration::Failed { from, error } => {
+            let problem = format!(
+                "Saltcellar could not copy your lokey vault from {}: {error}. Close lokey if it is running, then start Saltcellar again. The old folder was not changed.",
+                from.display()
+            );
+            (None, Some(problem), None)
+        }
+        Migration::NewVaultExists | Migration::NoOldVault | Migration::FolderOverride => {
+            (Some(store), None, None)
+        }
+    }
+}
+
 fn main() {
+    // Before the window opens, so nothing reads the vault folder mid-copy.
+    let (store, problem, migrated_from) = open_store();
     let app = tauri::Builder::default()
         .manage(AppState(Mutex::new(Inner {
-            store: Store::open_default().ok(),
+            store,
+            problem,
+            migrated_from,
             session: None,
             seen: None,
             last_active: Instant::now(),
@@ -498,7 +544,7 @@ fn main() {
             set_recovery,
         ])
         .build(tauri::generate_context!())
-        .expect("lokey failed to start");
+        .expect("Saltcellar failed to start");
 
     app.run(|handle, event| {
         if let RunEvent::Exit = event {

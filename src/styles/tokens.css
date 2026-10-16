@@ -1,6 +1,6 @@
 /*
- * lokey design tokens. The single source of truth for every value in the UI.
- * Owner: lokey maintainers. Last full contrast sweep: 2026-09-19 (WCAG 2.2
+ * Saltcellar design tokens. The single source of truth for every value in the UI.
+ * Owner: Saltcellar maintainers. Last full contrast sweep: 2026-09-19 (WCAG 2.2
  * relative luminance, both themes, script in the commit that added this file).
  *
  * Deliberate choices (DESIGN-SPEC DES-19):
@@ -8,7 +8,7 @@
  *   (near-black on light, near-white on dark) is the one emphasis colour.
  * - Destructive actions are not red. They are named in the label, carry a
  *   trash icon, and always sit behind a password prompt, so hue is not needed.
- * - System fonts only. lokey never touches the network, so web fonts are out;
+ * - System fonts only. Saltcellar never touches the network, so web fonts are out;
  *   Segoe UI Variable and Cascadia Mono ship with Windows 11.
  */
 

@@ -1,6 +1,7 @@
-# DECISIONS.md — lokey
+# DECISIONS.md — Saltcellar
 
-Append-only. Decisions before 2026-09-19 are on the Notion page named in
+Append-only. The app was called lokey until 0.4.0; entries before the rename
+keep that name. Decisions before 2026-09-19 are on the Notion page named in
 `.claude/CLAUDE.md`.
 
 ## 2026-09-27 — Recovery: a recovery key or none, not four security tiers
@@ -43,3 +44,25 @@ source would be one more thing to review.
 **Also rejected:** keeping the password on the Rust side and never sending it
 to the page. The dialog exists to show the password before it is used, and a
 revealed saved value already reaches the page the same way.
+
+## 2026-10-16 — Renamed to Saltcellar; the vault is copied, never moved
+
+**Decided:** the app, crates, identifier and release files are named
+Saltcellar (`saltcellar`). The vault folder moves to
+`%LOCALAPPDATA%\saltcellar`. On the first start, a vault in
+`%LOCALAPPDATA%\lokey` is copied there, only when the new folder has no
+`vault.lokey`; the old folder is never written to, moved or deleted. The format
+tag, the HPKE label and the `.lokey` file names stay, since existing vaults and
+backups carry or depend on them. A copy that fails shows the reason instead of
+the create-a-vault screen, which would otherwise make an empty vault that stops
+the copy for good.
+
+**Rejected:** moving the folder (Deskbeat's approach for its settings). A move
+interrupted halfway, or done while lokey is still running, can leave the only
+copy of the vault in neither place whole. A copy costs a few kilobytes and
+leaves the user an untouched fallback.
+
+**Also rejected:** keeping `%LOCALAPPDATA%\lokey` as the folder. It would
+avoid a migration, but leave the old name in the one path users are told to
+back up.
+

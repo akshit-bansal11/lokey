@@ -1,6 +1,6 @@
-# DIRECTORY-STRUCTURE.md — lokey
+# DIRECTORY-STRUCTURE.md — Saltcellar
 
-**Generated:** 2026-09-27 · **Command:** `git ls-files`, rendered as a tree by a short Python loop (no `tree` binary on the machine)
+**Generated:** 2026-10-16 · **Command:** `git ls-files`, rendered as a tree by a short Python loop (no `tree` binary on the machine)
 
 ## Excluded from the walk
 
@@ -9,7 +9,7 @@ Untracked paths: `.git` · `node_modules` · `target` · `dist` · `src-tauri/ge
 ## Tree
 
 ```text
-lokey/
+saltcellar/
 ├── .cargo/
 │   └── audit.toml
 ├── .claude/
@@ -21,7 +21,7 @@ lokey/
 │   │   └── release.yml
 │   └── dependabot.yml
 ├── crates/
-│   └── lokey-core/
+│   └── saltcellar-core/
 │       ├── src/
 │       │   ├── clipboard.rs
 │       │   ├── common-passwords.txt
@@ -98,7 +98,7 @@ lokey/
 
 | Directory | Why it exists |
 | --- | --- |
-| `crates/lokey-core/` | The engine. The only code that touches cryptography or the vault file. Separate from the app so the vault logic can be tested without a window. |
+| `crates/saltcellar-core/` | The engine. The only code that touches cryptography or the vault file. Separate from the app so the vault logic can be tested without a window. |
 | `src-tauri/` | The desktop app's Rust side: commands the page calls, the file watcher, window config. |
 | `src-tauri/capabilities/` | Tauri permissions: the page may only listen to vault events. |
 | `src-tauri/icons/` | App icons, embedded in the exe. |

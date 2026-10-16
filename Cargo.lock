@@ -1992,32 +1992,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 
 [[package]]
-name = "lokey-app"
-version = "0.3.0"
-dependencies = [
- "lokey-core",
- "serde",
- "tauri",
- "tauri-build",
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "lokey-core"
-version = "0.3.0"
-dependencies = [
- "aes-gcm",
- "argon2",
- "base64 0.23.1",
- "getrandom 0.4.3",
- "hpke",
- "serde",
- "serde_json",
- "windows-sys 0.61.2",
- "zeroize",
-]
-
-[[package]]
 name = "markup5ever"
 version = "0.38.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2826,6 +2800,32 @@ name = "rustversion"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
+
+[[package]]
+name = "saltcellar-app"
+version = "0.3.0"
+dependencies = [
+ "saltcellar-core",
+ "serde",
+ "tauri",
+ "tauri-build",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "saltcellar-core"
+version = "0.3.0"
+dependencies = [
+ "aes-gcm",
+ "argon2",
+ "base64 0.23.1",
+ "getrandom 0.4.3",
+ "hpke",
+ "serde",
+ "serde_json",
+ "windows-sys 0.61.2",
+ "zeroize",
+]
 
 [[package]]
 name = "same-file"

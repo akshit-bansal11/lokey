@@ -46,7 +46,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force out | Out-Null
-          Copy-Item target/release/lokey.exe out/lokey.exe
+          Copy-Item target/release/saltcellar.exe out/saltcellar.exe
           $sums = Get-ChildItem out -File | ForEach-Object {
             "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name
           }
@@ -64,7 +64,7 @@ jobs:
           $match.Groups[1].Value.Trim() | Set-Content -Encoding utf8 notes.md
 
       # Provenance per SLSA v1.1 (CI-SPEC CI-19). Verify with:
-      #   gh attestation verify lokey.exe --repo akshit-bansal11/lokey
+      #   gh attestation verify Saltcellar.exe --repo akshit-bansal11/saltcellar
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: out/*.exe

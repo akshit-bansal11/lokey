@@ -1,6 +1,6 @@
-# TECH-STACK.md — lokey
+# TECH-STACK.md — Saltcellar
 
-**Last verified:** 2026-09-20 · **Verified with:** `Cargo.lock`, `package-lock.json`
+**Last verified:** 2026-10-16 · **Verified with:** `Cargo.lock`, `package-lock.json`
 
 ## Runtime target
 
@@ -42,7 +42,7 @@
 
 | Service | What it does | Env vars | Set in | Rotation owner |
 | --- | --- | --- | --- | --- |
-| none | lokey has no network service | `LOKEY_DIR` (optional: vault folder, read by the app) | user's environment | n/a |
+| none | Saltcellar has no network service | `SALTCELLAR_DIR` (optional: vault folder, read by the app); `LOKEY_DIR` is still read after it, from before the rename | user's environment | n/a |
 
 ## Scripts
 
@@ -61,6 +61,8 @@
 | Argon2id | 64 MiB, t=3, p=1 | SECURITY-SPEC SEC-05; stored per vault in the header |
 | Master password minimum | 15 characters, max 1024, leaked-list check | SECURITY-SPEC SEC-06 (NIST SP 800-63B-4) |
 | Lockout | 10 wrong passwords then 15 minutes; backoff 1s doubling to 30s | `lockout.json`, beside the vault |
+| Vault folder | `%LOCALAPPDATA%\saltcellar`; a vault in `%LOCALAPPDATA%\lokey` is copied there once | `DIR`, `OLD_DIR` and `Migration` in `store.rs` |
+| Names kept from lokey | format tag `"lokey"`, HPKE label `lokey inbox v1`, `vault.lokey*` and `.lokey` | changing any of them makes existing vaults or backups unreadable |
 | App idle lock | 5 minutes | `IDLE_LOCK` in `src-tauri/src/main.rs` |
 | Clipboard clear | 30 seconds, only if unchanged | `CLEAR_AFTER` in `clipboard.rs` |
 | Value size cap | 64 KiB | keeps the file every change re-reads small |
