@@ -80,6 +80,7 @@ saltcellar/
 ├── Cargo.lock
 ├── Cargo.toml
 ├── CHANGELOG.md
+├── CONTRIBUTING.md
 ├── DECISIONS.md
 ├── DIRECTORY-STRUCTURE.md
 ├── index.html
@@ -88,6 +89,7 @@ saltcellar/
 ├── package-lock.json
 ├── package.json
 ├── README.md
+├── SECURITY.md
 ├── STATE.md
 ├── TECH-STACK.md
 ├── tsconfig.json
