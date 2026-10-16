@@ -1,4 +1,4 @@
-<p align="center"><img src="src-tauri/icons/icon.png" width="96" alt="Saltcellar"></p>
+<p align="center"><img src="assets/icon.svg" width="96" alt="Saltcellar"></p>
 
 # Saltcellar
 
