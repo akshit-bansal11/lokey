@@ -48,7 +48,7 @@
 | --- | --- | --- |
 | Branch protection on default branch | on; force-push and delete disabled | `gh api repos/akshit-bansal11/lokey/branches/main/protection`, 2026-09-19 |
 | Required status checks | `gate (lint, types, tests)`, strict | same call, 2026-09-19 |
-| Deploy approval environment exists with a reviewer | no; releases run on tag push, solo maintainer | 2026-09-19 |
+| Deploy approval environment exists with a reviewer | no; releases run on tag push, and a draft release when `release.yml` is run by hand; solo maintainer | 2026-10-16 |
 | Secrets present in CI | none needed (GITHUB_TOKEN only) | 2026-09-19 |
 | Backup provisioned and drilled | n/a: no server data | 2026-09-19 |
 

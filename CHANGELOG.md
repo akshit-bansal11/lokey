@@ -8,8 +8,10 @@ All notable changes to Saltcellar (called lokey until 0.4.0) are recorded here, 
 
 ### Changed
 
-- **lokey is now Saltcellar.** The window, the exe (`saltcellar.exe`) and the
-  repository carry the new name. The vault format is unchanged (v3), and the
+- **lokey is now Saltcellar.** The window, the exe and the repository carry
+  the new name. Releases are named for their version: `Saltcellar-0.4.0.exe`
+  beside `SHA256SUMS.txt`, under the title "Saltcellar v0.4.0". The permanent
+  `releases/latest/download/lokey.exe` link stops at 0.3.0. The vault format is unchanged (v3), and the
   vault and backup files keep their `.lokey` names.
 - The vault now lives in `%LOCALAPPDATA%\saltcellar`. `SALTCELLAR_DIR` chooses
   another folder; `LOKEY_DIR` still works.

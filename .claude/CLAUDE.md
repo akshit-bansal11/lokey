@@ -4,8 +4,8 @@ This project inherits every rule in ~/.claude/CLAUDE.md. Rules below add to or o
 
 A local-only encrypted key/value vault for Windows: a Tauri desktop app over
 one engine, `saltcellar-core`. Public repo, released from tags as a single
-portable `saltcellar.exe` (`tauri build --no-bundle`; there is no
-installer). It was called lokey until 0.4.0. The `lokey`
+portable `Saltcellar-<version>.exe` (`tauri build --no-bundle`; there is no
+installer). Running `release.yml` by hand makes a private draft release. It was called lokey until 0.4.0. The `lokey`
 command-line tool was removed on 2026-09-20 — do not reintroduce a second
 front-end without asking.
 
