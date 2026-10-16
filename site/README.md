@@ -2,7 +2,7 @@
 
 Two routes: a landing page at `/`, and the whole documentation on one page at `/docs`. The stack (Next.js static export, Tailwind, shadcn-style components, Biome, ESLint, tsc) and its versions are copied from Edgepad's site, so the two are maintained the same way.
 
-**Canonical host: [saltcellar.vercel.app](https://saltcellar.vercel.app).** Deployed to Vercel from the repository root (not from `site/`), using the root `vercel.json`: it installs and builds in `site/`, serves `site/out`, and sets the security headers.
+**Canonical host: [saltcellar.akshitbansal.me](https://saltcellar.akshitbansal.me).** Deployed to Vercel from the repository root (not from `site/`), using the root `vercel.json`: it installs and builds in `site/`, serves `site/out`, and sets the security headers.
 
 It is **not** part of the app's quality gate: `npm run check` at the root checks only the app. The site's own gate and build run in `.github/workflows/site.yml` on every push and pull request that touches `site/`.
 

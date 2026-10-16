@@ -3,7 +3,7 @@ import { DocsSections } from "@/components/sections/docs";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Toc } from "@/components/toc";
-import { ICON } from "@/lib/nav";
+import { SOCIAL_IMAGE } from "@/lib/nav";
 
 const TITLE = "Saltcellar — documentation";
 const DESCRIPTION =
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     type: "website",
     url: "/docs",
     siteName: "Saltcellar",
-    images: [ICON],
+    images: [SOCIAL_IMAGE],
   },
 };
 
