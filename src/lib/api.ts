@@ -43,7 +43,7 @@ function isFailure(value: unknown): value is Failure {
   );
 }
 
-/** lokey-core writes terse lowercase messages; the app shows them as sentences. */
+/** saltcellar-core writes terse lowercase messages; the app shows them as sentences. */
 function sentence(message: string): string {
   const text = message.trim();
   const capital = text.charAt(0).toUpperCase() + text.slice(1);

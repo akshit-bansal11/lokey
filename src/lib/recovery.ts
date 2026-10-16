@@ -1,5 +1,5 @@
 // Recovery keys as people copy them: case, dashes and spaces do not matter,
-// and O, I and L read as 0, 1 and 1, the same way lokey-core reads them.
+// and O, I and L read as 0, 1 and 1, the same way saltcellar-core reads them.
 
 export function normalizeRecoveryKey(text: string): string {
   return text.toUpperCase().replace(/[\s-]/g, "").replace(/O/g, "0").replace(/[IL]/g, "1");

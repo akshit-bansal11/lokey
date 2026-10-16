@@ -8,6 +8,10 @@ export type Status = {
   lockoutSecs: number;
   /** Whether a recovery key also opens the vault. */
   recovery: boolean;
+  /** Why there is no vault folder, when it is not a missing LOCALAPPDATA. */
+  problem: string;
+  /** The lokey folder the vault was just copied from; set once. */
+  migratedFrom: string;
 };
 
 export type Row = {

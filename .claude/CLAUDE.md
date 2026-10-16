@@ -1,10 +1,11 @@
 This project inherits every rule in ~/.claude/CLAUDE.md. Rules below add to or override it. Nothing here restates it.
 
-# lokey
+# Saltcellar
 
 A local-only encrypted key/value vault for Windows: a Tauri desktop app over
-one engine, `lokey-core`. Public repo, released from tags as a single portable
-`lokey.exe` (`tauri build --no-bundle`; there is no installer). The `lokey`
+one engine, `saltcellar-core`. Public repo, released from tags as a single
+portable `Saltcellar-<version>.exe` (`tauri build --no-bundle`; there is no
+installer). Running `release.yml` by hand makes a private draft release. It was called lokey until 0.4.0. The `lokey`
 command-line tool was removed on 2026-09-20 — do not reintroduce a second
 front-end without asking.
 
@@ -34,6 +35,19 @@ front-end without asking.
   `vault.rs`).
 - **Vault format v3 has no inbox.** `hpke` and `merge_inbox` remain only to
   upgrade v1/v2 vaults; see `OPEN_ITEMS.md` before removing them.
+
+- **The rename to Saltcellar (0.4.0) kept the vault format.** The format tag
+  `"lokey"` (`format.rs`, bound into every vault's associated data), the HPKE
+  label `lokey inbox v1` and the `vault.lokey*` / `.lokey` file names stay as
+  they are; changing any of them makes existing vaults or backups unreadable.
+  `Store::open_default` copies a vault from `%LOCALAPPDATA%\lokey` once
+  (copy, never move; see `Migration` in `store.rs`). `LOKEY_DIR` is still read
+  after `SALTCELLAR_DIR`.
+
+- **`site/` is the website** (saltcellar.vercel.app), a separate Next.js app
+  with its own lockfile and gate (`cd site && npm run check:ci`, `site.yml`).
+  It follows the same rule: no analytics, trackers, remote fonts or third-party
+  requests.
 
 ## Gate
 

@@ -3,7 +3,7 @@
 //! must be accepted, it is checked against a list of common and breached
 //! passwords, and there are no composition rules.
 //!
-//! The blocklist ships inside the binary because lokey never touches the
+//! The blocklist ships inside the binary because Saltcellar never touches the
 //! network. It holds the entries of SecLists' Pwdb top-1,000,000 list (MIT,
 //! Daniel Miessler) that are 15 characters or longer; shorter ones are already
 //! refused by the length rule.

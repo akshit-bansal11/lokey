@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "lokey",
-  "mainBinaryName": "lokey",
-  "version": "0.3.0",
+  "productName": "Saltcellar",
+  "mainBinaryName": "saltcellar",
+  "version": "0.4.0",
   "identifier": "io.github.akshitbansal11.lokey",
   "build": {
     "frontendDist": "../dist",
@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "lokey",
+        "title": "Saltcellar",
         "width": 960,
         "height": 640,
         "minWidth": 640,
@@ -33,7 +33,7 @@
     "targets": ["nsis"],
     "publisher": "Akshit Bansal",
     "shortDescription": "Local-only encrypted key/value vault",
-    "longDescription": "lokey keeps your environment keys, passwords and backup codes in an encrypted file on this PC. No network, ever.",
+    "longDescription": "Saltcellar keeps your environment keys, passwords and backup codes in an encrypted file on this PC. No network, ever.",
     "copyright": "MIT License",
     "icon": [
       "icons/32x32.png",
