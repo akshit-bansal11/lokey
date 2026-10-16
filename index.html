@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <title>lokey</title>
+    <title>Saltcellar</title>
     <link rel="stylesheet" href="/src/styles/app.css" />
     <script type="module" src="/src/main.ts"></script>
   </head>
@@ -24,7 +24,7 @@
     <template id="tpl-setup">
       <section class="gate">
         <form class="gate-form" id="setup-form" novalidate>
-          <h1 class="gate-title">Set up lokey</h1>
+          <h1 class="gate-title">Set up Saltcellar</h1>
           <p class="gate-lede">
             Your keys stay in one encrypted file on this PC. One password protects it.
           </p>
@@ -53,7 +53,7 @@
             </label>
             <label class="choice" data-accept hidden>
               <input type="checkbox" name="accept" />
-              <span>I understand that nobody, not even lokey, can open the vault without the master password.</span>
+              <span>I understand that nobody, not even Saltcellar, can open the vault without the master password.</span>
             </label>
             <span class="field-error" data-error-for="accept"></span>
           </fieldset>
@@ -87,7 +87,7 @@
     <template id="tpl-unlock">
       <section class="gate">
         <form class="gate-form" id="unlock-form" novalidate>
-          <h1 class="gate-title">lokey</h1>
+          <h1 class="gate-title">Saltcellar</h1>
           <p class="notice" id="unlock-reason" data-reason></p>
           <label class="field">
             <span class="field-label">Master password</span>
@@ -137,7 +137,7 @@
     <template id="tpl-vault">
       <section class="vault">
         <header class="toolbar">
-          <h1 class="wordmark">lokey</h1>
+          <h1 class="wordmark">Saltcellar</h1>
           <label>
             <span class="visually-hidden">Project</span>
             <select class="input" id="project"></select>
@@ -241,7 +241,7 @@
           <h3 id="settings-file">Vault file</h3>
           <p class="gate-note" id="settings-path"></p>
           <p class="dialog-text">
-            This one file is the whole vault. lokey never sends it anywhere.
+            This one file is the whole vault. Saltcellar never sends it anywhere.
           </p>
         </section>
         <section class="settings-section" aria-labelledby="settings-backup">
@@ -322,7 +322,7 @@
         <p class="dialog-text" id="recovery-text"></p>
         <p class="recovery-key" id="recovery-key"></p>
         <p class="dialog-text">
-          Write it on paper and keep it somewhere safe, away from this PC. Anyone who has it can open the vault. lokey never shows it again.
+          Write it on paper and keep it somewhere safe, away from this PC. Anyone who has it can open the vault. Saltcellar never shows it again.
         </p>
         <label class="field">
           <span class="field-label">Type the recovery key to confirm you have it</span>

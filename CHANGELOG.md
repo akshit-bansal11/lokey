@@ -1,10 +1,44 @@
 # Changelog
 
-All notable changes to lokey are recorded here, following
+All notable changes to Saltcellar (called lokey until 0.4.0) are recorded here, following
 [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/). Versions follow
 [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.4.0] - 2026-10-16
+
+lokey is now Saltcellar. The vault format is unchanged (v3): a lokey vault is
+copied to the new folder on the first start, and opens with the same password.
+
+### Added
+
+- A copy of a lokey vault on the first start; see "Upgrading from lokey"
+  below.
+- A website at https://saltcellar.vercel.app, with the documentation on one
+  page at `/docs`. Like the app, it loads nothing from anywhere else.
+- `SECURITY.md` (what the vault protects against, what it does not, and how to
+  report a hole privately) and `CONTRIBUTING.md`.
+
+### Changed
+
+- **lokey is now Saltcellar.** The window, the exe and the repository carry
+  the new name. Releases are named for their version: `Saltcellar-0.4.0.exe`
+  beside `SHA256SUMS.txt`, under the title "Saltcellar v0.4.0". The permanent
+  `releases/latest/download/lokey.exe` link stops at 0.3.0. The vault and
+  backup files keep their `.lokey` names.
+- The vault now lives in `%LOCALAPPDATA%\saltcellar`. `SALTCELLAR_DIR` chooses
+  another folder; `LOKEY_DIR` still works.
+
+### Upgrading from lokey
+
+On its first start, Saltcellar copies your vault, its backup and its lockout
+file from `%LOCALAPPDATA%\lokey` into `%LOCALAPPDATA%\saltcellar`, then opens
+it with the same master password. The old folder is left exactly as it was;
+delete it yourself once Saltcellar has opened your vault. Nothing is copied if
+`%LOCALAPPDATA%\saltcellar` already has a vault, or if `SALTCELLAR_DIR` or
+`LOKEY_DIR` is set. Close lokey before the first start. Each copy, or a failed
+attempt, is recorded in `%LOCALAPPDATA%\saltcellar\migration.log`.
 
 ## [0.3.0] - 2026-09-27
 
@@ -95,8 +129,9 @@ A vault made by an earlier build opens as before with its master password. Its
 deletion password is no longer asked for and is dropped the next time the
 vault is saved. After that, the earlier builds cannot open the vault.
 
-[Unreleased]: https://github.com/akshit-bansal11/lokey/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/akshit-bansal11/lokey/compare/v0.1.0...v0.3.0
-[0.1.0]: https://github.com/akshit-bansal11/lokey/compare/v0.0.2...v0.1.0
-[0.0.2]: https://github.com/akshit-bansal11/lokey/compare/v0.0.1...v0.0.2
-[0.0.1]: https://github.com/akshit-bansal11/lokey/releases/tag/v0.0.1
+[Unreleased]: https://github.com/akshit-bansal11/saltcellar/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/akshit-bansal11/saltcellar/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/akshit-bansal11/saltcellar/compare/v0.1.0...v0.3.0
+[0.1.0]: https://github.com/akshit-bansal11/saltcellar/compare/v0.0.2...v0.1.0
+[0.0.2]: https://github.com/akshit-bansal11/saltcellar/compare/v0.0.1...v0.0.2
+[0.0.1]: https://github.com/akshit-bansal11/saltcellar/releases/tag/v0.0.1

@@ -35,7 +35,7 @@ async function route(reason?: LockReason | "manual"): Promise<void> {
   if (!status.vaultPath) {
     showSetup(
       { onCreated: () => undefined, onRestored: () => undefined },
-      "lokey cannot find your local app data folder (LOCALAPPDATA).",
+      status.problem || "Saltcellar cannot find your local app data folder (LOCALAPPDATA).",
     );
     return;
   }
@@ -72,6 +72,12 @@ async function route(reason?: LockReason | "manual"): Promise<void> {
     reason === "manual" ? undefined : reason,
   );
   if (reason === "manual") announce("Locked.");
+  // A copy only ever leads here: the copied vault exists, so setup is skipped.
+  if (status.migratedFrom) {
+    announce(
+      `Your lokey vault was copied here from ${status.migratedFrom}. The old folder was left as it was.`,
+    );
+  }
 }
 
 void onVaultChanged((snapshot) => {
