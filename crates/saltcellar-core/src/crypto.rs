@@ -1,4 +1,4 @@
-//! Every cryptographic primitive lokey uses, in one file.
+//! Every cryptographic primitive Saltcellar uses, in one file.
 //!
 //! - AES-256-GCM seals the vault body under a random data key, and seals that
 //!   data key under each key allowed to open the vault.
@@ -27,6 +27,8 @@ const NONCE_LEN: usize = 12;
 const ENCAPPED_LEN: usize = 32;
 
 type Kem = X25519HkdfSha256;
+/// Keeps the name the app had when v1/v2 inboxes were sealed: changing it
+/// would make those records unreadable.
 const HPKE_INFO: &[u8] = b"lokey inbox v1";
 
 /// Argon2id cost, stored in the vault header so it can be raised later

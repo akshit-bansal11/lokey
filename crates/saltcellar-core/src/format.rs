@@ -28,6 +28,9 @@ use crate::{
     crypto::{KdfParams, Sealed},
 };
 
+/// The app was called lokey when this tag was chosen. It is written into
+/// every vault and bound into the sealed key's associated data, so it stays:
+/// changing it would make every existing vault unreadable.
 const FORMAT: &str = "lokey";
 /// v2 dropped the deletion-password check from the body. v3 added the random
 /// data key and the recovery key, and dropped the inbox.
@@ -79,11 +82,11 @@ impl VaultFile {
         let file: Self = serde_json::from_slice(bytes)
             .map_err(|err| Error::Corrupt(format!("vault file is not valid: {err}")))?;
         if file.format != FORMAT {
-            return Err(Error::Corrupt("this file is not a lokey vault".into()));
+            return Err(Error::Corrupt("this file is not a Saltcellar vault".into()));
         }
         if !(1..=VERSION).contains(&file.version) {
             return Err(Error::Corrupt(format!(
-                "vault format v{} needs a newer lokey (this build reads v{VERSION})",
+                "vault format v{} needs a newer Saltcellar (this build reads v{VERSION})",
                 file.version
             )));
         }

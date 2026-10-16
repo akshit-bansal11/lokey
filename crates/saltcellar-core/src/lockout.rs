@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Error, Result};
 
-const FILE: &str = "lockout.json";
+pub(crate) const FILE: &str = "lockout.json";
 const MAX_FAILS: u32 = 10;
 const LOCKOUT: Duration = Duration::from_secs(15 * 60);
 const BACKOFF_CAP_SECS: u64 = 30;

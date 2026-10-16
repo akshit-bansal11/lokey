@@ -26,7 +26,7 @@ mod imp {
         OFN_OVERWRITEPROMPT, OFN_PATHMUSTEXIST, OPENFILENAMEW,
     };
 
-    const FILTER: &str = "lokey backup (*.lokey)\0*.lokey\0All files\0*.*\0\0";
+    const FILTER: &str = "Saltcellar backup (*.lokey)\0*.lokey\0All files\0*.*\0\0";
     /// Long paths are allowed on Windows 10 and later.
     const MAX_PATH_UNITS: usize = 32 * 1024;
 
@@ -81,7 +81,7 @@ mod imp {
 
     use tauri::WebviewWindow;
 
-    /// lokey ships for Windows only; elsewhere there is no dialog to show.
+    /// Saltcellar ships for Windows only; elsewhere there is no dialog to show.
     pub fn run(_window: &WebviewWindow, _initial: &str, _save: bool) -> Option<PathBuf> {
         None
     }

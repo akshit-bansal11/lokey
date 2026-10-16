@@ -2,7 +2,7 @@
 //! for one at a time through `reveal`. Lengths are sent so the masked cell can be
 //! drawn without the value.
 
-use lokey_core::{ChangeKind, Error, Report, Session};
+use saltcellar_core::{ChangeKind, Error, Report, Session};
 use serde::Serialize;
 
 #[derive(Default, Serialize)]
@@ -14,6 +14,12 @@ pub struct Status {
     pub lockout_secs: u64,
     /// Whether a recovery key also opens the vault. Read from the header.
     pub recovery: bool,
+    /// Why there is no vault folder to use, when that is not a missing
+    /// LOCALAPPDATA. Empty otherwise.
+    pub problem: String,
+    /// The lokey folder the vault was just copied from. Set once, on the
+    /// first status after the copy, so the page says so once.
+    pub migrated_from: String,
 }
 
 #[derive(Clone, Serialize)]
@@ -135,7 +141,7 @@ impl Failure {
     pub fn no_data_folder() -> Self {
         Self::new(
             "unsupported",
-            "lokey cannot find your local app data folder (LOCALAPPDATA).",
+            "Saltcellar cannot find your local app data folder (LOCALAPPDATA).",
         )
     }
 }

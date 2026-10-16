@@ -1,16 +1,16 @@
 [workspace]
 resolver = "3"
-members = ["crates/lokey-core", "src-tauri"]
+members = ["crates/saltcellar-core", "src-tauri"]
 
 [workspace.package]
-version = "0.3.0"
+version = "0.4.0"
 edition = "2024"
 rust-version = "1.89"
 license = "MIT"
-repository = "https://github.com/akshit-bansal11/lokey"
+repository = "https://github.com/akshit-bansal11/saltcellar"
 
 [workspace.dependencies]
-lokey-core = { path = "crates/lokey-core" }
+saltcellar-core = { path = "crates/saltcellar-core" }
 aes-gcm = { version = "0.11.1", default-features = false, features = ["aes", "alloc", "zeroize"] }
 argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "zeroize"] }
 base64 = "0.23.1"
