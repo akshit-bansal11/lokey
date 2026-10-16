@@ -217,13 +217,13 @@ export default function Page() {
             <BlurFade delay={0.1}>
               {/* The app's own icon: the repository has no screenshot of the app yet. */}
               <Image
-                src="/icon.png"
+                src="/icon.svg"
                 width={256}
                 height={256}
                 unoptimized
                 priority
-                alt="The Saltcellar icon: a white key on a dark rounded square."
-                className="shadow-lift mx-auto size-48 rounded-[22%] lg:size-64"
+                alt="The Saltcellar icon: a white salt shaker with a keyhole, on a blue rounded square."
+                className="mx-auto size-48 drop-shadow-xl lg:size-64"
               />
             </BlurFade>
           </div>

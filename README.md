@@ -11,7 +11,7 @@ It was called **lokey** until 0.4.0. An existing lokey vault is copied over on t
 [![CI](https://github.com/akshit-bansal11/saltcellar/actions/workflows/ci.yml/badge.svg)](https://github.com/akshit-bansal11/saltcellar/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/akshit-bansal11/saltcellar)](https://github.com/akshit-bansal11/saltcellar/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Documentation](https://img.shields.io/badge/docs-saltcellar.vercel.app-black.svg)](https://saltcellar.vercel.app/docs)
+[![Documentation](https://img.shields.io/badge/docs-saltcellar.akshitbansal.me-black.svg)](https://saltcellar.akshitbansal.me/docs)
 
 ## What it does
 

@@ -48,12 +48,12 @@ export const REPO = "https://github.com/akshit-bansal11/saltcellar";
 export const LATEST_RELEASE = `${REPO}/releases/latest`;
 
 /** The site's one origin. Canonical links, the sitemap and robots.txt all resolve against it. */
-export const SITE = "https://saltcellar.vercel.app";
+export const SITE = "https://saltcellar.akshitbansal.me";
 
-/** The app's own icon, the only image the repository has for it. */
-export const ICON = {
-  url: "/icon.png",
-  width: 1024,
-  height: 1024,
-  alt: "Saltcellar: a white key on a dark rounded square.",
+/** The link preview every page shares: the icon, the name and the one-line claim. */
+export const SOCIAL_IMAGE = {
+  url: "/og.png",
+  width: 1200,
+  height: 630,
+  alt: "Saltcellar: an encrypted vault that never leaves your PC. No network, ever.",
 };

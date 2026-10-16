@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <title>Saltcellar</title>
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b8cff"/>
+      <stop offset="1" stop-color="#0049b8"/>
+    </linearGradient>
+    <mask id="cut">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <circle cx="512" cy="600" r="78" fill="#000"/>
+      <path d="M476 630 H548 L574 770 H450 Z" fill="#000"/>
+    </mask>
+  </defs>
+  <rect x="16" y="16" width="992" height="992" rx="200" fill="url(#tile)"/>
+  <g fill="#fff" mask="url(#cut)">
+    <path d="M330 404 V340 C330 262 414 210 512 210 C610 210 694 262 694 340 V404 Z"/>
+    <path d="M368 450 H656 Q738 450 742 532 L756 772 Q760 854 678 854 H346 Q264 854 268 772 L282 532 Q286 450 368 450 Z"/>
+  </g>
+</svg>
