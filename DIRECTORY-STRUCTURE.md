@@ -21,6 +21,13 @@ saltcellar/
 │   │   ├── release.yml
 │   │   └── site.yml
 │   └── dependabot.yml
+├── assets/
+│   ├── logo-1024.png
+│   ├── logo-256.png
+│   ├── logo-small.svg
+│   ├── logo.svg
+│   ├── og-1200x630.png
+│   └── social-preview-1280x640.png
 ├── crates/
 │   └── saltcellar-core/
 │       ├── src/
@@ -154,6 +161,7 @@ saltcellar/
 
 | Directory | Why it exists |
 | --- | --- |
+| `assets/` | The logo and the social previews, for use outside the app and the site: README, GitHub's social preview (`social-preview-1280x640.png`, uploaded by hand), posts. Copies; the build reads `src-tauri/icons/` and `site/public/`. |
 | `crates/saltcellar-core/` | The engine. The only code that touches cryptography or the vault file. Separate from the app so the vault logic can be tested without a window. |
 | `src-tauri/` | The desktop app's Rust side: commands the page calls, the file watcher, window config. |
 | `src-tauri/capabilities/` | Tauri permissions: the page may only listen to vault events. |
