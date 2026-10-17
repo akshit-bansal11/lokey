@@ -122,7 +122,7 @@ function Heading({
 }) {
   return (
     <BlurFade>
-      <p className="text-primary text-[0.9375rem] font-bold">{eyebrow}</p>
+      <p className="text-saffron-ink text-[0.9375rem] font-bold">{eyebrow}</p>
       <h2 className="mt-2 max-w-[20ch] text-[2rem] leading-[1.08] font-black tracking-[-0.02em] md:text-5xl">
         {title}
       </h2>
@@ -140,7 +140,7 @@ function MoreLink({ href, children }: { href: string; children: React.ReactNode 
   return (
     <Link
       href={href}
-      className="text-primary inline-flex min-h-11 items-center gap-1.5 rounded-lg text-[0.9375rem] font-bold hover:underline hover:underline-offset-4"
+      className="text-saffron-ink inline-flex min-h-11 items-center gap-1.5 rounded-lg text-[0.9375rem] font-bold hover:underline hover:underline-offset-4"
     >
       {children}
       <ArrowRight aria-hidden className="size-4" />
@@ -222,7 +222,7 @@ export default function Page() {
                 height={256}
                 unoptimized
                 priority
-                alt="The Saltcellar icon: a cube of salt whose three faces meet in a keyhole, on an ember-orange rounded square."
+                alt="The Saltcellar icon: stepped squares sinking to a keyhole, like a salt crystal or stairs down to a cellar, in saffron and dark brown."
                 className="mx-auto size-48 drop-shadow-xl lg:size-64"
               />
             </BlurFade>
@@ -254,7 +254,7 @@ export default function Page() {
               <li key={title}>
                 <BlurFade delay={(index % 3) * 0.05} className="h-full">
                   <Card className="h-full px-6 py-6">
-                    <span className="bg-accent-soft text-primary grid size-11 place-items-center rounded-xl">
+                    <span className="bg-accent-soft text-saffron-ink grid size-11 place-items-center rounded-xl">
                       <Icon aria-hidden className="size-5" />
                     </span>
                     <div>
@@ -323,7 +323,7 @@ export default function Page() {
               <div className="flex gap-4">
                 <ShieldCheck
                   aria-hidden
-                  className="text-primary mt-0.5 size-6 shrink-0"
+                  className="text-saffron-ink mt-0.5 size-6 shrink-0"
                 />
                 <div>
                   <h3 className="text-lg font-bold">Guessing at the prompt</h3>
@@ -386,7 +386,7 @@ export default function Page() {
                     "Choose a master password, and a recovery key to write on paper.",
                   ].map((step, index) => (
                     <li key={step} className="flex gap-3 py-3 first:pt-0 last:pb-0">
-                      <span className="text-primary w-4 shrink-0 text-[0.9375rem] font-black">
+                      <span className="text-saffron-ink w-4 shrink-0 text-[0.9375rem] font-black">
                         {index + 1}
                       </span>
                       <span className="text-dim text-[0.9375rem] leading-relaxed">

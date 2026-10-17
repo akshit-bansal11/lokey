@@ -1,17 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <title>Saltcellar</title>
-  <defs>
-    <mask id="cut">
-      <rect width="1024" height="1024" fill="#fff"/>
-      <path d="M512 512 L218 342 M512 512 L806 342 M512 512 V870" stroke="#000" stroke-width="48"/>
-      <circle cx="512" cy="512" r="96" fill="#000"/>
-      <path d="M484 540 H540 L568 740 H456 Z" fill="#000"/>
-    </mask>
-  </defs>
-  <rect x="16" y="16" width="992" height="992" rx="200" fill="#E2552D"/>
-  <g mask="url(#cut)" stroke-width="40" stroke-linejoin="round">
-    <path d="M512 172 L806 342 L512 512 L218 342 Z" fill="#fff" stroke="#fff"/>
-    <path d="M218 342 L512 512 L512 852 L218 682 Z" fill="#FFD9CB" stroke="#FFD9CB"/>
-    <path d="M512 512 L806 342 L806 682 L512 852 Z" fill="#FFA889" stroke="#FFA889"/>
-  </g>
+  <rect width="1024" height="1024" rx="228" fill="#F6C24B"/>
+  <rect x="102" y="79" width="820" height="820" rx="164" fill="#E39B29"/>
+  <rect x="232" y="255" width="560" height="560" rx="112" fill="#5C3412"/>
+  <rect x="347" y="416" width="330" height="330" rx="66" fill="#1B120B"/>
+  <circle cx="512" cy="540" r="74" fill="#F6C24B"/>
+  <path d="M481 574 H543 L568 696 H456 Z" fill="#F6C24B"/>
 </svg>
