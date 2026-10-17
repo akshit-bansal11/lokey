@@ -13,19 +13,15 @@
     <!-- The brand mark, defined once and used by <use href="#logo">. -->
     <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
       <defs>
-        <mask id="logo-cut">
-          <rect width="1024" height="1024" fill="#fff" />
-          <path d="M512 512 L263 368 M512 512 L761 368 M512 512 V820" stroke="#000" stroke-width="26" />
-          <circle cx="512" cy="512" r="68" fill="#000" />
-          <path d="M492 540 H532 L552 704 H472 Z" fill="#000" />
-        </mask>
         <symbol id="logo" viewBox="0 0 1024 1024">
-          <rect x="48" y="48" width="928" height="928" rx="212" style="fill: var(--logo-tile)" />
-          <g mask="url(#logo-cut)" stroke-width="28" stroke-linejoin="round">
-            <path d="M512 224 L761 368 L512 512 L263 368 Z" style="fill: var(--logo-top); stroke: var(--logo-top)" />
-            <path d="M263 368 L512 512 L512 800 L263 656 Z" style="fill: var(--logo-left); stroke: var(--logo-left)" />
-            <path d="M512 512 L761 368 L761 656 L512 800 Z" style="fill: var(--logo-right); stroke: var(--logo-right)" />
-          </g>
+          <!-- Hopper crystal: stepped squares sinking to a keyhole. Same in both themes. -->
+          <rect width="1024" height="1024" rx="228" fill="#F6C24B" />
+          <rect x="112" y="112" width="800" height="800" rx="160" fill="#E39B29" />
+          <rect x="212" y="252" width="600" height="600" rx="120" fill="#AE6519" />
+          <rect x="302" y="382" width="420" height="420" rx="84" fill="#5C3412" />
+          <rect x="382" y="502" width="260" height="260" rx="52" fill="#1B120B" />
+          <circle cx="512" cy="601" r="56" fill="#F6C24B" />
+          <path d="M488 626 H536 L554 719 H470 Z" fill="#F6C24B" />
         </symbol>
       </defs>
     </svg>
