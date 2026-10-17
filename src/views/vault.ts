@@ -22,7 +22,6 @@ import { askProjectName, confirmDelete, openSettings, showKeys } from "@/views/d
 import { openGenerator } from "@/views/generator.ts";
 
 const MASK = "••••••••••••";
-const NEW_PROJECT = "\u0000new";
 const ACTIONS = ["reveal", "copy", "edit", "delete"] as const;
 type Action = (typeof ACTIONS)[number];
 const ACTION_ICONS: Record<Action, IconName> = {
@@ -182,21 +181,37 @@ function hideRevealed(): void {
 }
 
 function renderProjects(): void {
-  const select = byId("project", HTMLSelectElement);
+  const nav = byId("projects", HTMLElement);
   const names = projectNames(snapshot.projects, pendingProjects);
   if (!names.some((name) => sameName(name, project))) project = DEFAULT_PROJECT;
   const counts = new Map(snapshot.projects.map((p) => [p.name.toLowerCase(), p.count]));
-  const choices = names.map((name) => {
-    const option = document.createElement("option");
-    option.value = name;
-    option.textContent = `${name} (${counts.get(name.toLowerCase()) ?? 0})`;
-    option.selected = sameName(name, project);
-    return option;
+  const hadFocus = nav.contains(document.activeElement);
+  const items = names.map((name) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "project";
+    button.dataset.project = name;
+    const count = counts.get(name.toLowerCase()) ?? 0;
+    button.title = `${name} (${count})`;
+    if (sameName(name, project)) button.setAttribute("aria-current", "true");
+    const initial = document.createElement("span");
+    initial.className = "project-initial";
+    initial.setAttribute("aria-hidden", "true");
+    initial.textContent = [...name][0]?.toUpperCase() ?? "";
+    const label = document.createElement("span");
+    label.className = "project-name";
+    label.textContent = name;
+    const total = document.createElement("span");
+    total.className = "project-count";
+    total.textContent = String(count);
+    total.setAttribute("aria-label", `${count} keys`);
+    button.append(initial, label, total);
+    return button;
   });
-  const create = document.createElement("option");
-  create.value = NEW_PROJECT;
-  create.textContent = "New project…";
-  select.replaceChildren(...choices, create);
+  nav.replaceChildren(...items);
+  if (hadFocus) {
+    nav.querySelector<HTMLElement>('[aria-current="true"]')?.focus();
+  }
 }
 
 function render(): void {
@@ -567,11 +582,12 @@ export function showVault(initial: Snapshot, vaultOptions: VaultOptions): void {
   const root = mount("tpl-vault");
   showShortcuts(true);
 
-  const select = find(root, "#project", HTMLSelectElement);
-  select.addEventListener("change", () => {
-    if (select.value === NEW_PROJECT) newProject();
-    else switchProject(select.value);
+  find(root, "#projects", HTMLElement).addEventListener("click", (event) => {
+    const button = event.target instanceof Element ? event.target.closest("button") : null;
+    const name = button?.dataset.project;
+    if (name !== undefined && !sameName(name, project)) switchProject(name);
   });
+  find(root, "#new-project", HTMLButtonElement).addEventListener("click", newProject);
 
   const search = find(root, "#search", HTMLInputElement);
   search.addEventListener("input", () => render());

@@ -70,6 +70,10 @@ const ICONS = {
     { tag: "path", d: "M15 6h.01" },
     { tag: "path", d: "M18 9h.01" },
   ],
+  plus: [
+    { tag: "path", d: "M5 12h14" },
+    { tag: "path", d: "M12 5v14" },
+  ],
   keyboard: [
     { tag: "path", d: "M10 8h.01" },
     { tag: "path", d: "M12 12h.01" },
