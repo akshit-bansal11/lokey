@@ -14,7 +14,7 @@ All notable changes to Saltcellar (called lokey until 0.4.0) are recorded here, 
 - The website has a link preview (`og.png`, 1200×630) instead of the bare icon.
 - The website shows the icon beside its name in the header, and draws the
   hero icon from SVG rather than a 1024 px PNG.
-- The website moved to https://saltcellar.akshitbansal.me.
+- The website moved to https://saltcellar.akshitbansal.dev.
 
 ## [0.4.0] - 2026-10-16
 

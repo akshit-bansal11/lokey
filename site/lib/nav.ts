@@ -48,7 +48,7 @@ export const REPO = "https://github.com/akshit-bansal11/saltcellar";
 export const LATEST_RELEASE = `${REPO}/releases/latest`;
 
 /** The site's one origin. Canonical links, the sitemap and robots.txt all resolve against it. */
-export const SITE = "https://saltcellar.akshitbansal.me";
+export const SITE = "https://saltcellar.akshitbansal.dev";
 
 /** The link preview every page shares: the icon, the name and the one-line claim. */
 export const SOCIAL_IMAGE = {
