@@ -1,38 +1,54 @@
 /*
  * Saltcellar design tokens. The single source of truth for every value in the UI.
- * Owner: Saltcellar maintainers. Last full contrast sweep: 2026-09-19 (WCAG 2.2
- * relative luminance, both themes, script in the commit that added this file).
+ * Owner: Saltcellar maintainers. Last full contrast sweep: 2026-10-17 (WCAG 2.2
+ * relative luminance, both themes, computed by script; ratios are in the comments).
  *
- * Deliberate choices (DESIGN-SPEC DES-19):
- * - No accent hue. The owner asked for black, white and gray only, so ink
- *   (near-black on light, near-white on dark) is the one emphasis colour.
+ * Deliberate choices:
+ * - Saffron accent (DES-19, the brand is saffron by the owner's choice on
+ *   2026-10-17, replacing ember; before that it was "black, white and gray
+ *   only"). The tile is #F6C24B with espresso #1B120B text, in both themes.
+ *   Saffron is too light to be text, a focus ring or an input edge on light
+ *   surfaces (1.5:1), so light uses dark amber #8A5310 for those. The accent
+ *   marks the primary button, focus ring, selection, the active project and
+ *   small highlights; everything else is warm espresso-graphite.
  * - Destructive actions are not red. They are named in the label, carry a
- *   trash icon, and always sit behind a password prompt, so hue is not needed.
+ *   trash icon, and always sit behind a confirmation dialog, so hue is not needed.
  * - System fonts only. Saltcellar never touches the network, so web fonts are out;
  *   Segoe UI Variable and Cascadia Mono ship with Windows 11.
  */
 
 :root {
   /* Raw neutral palette. Components never reference these directly. */
-  --gray-0: #fafafa;
-  --gray-50: #f4f4f4;
-  --gray-100: #ececec;
-  --gray-150: #e3e3e3;
-  --gray-200: #dedede;
-  --gray-300: #c2c2c2;
-  --gray-400: #9c9c9c;
-  --gray-500: #7f7f7f;
-  --gray-550: #777777;
-  --gray-600: #616161;
-  --gray-700: #4d4d4d;
-  --gray-750: #333333;
-  --gray-800: #2e2e2e;
-  --gray-850: #2b2b2b;
-  --gray-875: #232323;
-  --gray-900: #1a1a1a;
-  --gray-950: #131313;
-  --gray-ink-light: #ececec;
-  --gray-ink-hover-dark: #d4d4d4;
+  --gray-0: #ffffff;
+  --gray-50: #faf7f0;
+  --gray-75: #f1ece1;
+  --gray-100: #f5f1e8;
+  --gray-150: #eae4d6;
+  --gray-200: #e6dfd0;
+  --gray-300: #cbc1b5;
+  --gray-400: #a0958a;
+  --gray-500: #857869;
+  --gray-550: #7a6f64;
+  --gray-600: #675b50;
+  --gray-700: #4a3f35;
+  --gray-750: #3a322a;
+  --gray-800: #2e2822;
+  --gray-850: #2d2721;
+  --gray-875: #241f1a;
+  --gray-900: #1b120b;
+  --gray-925: #1b1713;
+  --gray-940: #100d0b;
+  --gray-950: #14110e;
+  --gray-ink-light: #f3eee6;
+  --gray-ink-hover-dark: #d8cfc3;
+  --saffron-400: #f6c24b; /* the brand: logo tile, fills, dark-theme text and focus */
+  --saffron-hover-light: #e8b034; /* a slightly deeper fill for hover on light */
+  --saffron-hover-dark: #fad472; /* a lighter fill for hover on dark */
+  --saffron-500: #e39b29; /* logo step; not used for text */
+  --saffron-600: #ae6519; /* logo step; not used for text */
+  --saffron-700: #8a5310; /* dark amber: text, focus ring and input edge on light */
+  --saffron-900: #5c3412; /* logo step */
+  --saffron-950: #1b120b; /* espresso: text on saffron, the logo core */
 
   /* Type */
   --font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
@@ -43,12 +59,13 @@
   --text-md: 0.875rem; /* 14px: inputs, buttons, prose */
   --text-lg: 1.25rem; /* 20px: dialog titles */
   --text-xl: 1.75rem; /* 28px: screen titles */
+  --text-2xl: 2rem; /* 32px: gate titles */
   --leading-tight: 1.2;
   --leading-body: 1.5;
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
-  --tracking-display: -0.02em;
+  --tracking-display: -0.025em;
 
   /* Spacing: one 4px scale; every margin, padding and gap is a step on it. */
   --space-1: 0.25rem;
@@ -62,22 +79,25 @@
   /* Sizes */
   --control-h: 2rem; /* 32px: buttons and inputs, above the 24px AA target */
   --icon-button: 1.75rem; /* 28px square icon buttons */
+  --pill: 999px;
   --icon: 1rem;
-  --row-h: 2.5rem;
+  --row-h: 3rem;
+  --sidebar-w: 14.5rem;
+  --rail-w: 3.5rem;
   --col-num: 3rem;
-  --col-key: 30%;
-  --form-width: 22rem;
+  --col-key: 34%;
+  --form-width: 24rem;
   --dialog-width: 28rem;
   --hairline: 1px;
   --focus-width: 2px;
   --clip-bar: 2px; /* clipboard countdown; 1px was too faint at 96 DPI */
 
   /* Radius: control < card < surface. */
-  --radius-control: 6px;
-  --radius-card: 10px;
-  --radius-surface: 14px;
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-surface: 20px;
 
-  /* Motion: one duration set, one easing. Colour and opacity only. */
+  /* Motion: one duration set, one easing. Colour, opacity and small transforms, 160ms at most. */
   --duration-fast: 100ms;
   --duration-base: 160ms;
   --ease: cubic-bezier(0.2, 0, 0, 1);
@@ -86,40 +106,63 @@
   /* Light theme roles (default). Ratios measured against the listed surface. */
   color-scheme: light;
   --color-bg-canvas: var(--gray-50); /* window background */
+  --color-bg-sidebar: var(--gray-75); /* project sidebar */
   --color-bg-surface: var(--gray-0); /* sheet, dialogs, inputs */
   --color-bg-hover: var(--gray-100); /* hovered row or button */
   --color-bg-selected: var(--gray-150); /* focused row, pressed button */
-  --color-text-primary: var(--gray-900); /* 16.67:1 surface, 13.56:1 selected */
-  --color-text-secondary: var(--gray-700); /* 8.10:1 surface, 6.59:1 selected */
-  --color-text-muted: var(--gray-600); /* 5.93:1 surface, 4.83:1 selected */
+  --color-text-primary: var(--gray-900); /* 18.45:1 surface, 14.56:1 selected */
+  --color-text-secondary: var(--gray-700); /* 10.23:1 surface, 8.07:1 selected */
+  --color-text-muted: var(--gray-600); /* 6.59:1 surface, 5.20:1 selected, 5.59:1 sidebar */
   --color-border-subtle: var(--gray-200); /* decorative dividers only, never a control edge */
-  --color-border-control: var(--gray-500); /* 3.84:1 surface, 3.12:1 selected (SC 1.4.11) */
-  --color-focus: var(--gray-900); /* 16.67:1 surface */
-  --color-action-bg: var(--gray-900); /* filled button */
-  --color-action-bg-hover: var(--gray-750);
-  --color-action-fg: var(--gray-0); /* 16.67:1 on action-bg, 12.10:1 on hover */
-  --shadow-overlay: 0 1px 2px rgb(0 0 0 / 0.06), 0 12px 32px rgb(0 0 0 / 0.14);
-  --backdrop: rgb(0 0 0 / 0.32);
+  --color-border-control: var(
+    --gray-500
+  ); /* 4.30:1 surface, 4.02:1 canvas, 3.65:1 sidebar (SC 1.4.11) */
+  --color-focus: var(
+    --saffron-700
+  ); /* dark amber: 6.31:1 surface, 5.90:1 canvas, 5.36:1 sidebar, 4.98:1 selected */
+  --color-accent: var(
+    --saffron-400
+  ); /* brand fill; 1.65:1 on surface, so never an edge or text on light */
+  --color-accent-hover: var(--saffron-hover-light);
+  --color-accent-fg: var(--saffron-950); /* 11.19:1 on accent, 9.39:1 on hover */
+  --color-action-bg: var(--color-accent); /* filled primary button */
+  --color-action-bg-hover: var(--color-accent-hover);
+  --color-action-fg: var(--color-accent-fg);
+  --logo-glow: rgb(246 194 75 / 0.32); /* glow behind the gate logo */
+  --color-accent-text: var(--saffron-700); /* 6.31:1 surface, 5.90:1 canvas, 5.36:1 sidebar */
+  --color-accent-soft: #f4e4bc; /* active project fill; accent text 5.01:1, primary text 14.65:1 */
+  --shadow-overlay: 0 1px 2px rgb(40 25 8 / 0.06), 0 16px 40px rgb(40 25 8 / 0.16);
+  --shadow-card: 0 1px 2px rgb(40 25 8 / 0.05), 0 8px 24px rgb(40 25 8 / 0.07);
+  --backdrop: rgb(27 18 11 / 0.38);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
     --color-bg-canvas: var(--gray-950);
-    --color-bg-surface: var(--gray-900);
+    --color-bg-sidebar: var(--gray-940);
+    --color-bg-surface: var(--gray-925);
     --color-bg-hover: var(--gray-875);
     --color-bg-selected: var(--gray-850);
-    --color-text-primary: var(--gray-ink-light); /* 14.73:1 surface, 11.99:1 selected */
-    --color-text-secondary: var(--gray-300); /* 9.77:1 surface, 7.95:1 selected */
-    --color-text-muted: var(--gray-400); /* 6.34:1 surface, 5.16:1 selected */
+    --color-text-primary: var(--gray-ink-light); /* 15.43:1 surface, 12.77:1 selected */
+    --color-text-secondary: var(--gray-300); /* 10.04:1 surface, 8.31:1 selected */
+    --color-text-muted: var(--gray-400); /* 6.08:1 surface, 5.03:1 selected, 6.60:1 sidebar */
     --color-border-subtle: var(--gray-800);
-    --color-border-control: var(--gray-550); /* 3.89:1 surface, 3.51:1 hover */
-    --color-focus: var(--gray-ink-light); /* 14.73:1 surface */
-    --color-action-bg: var(--gray-ink-light);
-    --color-action-bg-hover: var(--gray-ink-hover-dark);
-    --color-action-fg: var(--gray-950); /* 15.73:1 on action-bg, 12.53:1 on hover */
-    --shadow-overlay: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.5);
-    --backdrop: rgb(0 0 0 / 0.56);
+    --color-border-control: var(--gray-550); /* 3.64:1 surface, 3.84:1 canvas, 3.33:1 hover */
+    --color-focus: var(
+      --saffron-400
+    ); /* 10.81:1 surface, 11.41:1 canvas, 11.75:1 sidebar, 8.95:1 selected */
+    --color-accent: var(--saffron-400);
+    --color-accent-hover: var(--saffron-hover-dark);
+    --color-accent-fg: var(--saffron-950); /* 11.19:1 on accent, 12.94:1 on hover */
+    --color-action-bg: var(--color-accent);
+    --color-action-bg-hover: var(--color-accent-hover);
+    --color-action-fg: var(--color-accent-fg);
+    --color-accent-text: var(--saffron-400); /* 10.81:1 surface, 11.41:1 canvas, 11.75:1 sidebar */
+    --color-accent-soft: #3a2b12; /* accent text 8.30:1, primary text 11.85:1 */
+    --shadow-overlay: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 40px rgb(0 0 0 / 0.55);
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+    --backdrop: rgb(8 6 3 / 0.6);
   }
 }
 

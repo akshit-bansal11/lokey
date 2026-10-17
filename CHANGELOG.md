@@ -6,12 +6,34 @@ All notable changes to Saltcellar (called lokey until 0.4.0) are recorded here, 
 
 ## [Unreleased]
 
+### Added
+
+- A command palette on Ctrl+K: every command, with its shortcut, and
+  "Switch to project …" for each project. Search keeps Ctrl+F and `/`.
+- Ctrl+1 to Ctrl+9 open the first nine projects; Alt+↑ and Alt+↓ step
+  through them, like Ctrl+PgUp and Ctrl+PgDn.
+- Ctrl+Shift+C on a row copies the key's name; Ctrl+Enter in the add row
+  adds the key.
+
 ### Changed
 
-- A new icon: a salt shaker with a keyhole, on a blue tile, replacing the
-  plain key. The 16, 24 and 32 px sizes come from a simpler drawing
-  (`icon-small.svg`) so they stay legible.
-- The website has a link preview (`og.png`, 1200×630) instead of the bare icon.
+- A new icon: a hopper crystal, the stepped, sinking squares rock salt grows
+  into, which also read as stairs down to a cellar, with the keyhole at the
+  bottom. Saffron and espresso, flat, with no gradients. The 16, 24 and 32 px
+  sizes come from a simpler drawing (`icon-small.svg`) with fewer steps and a
+  larger keyhole.
+- A new look for the app: saffron on warm espresso neutrals, replacing the
+  black, white and grey design (DES-19 records the change). Projects are a
+  sidebar with key counts instead of a drop-down; it folds to a rail of
+  initials below 760 px. Setup, unlock, restore and recovery are a centred
+  card with the icon. Light text and focus rings use a dark amber, since
+  saffron itself is too light to read on white.
+- The shortcuts are listed in one place (`src/lib/shortcuts.ts`): the
+  dispatch, the shortcuts dialog, the status bar hint and the button tooltips
+  all read it, so they cannot drift apart.
+- The website uses the same saffron palette.
+- The link previews (`og.png`, `assets/`) show the icon beside the app, and
+  name the akshitbansal.dev domain.
 - The website shows the icon beside its name in the header, and draws the
   hero icon from SVG rather than a 1024 px PNG.
 - The website moved to https://saltcellar.akshitbansal.dev.
