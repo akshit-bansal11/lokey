@@ -8,10 +8,10 @@
       <path d="M484 540 H540 L568 740 H456 Z" fill="#000"/>
     </mask>
   </defs>
-  <rect x="16" y="16" width="992" height="992" rx="200" fill="#0068d6"/>
+  <rect x="16" y="16" width="992" height="992" rx="200" fill="#E2552D"/>
   <g mask="url(#cut)" stroke-width="40" stroke-linejoin="round">
     <path d="M512 172 L806 342 L512 512 L218 342 Z" fill="#fff" stroke="#fff"/>
-    <path d="M218 342 L512 512 L512 852 L218 682 Z" fill="#cfe2fb" stroke="#cfe2fb"/>
-    <path d="M512 512 L806 342 L806 682 L512 852 Z" fill="#94c0f6" stroke="#94c0f6"/>
+    <path d="M218 342 L512 512 L512 852 L218 682 Z" fill="#FFD9CB" stroke="#FFD9CB"/>
+    <path d="M512 512 L806 342 L806 682 L512 852 Z" fill="#FFA889" stroke="#FFA889"/>
   </g>
 </svg>

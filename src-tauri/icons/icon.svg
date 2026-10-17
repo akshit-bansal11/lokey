@@ -9,11 +9,11 @@
       <path d="M492 540 H532 L552 704 H472 Z" fill="#000"/>
     </mask>
   </defs>
-  <rect x="48" y="48" width="928" height="928" rx="212" fill="#0068d6"/>
+  <rect x="48" y="48" width="928" height="928" rx="212" fill="#E2552D"/>
   <!-- a salt crystal: rock salt grows as cubes -->
   <g mask="url(#cut)" stroke-width="28" stroke-linejoin="round">
     <path d="M512 224 L761 368 L512 512 L263 368 Z" fill="#fff" stroke="#fff"/>
-    <path d="M263 368 L512 512 L512 800 L263 656 Z" fill="#cfe2fb" stroke="#cfe2fb"/>
-    <path d="M512 512 L761 368 L761 656 L512 800 Z" fill="#94c0f6" stroke="#94c0f6"/>
+    <path d="M263 368 L512 512 L512 800 L263 656 Z" fill="#FFD9CB" stroke="#FFD9CB"/>
+    <path d="M512 512 L761 368 L761 656 L512 800 Z" fill="#FFA889" stroke="#FFA889"/>
   </g>
 </svg>
