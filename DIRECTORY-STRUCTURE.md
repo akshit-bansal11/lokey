@@ -103,14 +103,18 @@ saltcellar/
 │   │   ├── recovery.ts
 │   │   ├── rows.test.ts
 │   │   ├── rows.ts
+│   │   ├── shortcuts.test.ts
+│   │   ├── shortcuts.ts
 │   │   ├── status.ts
 │   │   └── types.ts
 │   ├── styles/
 │   │   ├── app.css
+│   │   ├── palette.css
 │   │   └── tokens.css
 │   ├── views/
 │   │   ├── dialogs.ts
 │   │   ├── generator.ts
+│   │   ├── palette.ts
 │   │   ├── setup.ts
 │   │   ├── unlock.ts
 │   │   └── vault.ts
