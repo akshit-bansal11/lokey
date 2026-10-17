@@ -16,10 +16,20 @@ import {
   visibleRows,
   wouldReplace,
 } from "@/lib/rows.ts";
+import {
+  findShortcut,
+  projectIndex,
+  type RowMoveKey,
+  rowMoveKey,
+  SHORTCUTS,
+  shortcutById,
+  titleWithKey,
+} from "@/lib/shortcuts.ts";
 import { announce, showShortcuts, startClipboardTimer } from "@/lib/status.ts";
 import type { Row, Snapshot } from "@/lib/types.ts";
-import { askProjectName, confirmDelete, openSettings, showKeys } from "@/views/dialogs.ts";
+import { askProjectName, confirmDelete, openSettings } from "@/views/dialogs.ts";
 import { openGenerator } from "@/views/generator.ts";
+import { openPalette, type PaletteCommand, showShortcutList } from "@/views/palette.ts";
 
 const MASK = "••••••••••••";
 const NEW_PROJECT = "\u0000new";
@@ -418,7 +428,7 @@ function handleFailure(error: unknown): void {
 type RowPick = (rows: HTMLTableRowElement[], at: number) => number;
 
 /** Row-to-row keys: which row each one lands on, given the current one. */
-const ROW_MOVES: Record<string, RowPick> = {
+const ROW_MOVES: Record<RowMoveKey, RowPick> = {
   ArrowDown: (_, at) => at + 1,
   ArrowUp: (_, at) => at - 1,
   Home: () => 0,
@@ -440,25 +450,53 @@ function onSheetKey(event: KeyboardEvent): void {
   if (!(target instanceof HTMLElement) || target instanceof HTMLInputElement) return;
   const tr = rowFor(target);
   if (!tr) return;
-  const move = ROW_MOVES[event.key];
-  if (move) {
-    event.preventDefault();
-    focusRow(target, move);
-  } else if (event.key === "Escape") {
-    // First Escape hides a shown value; the next goes back to search.
-    event.preventDefault();
-    if (revealed) hideRevealed();
-    else focusSearch();
-  } else if (event.key === "F2") {
-    event.preventDefault();
-    void onAction("edit", tr);
-  } else if (event.key === "Delete") {
-    event.preventDefault();
-    void onAction("delete", tr);
-  } else if (event.key === "c" && (event.ctrlKey || event.metaKey)) {
-    if (window.getSelection()?.toString()) return;
-    event.preventDefault();
-    void onAction("copy", tr);
+  const shortcut = findShortcut(event, "row");
+  if (!shortcut) return;
+  switch (shortcut.id) {
+    case "row-move": {
+      const key = rowMoveKey(event);
+      if (!key) return;
+      event.preventDefault();
+      focusRow(target, ROW_MOVES[key]);
+      return;
+    }
+    case "row-escape":
+      // First Escape hides a shown value; the next goes back to search.
+      event.preventDefault();
+      if (revealed) hideRevealed();
+      else focusSearch();
+      return;
+    case "row-edit":
+      event.preventDefault();
+      void onAction("edit", tr);
+      return;
+    case "row-delete":
+      event.preventDefault();
+      void onAction("delete", tr);
+      return;
+    case "row-copy":
+      // With text selected, Ctrl+C keeps its ordinary meaning.
+      if (window.getSelection()?.toString()) return;
+      event.preventDefault();
+      void onAction("copy", tr);
+      return;
+    case "row-copy-name":
+      if (window.getSelection()?.toString()) return;
+      event.preventDefault();
+      void copyName(tr);
+      return;
+  }
+}
+
+/** Copies the key's name through the same clipboard path (and timer) as a value. */
+async function copyName(tr: HTMLTableRowElement): Promise<void> {
+  const { key } = rowKey(tr);
+  try {
+    const seconds = await api.copyText(key);
+    startClipboardTimer(seconds);
+    announce(`Copied the name ${key}. The clipboard clears in ${seconds} seconds.`);
+  } catch (error) {
+    handleFailure(error);
   }
 }
 
@@ -518,36 +556,61 @@ function generatePassword(): void {
   });
 }
 
-/** The page-wide shortcuts; the shortcuts dialog lists every one of them. */
+function jumpToProject(index: number): void {
+  const name = projectNames(snapshot.projects, pendingProjects)[index];
+  if (name === undefined) return;
+  switchProject(name);
+  announce(`Showing ${project}.`);
+}
+
+/** What each global shortcut does; the ids are those of src/lib/shortcuts.ts. */
+const COMMANDS: Record<string, () => void> = {
+  palette: openCommands,
+  "add-key": () => byId("new-key", HTMLInputElement).focus(),
+  "new-project": newProject,
+  generate: generatePassword,
+  search: focusSearch,
+  settings,
+  lock: () => options.onLock(),
+  help: showShortcutList,
+  "project-prev": () => stepProject(-1),
+  "project-next": () => stepProject(1),
+};
+
+/** The page-wide shortcuts, dispatched through the registry. */
 function commandFor(event: KeyboardEvent): (() => void) | undefined {
-  const inField =
-    event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement;
-  // Single-character keys only outside fields, so they never eat typing (SC 2.1.4).
-  if (event.key === "F1" || (event.key === "?" && !inField)) return showKeys;
-  if (event.key === "/" && !inField) return focusSearch;
-  if (!(event.ctrlKey || event.metaKey) || event.altKey) return undefined;
-  switch (event.key.toLowerCase()) {
-    case "n":
-      return event.shiftKey ? newProject : () => byId("new-key", HTMLInputElement).focus();
-    case "f":
-    case "k":
-      return focusSearch;
-    case ",":
-      return settings;
-    case "g":
-      return generatePassword;
-    case "pageup":
-      return () => stepProject(-1);
-    case "pagedown":
-      return () => stepProject(1);
-    default:
-      return undefined;
+  const shortcut = findShortcut(event, "global");
+  if (!shortcut) return undefined;
+  if (shortcut.id === "project-jump") {
+    const index = projectIndex(event);
+    return index === undefined ? undefined : () => jumpToProject(index);
   }
+  return COMMANDS[shortcut.id];
+}
+
+/** The palette lists every global command plus one "Switch to" per other project. */
+function openCommands(): void {
+  const commands: PaletteCommand[] = SHORTCUTS.flatMap((shortcut) => {
+    const run = COMMANDS[shortcut.id];
+    if (!run || shortcut.id === "palette") return [];
+    return [{ id: shortcut.id, label: shortcut.description, keys: shortcut.keys, run }];
+  });
+  const names = projectNames(snapshot.projects, pendingProjects);
+  names.forEach((name, index) => {
+    if (sameName(name, project)) return;
+    commands.push({
+      id: `project:${name}`,
+      label: `Switch to project ${name}`,
+      keys: index < 9 ? [`Ctrl+${index + 1}`] : [],
+      run: () => jumpToProject(index),
+    });
+  });
+  openPalette(commands);
 }
 
 function onGlobalKey(event: KeyboardEvent): void {
   touch();
-  if (event.key.toLowerCase() === "l" && (event.ctrlKey || event.metaKey)) {
+  if (shortcutById("lock").match(event)) {
     event.preventDefault();
     options.onLock();
     return;
@@ -595,7 +658,7 @@ export function showVault(initial: Snapshot, vaultOptions: VaultOptions): void {
   keyInput.addEventListener("input", updateAddLabel);
   for (const input of [keyInput, valueInput]) {
     input.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
+      if (findShortcut(event, "add")) {
         event.preventDefault();
         void addKey();
       }
@@ -605,8 +668,21 @@ export function showVault(initial: Snapshot, vaultOptions: VaultOptions): void {
 
   find(root, "#lock", HTMLButtonElement).addEventListener("click", () => options.onLock());
   find(root, "#settings-open", HTMLButtonElement).addEventListener("click", settings);
-  find(root, "#keys-open", HTMLButtonElement).addEventListener("click", showKeys);
+  find(root, "#keys-open", HTMLButtonElement).addEventListener("click", showShortcutList);
   find(root, "#generate-open", HTMLButtonElement).addEventListener("click", generatePassword);
+
+  // Tooltips carry their shortcut, read from the registry.
+  const tips: [string, string, string][] = [
+    ["#generate-open", "Generate a password", "generate"],
+    ["#keys-open", "Keyboard shortcuts", "help"],
+    ["#settings-open", "Settings", "settings"],
+    ["#lock", "Lock", "lock"],
+    ["#add", "Add key", "add-submit"],
+    ["#search", "Search keys", "search"],
+  ];
+  for (const [selector, label, id] of tips) {
+    find(root, selector, HTMLElement).title = titleWithKey(label, id);
+  }
 
   document.addEventListener("keydown", onGlobalKey);
   document.addEventListener("pointerdown", touch);

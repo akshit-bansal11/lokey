@@ -1,0 +1,41 @@
+/* Command palette (Ctrl+K). Tokens only; the dialog shell is the shared one. */
+.palette {
+  gap: var(--space-2);
+}
+
+.palette-list {
+  max-height: 18rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.palette-list [role="option"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  color: var(--color-text-primary);
+  font-size: var(--text-md);
+  cursor: default;
+}
+
+.palette-list [role="option"][aria-selected="true"] {
+  background: var(--color-bg-selected);
+}
+
+.palette-keys {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-1);
+}
+
+.palette-empty {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
