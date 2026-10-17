@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <title>Saltcellar</title>
   <rect width="1024" height="1024" rx="228" fill="#F6C24B"/>
-  <rect x="102" y="79" width="820" height="820" rx="164" fill="#E39B29"/>
-  <rect x="232" y="255" width="560" height="560" rx="112" fill="#5C3412"/>
-  <rect x="347" y="416" width="330" height="330" rx="66" fill="#1B120B"/>
-  <circle cx="512" cy="540" r="74" fill="#F6C24B"/>
-  <path d="M481 574 H543 L568 696 H456 Z" fill="#F6C24B"/>
+  <rect x="102" y="102" width="820" height="820" rx="164" fill="#E39B29"/>
+  <rect x="232" y="278" width="560" height="560" rx="112" fill="#5C3412"/>
+  <rect x="347" y="439" width="330" height="330" rx="66" fill="#1B120B"/>
+  <circle cx="512" cy="563" r="74" fill="#F6C24B"/>
+  <path d="M481 597 H543 L568 719 H456 Z" fill="#F6C24B"/>
 </svg>
