@@ -8,9 +8,12 @@ All notable changes to Saltcellar (called lokey until 0.4.0) are recorded here, 
 
 ### Changed
 
-- A new icon: a salt shaker with a keyhole, on a blue tile, replacing the
+- A new icon: a cube of salt (rock salt grows as cubes) whose three faces
+  meet in a keyhole, flat with no gradients, on a blue tile, replacing the
   plain key. The 16, 24 and 32 px sizes come from a simpler drawing
-  (`icon-small.svg`) so they stay legible.
+  (`icon-small.svg`) with wider seams so they stay legible.
+- The link previews (`og.png`, `assets/`) are flat too, and name the
+  akshitbansal.dev domain.
 - The website has a link preview (`og.png`, 1200×630) instead of the bare icon.
 - The website shows the icon beside its name in the header, and draws the
   hero icon from SVG rather than a 1024 px PNG.

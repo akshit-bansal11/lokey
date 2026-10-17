@@ -222,7 +222,7 @@ export default function Page() {
                 height={256}
                 unoptimized
                 priority
-                alt="The Saltcellar icon: a white salt shaker with a keyhole, on a blue rounded square."
+                alt="The Saltcellar icon: a cube of salt whose three faces meet in a keyhole, on a blue rounded square."
                 className="mx-auto size-48 drop-shadow-xl lg:size-64"
               />
             </BlurFade>
