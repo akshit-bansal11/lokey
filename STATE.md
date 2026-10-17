@@ -1,6 +1,6 @@
 # STATE.md — Saltcellar
 
-**Updated:** 2026-10-16 · **Branch:** `claude/sharp-newton-cz8bwz` · **Last release:** `v0.3.0`
+**Updated:** 2026-10-17 · **Branch:** `claude/affectionate-dijkstra-defddy` · **Last release:** `v0.3.0`
 
 ## Bootstrap record
 
@@ -13,7 +13,7 @@
 
 ## Where the work is right now
 
-- **In flight:** 0.4.0, bumped and not tagged: the rename from lokey to Saltcellar: crates, identifier and UI renamed, and a one-time copy of `%LOCALAPPDATA%\lokey` into `%LOCALAPPDATA%\saltcellar` (`Migration` in `store.rs`). The vault format and file names are unchanged. Also a website in `site/` (landing page and `/docs`), served at https://saltcellar.akshitbansal.dev (Vercel project `saltcellar`).
+- **In flight:** 1.0.0, bumped and to be tagged once the release PR merges: the rename from lokey to Saltcellar (bumped as 0.4.0, never tagged; there is no 0.4.0 release), a one-time copy of `%LOCALAPPDATA%\lokey` into `%LOCALAPPDATA%\saltcellar` (`Migration` in `store.rs`), and the saffron redesign (PR #29: new icon, sidebar, command palette, shortcuts). The vault format and file names are unchanged. Also a website in `site/` (landing page and `/docs`), served at https://saltcellar.akshitbansal.dev (Vercel project `saltcellar`).
 - **Last shipped:** v0.3.0 (2026-09-27, PR #17, tag on `009679a`): the password generator (PR #15), the settings dialog's delete buttons drawing their icons, the SEC-03 command register above `generate_handler!`, `"type": "module"`, and Tauri 2.11.6 / CLI 2.11.5. There is no 0.2.0, by the maintainer's choice. v0.1.0 before it shipped vault format v3, the recovery key, and encrypted backup export and restore.
 - **Blocked on:** Nothing.
 - **Next action:** after the rename merges, rename the GitHub repo to `akshit-bansal11/saltcellar`, then run a draft release on a PC with a lokey vault to see the migration work (`OPEN_ITEMS.md`). Still open: the manual pass in the built exe listed in `OPEN_ITEMS.md` (recovery, export, restore, the Save/Open dialogs, the settings dialog's icons), plus the older items: every shortcut once, and opening a vault made by an earlier build to see it upgrade to v3.
@@ -38,7 +38,7 @@
 | --- | --- | --- |
 | Editing `Cargo.toml` without refreshing `Cargo.lock` | CI runs `--locked` and fails; nobody can regenerate it locally | Dispatch `lockfile.yml` on the branch, commit its artifact |
 | Changing the vault format | Existing users' vaults stop opening | Bump `VERSION` in `format.rs` and read the old version |
-| Renaming the format tag `"lokey"`, the HPKE label `lokey inbox v1` or the `vault.lokey*` / `.lokey` names | They are inside existing vaults and backups, or are how they are found; every existing vault stops opening | Leave them; the 0.4.0 rename kept them on purpose |
+| Renaming the format tag `"lokey"`, the HPKE label `lokey inbox v1` or the `vault.lokey*` / `.lokey` names | They are inside existing vaults and backups, or are how they are found; every existing vault stops opening | Leave them; the rename (shipped in 1.0.0) kept them on purpose |
 | Writing to `%LOCALAPPDATA%\lokey` | It is the only copy of an upgrading user's vault until the migration has run | `Store::adopt` only reads it; keep it that way |
 | Lowering Argon2id parameters, even in tests | Weakens every vault created afterwards | Keep 64 MiB / t=3 / p=1; tests use fewer password operations |
 

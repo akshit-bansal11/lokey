@@ -1,6 +1,6 @@
 # DECISIONS.md — Saltcellar
 
-Append-only. The app was called lokey until 0.4.0; entries before the rename
+Append-only. The app was called lokey until 1.0.0; entries before the rename
 keep that name. Decisions before 2026-09-19 are on the Notion page named in
 `.claude/CLAUDE.md`.
 
@@ -66,3 +66,14 @@ leaves the user an untouched fallback.
 avoid a migration, but leave the old name in the one path users are told to
 back up.
 
+
+## 2026-10-17 — The rename and the redesign ship as 1.0.0; there is no 0.4.0
+
+**Decided:** the maintainer numbered the release after 0.3.0 as 1.0.0. The
+rename, bumped as 0.4.0 on 2026-10-16, was never tagged, so it ships in 1.0.0
+together with the saffron redesign, and the changelog folds both into one
+section. That keeps the rename and the lokey upgrade steps in the release
+notes, which `release.yml` takes from the tagged version's section only.
+
+**Rejected:** tagging v0.4.0 on the rename commit first. It would publish a
+release in the old black, white and grey design that nobody asked for.

@@ -5,7 +5,7 @@ This project inherits every rule in ~/.claude/CLAUDE.md. Rules below add to or o
 A local-only encrypted key/value vault for Windows: a Tauri desktop app over
 one engine, `saltcellar-core`. Public repo, released from tags as a single
 portable `Saltcellar-<version>.exe` (`tauri build --no-bundle`; there is no
-installer). Running `release.yml` by hand makes a private draft release. It was called lokey until 0.4.0. The `lokey`
+installer). Running `release.yml` by hand makes a private draft release. It was called lokey until 1.0.0. The `lokey`
 command-line tool was removed on 2026-09-20 — do not reintroduce a second
 front-end without asking.
 
@@ -36,7 +36,7 @@ front-end without asking.
 - **Vault format v3 has no inbox.** `hpke` and `merge_inbox` remain only to
   upgrade v1/v2 vaults; see `OPEN_ITEMS.md` before removing them.
 
-- **The rename to Saltcellar (0.4.0) kept the vault format.** The format tag
+- **The rename to Saltcellar (1.0.0) kept the vault format.** The format tag
   `"lokey"` (`format.rs`, bound into every vault's associated data), the HPKE
   label `lokey inbox v1` and the `vault.lokey*` / `.lokey` file names stay as
   they are; changing any of them makes existing vaults or backups unreadable.
