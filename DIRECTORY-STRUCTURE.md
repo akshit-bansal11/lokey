@@ -171,7 +171,7 @@ saltcellar/
 | `src/views/` | One module per screen or dialog group. |
 | `src/styles/` | The token file and the stylesheet that consumes it. |
 | `.github/workflows/` | CI (`ci.yml`), release on tag or as a hand-run draft (`release.yml`), lockfile resolution (`lockfile.yml`), the website's gate (`site.yml`). |
-| `site/` | The website at saltcellar.akshitbansal.me: landing page and one-page docs. Its own Next.js app, lockfile and gate, copied from Edgepad's site; the app's gate never reads it. |
+| `site/` | The website at saltcellar.akshitbansal.dev: landing page and one-page docs. Its own Next.js app, lockfile and gate, copied from Edgepad's site; the app's gate never reads it. |
 | `site/app/` | The two routes (`/`, `/docs`), the layout, robots and sitemap. |
 | `site/components/` | Page parts: header, footer, sidebar, the docs sections; `ui/` holds the shadcn-style primitives. |
 | `.cargo/` | `audit.toml`: accepted RustSec warnings with reasons and expiry. |
