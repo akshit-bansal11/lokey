@@ -86,7 +86,7 @@ The app shows one project at a time as a sheet with three columns: number, key a
 - Type a name and value in the last row and press Enter to add a key.
 - Show, copy, edit and delete are on each row. Copying clears the clipboard after 30 seconds, and a thin line in the status bar counts it down.
 - **Generate a password** (the dice button, or Ctrl+G): pick a length from 8 to 128 and which characters to use (uppercase, lowercase, digits, symbols). Copy it, or choose **Use as new key** to put it in the last row's value, then name the key and press Enter.
-- Everything works from the keyboard. Press **F1** (or `?`) for the full list: Ctrl+N adds a key, Ctrl+Shift+N makes a project, Ctrl+PgUp/PgDn switch projects, Ctrl+F searches, Ctrl+G opens the generator, Ctrl+, opens settings, Ctrl+L locks; in the rows, Up/Down/Home/End move, Enter shows, Ctrl+C copies, F2 edits, Del deletes.
+- Everything works from the keyboard. Press **F1** (or `?`) for the full list. Ctrl+K opens the command palette (every command, and "Switch to project X"). Ctrl+N adds a key, Ctrl+Shift+N makes a project, Ctrl+1 to Ctrl+9 jump to a project, Ctrl+PgUp/PgDn or Alt+Up/Down switch projects, Ctrl+F or `/` searches, Ctrl+G opens the generator, Ctrl+, opens settings, Ctrl+L locks; in the rows, Up/Down/Home/End move, Enter shows, Ctrl+C copies the value, Ctrl+Shift+C copies the key's name, F2 edits, Del deletes; in the add row, Ctrl+Enter (or Enter) adds the key.
 - **Projects** keep the same key name apart. New keys go to `default` unless you pick another.
 - **Names** use letters, digits and `_ - . /`, and match regardless of case.
 - The app locks itself after 5 minutes without use, and whenever it is closed: the next start asks for the master password again.

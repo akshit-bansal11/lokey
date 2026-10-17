@@ -154,10 +154,13 @@ export function DocsSections() {
         <Sub>The keyboard</Sub>
         <P>
           Everything works from the keyboard. Press <C>F1</C> (or <C>?</C>) for the full
-          list: Ctrl+N adds a key, Ctrl+Shift+N makes a project, Ctrl+PgUp and Ctrl+PgDn
-          switch projects, Ctrl+F searches, Ctrl+G opens the generator, Ctrl+, opens
-          settings and Ctrl+L locks. In the rows, Up, Down, Home and End move, Enter
-          shows, Ctrl+C copies, F2 edits and Del deletes.
+          list. Ctrl+K opens the command palette, which lists every command and project.
+          Ctrl+N adds a key, Ctrl+Shift+N makes a project, Ctrl+1 to Ctrl+9 jump to a
+          project, Ctrl+PgUp and Ctrl+PgDn (or Alt+Up and Alt+Down) switch projects,
+          Ctrl+F or / searches, Ctrl+G opens the generator, Ctrl+, opens settings and
+          Ctrl+L locks. In the rows, Up, Down, Home and End move, Enter shows, Ctrl+C
+          copies the value, Ctrl+Shift+C copies the key&apos;s name, F2 edits and Del
+          deletes. In the add row, Ctrl+Enter (or Enter) adds the key.
         </P>
       </Section>
 

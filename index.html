@@ -36,7 +36,7 @@
       <span class="clip-timer" id="clip-timer" hidden></span>
       <span id="status" role="status" aria-live="polite"></span>
       <span class="shortcuts" id="shortcuts" hidden>
-        F1 shortcuts · / search · Ctrl+L lock
+        Ctrl+K commands · / search · Ctrl+L lock
       </span>
     </footer>
 
@@ -401,38 +401,23 @@
       </div>
     </dialog>
 
-    <!-- Every shortcut the vault binds; commandFor and onSheetKey in vault.ts. -->
+    <!-- The shortcut list is generated from src/lib/shortcuts.ts (views/palette.ts). -->
     <dialog id="keys-dialog" aria-labelledby="keys-title">
       <div class="dialog-form">
         <h2 class="dialog-title" id="keys-title">Keyboard shortcuts</h2>
-        <section class="settings-section" aria-labelledby="keys-vault">
-          <h3 id="keys-vault">Vault</h3>
-          <dl class="keys">
-            <dt><kbd>Ctrl+N</kbd></dt><dd>Add a key</dd>
-            <dt><kbd>Ctrl+Shift+N</kbd></dt><dd>New project</dd>
-            <dt><kbd>Ctrl+G</kbd></dt><dd>Generate a password</dd>
-            <dt><kbd>Ctrl+PgUp</kbd> <kbd>Ctrl+PgDn</kbd></dt><dd>Previous or next project</dd>
-            <dt><kbd>Ctrl+F</kbd> <kbd>Ctrl+K</kbd> <kbd>/</kbd></dt><dd>Search</dd>
-            <dt><kbd>Ctrl+,</kbd></dt><dd>Settings</dd>
-            <dt><kbd>Ctrl+L</kbd></dt><dd>Lock</dd>
-            <dt><kbd>F1</kbd> <kbd>?</kbd></dt><dd>These shortcuts</dd>
-          </dl>
-        </section>
-        <section class="settings-section" aria-labelledby="keys-rows">
-          <h3 id="keys-rows">Rows</h3>
-          <dl class="keys">
-            <dt><kbd>↑ ↓</kbd> <kbd>Home</kbd> <kbd>End</kbd></dt><dd>Move between rows</dd>
-            <dt><kbd>Tab</kbd></dt><dd>Move between a row's buttons</dd>
-            <dt><kbd>Enter</kbd> <kbd>Space</kbd></dt><dd>Use the focused button</dd>
-            <dt><kbd>Ctrl+C</kbd></dt><dd>Copy the value</dd>
-            <dt><kbd>F2</kbd></dt><dd>Edit the value</dd>
-            <dt><kbd>Del</kbd></dt><dd>Delete the key</dd>
-            <dt><kbd>Esc</kbd></dt><dd>Hide the value, then back to search</dd>
-          </dl>
-        </section>
+        <div id="keys-groups"></div>
         <div class="dialog-actions">
           <button type="button" class="btn primary" data-close>Done</button>
         </div>
+      </div>
+    </dialog>
+
+    <!-- Command palette (Ctrl+K); views/palette.ts fills the listbox. -->
+    <dialog id="palette-dialog" aria-label="Command palette">
+      <div class="dialog-form palette">
+        <input class="input" id="palette-input" type="text" role="combobox" aria-label="Type a command" aria-autocomplete="list" aria-expanded="true" aria-controls="palette-list" placeholder="Type a command" autocomplete="off" spellcheck="false" />
+        <div class="palette-list" id="palette-list" role="listbox" aria-label="Commands"></div>
+        <p class="palette-empty" id="palette-empty" role="status" hidden>No matching commands.</p>
       </div>
     </dialog>
   </body>

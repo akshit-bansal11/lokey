@@ -2,6 +2,7 @@
 // (UI-D05), plus the clipboard countdown hairline.
 
 import { byId } from "@/lib/dom.ts";
+import { hintText } from "@/lib/shortcuts.ts";
 
 let clearTimer: number | undefined;
 
@@ -29,5 +30,7 @@ export function startClipboardTimer(seconds: number): void {
 }
 
 export function showShortcuts(visible: boolean): void {
-  byId("shortcuts", HTMLElement).hidden = !visible;
+  const hint = byId("shortcuts", HTMLElement);
+  hint.textContent = hintText();
+  hint.hidden = !visible;
 }
