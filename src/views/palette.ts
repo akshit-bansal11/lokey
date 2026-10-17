@@ -3,7 +3,6 @@
 
 import { byId } from "@/lib/dom.ts";
 import { GROUPS, SHORTCUTS } from "@/lib/shortcuts.ts";
-import { announce } from "@/lib/status.ts";
 
 export type PaletteCommand = {
   id: string;
@@ -103,8 +102,8 @@ function renderList(): void {
     }),
   );
   empty.hidden = shown.length > 0;
+  input.setAttribute("aria-expanded", String(shown.length > 0));
   setActive(0);
-  if (shown.length === 0) announce("No matching commands.");
 }
 
 input.addEventListener("input", renderList);
@@ -120,13 +119,16 @@ input.addEventListener("keydown", (event) => {
     event.preventDefault();
     run(shown[active]);
   } else if (event.key.toLowerCase() === "k" && (event.ctrlKey || event.metaKey)) {
+    // Stop here, or the page-wide Ctrl+K sees no open dialog and reopens it.
     event.preventDefault();
+    event.stopPropagation();
     dialog.close();
   }
 });
 dialog.addEventListener("close", () => {
   input.value = "";
   list.replaceChildren();
+  input.removeAttribute("aria-activedescendant");
   shown = [];
 });
 
