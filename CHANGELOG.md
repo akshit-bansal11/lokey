@@ -1,22 +1,42 @@
 # Changelog
 
-All notable changes to Saltcellar (called lokey until 0.4.0) are recorded here, following
+All notable changes to Saltcellar (called lokey until 1.0.0) are recorded here, following
 [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/). Versions follow
 [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-17
+
+lokey is now Saltcellar, with a new look. There is no 0.4.0 release: the
+rename, bumped as 0.4.0 and never tagged, ships here with the redesign. The
+vault format is unchanged (v3): a lokey vault is copied to the new folder on
+the first start, and opens with the same password.
+
 ### Added
 
+- A copy of a lokey vault on the first start; see "Upgrading from lokey"
+  below.
 - A command palette on Ctrl+K: every command, with its shortcut, and
   "Switch to project …" for each project. Search keeps Ctrl+F and `/`.
 - Ctrl+1 to Ctrl+9 open the first nine projects; Alt+↑ and Alt+↓ step
   through them, like Ctrl+PgUp and Ctrl+PgDn.
 - Ctrl+Shift+C on a row copies the key's name; Ctrl+Enter in the add row
   adds the key.
+- A website at https://saltcellar.akshitbansal.dev, with the documentation on
+  one page at `/docs`. Like the app, it loads nothing from anywhere else.
+- `SECURITY.md` (what the vault protects against, what it does not, and how to
+  report a hole privately) and `CONTRIBUTING.md`.
 
 ### Changed
 
+- **lokey is now Saltcellar.** The window, the exe and the repository carry
+  the new name. Releases are named for their version: `Saltcellar-1.0.0.exe`
+  beside `SHA256SUMS.txt`, under the title "Saltcellar v1.0.0". The permanent
+  `releases/latest/download/lokey.exe` link stops at 0.3.0. The vault and
+  backup files keep their `.lokey` names.
+- The vault now lives in `%LOCALAPPDATA%\saltcellar`. `SALTCELLAR_DIR` chooses
+  another folder; `LOKEY_DIR` still works.
 - A new icon: a hopper crystal, the stepped, sinking squares rock salt grows
   into, which also read as stairs down to a cellar, with the keyhole at the
   bottom. Saffron and espresso, flat, with no gradients. The 16, 24 and 32 px
@@ -31,36 +51,11 @@ All notable changes to Saltcellar (called lokey until 0.4.0) are recorded here, 
 - The shortcuts are listed in one place (`src/lib/shortcuts.ts`): the
   dispatch, the shortcuts dialog, the status bar hint and the button tooltips
   all read it, so they cannot drift apart.
-- The website uses the same saffron palette.
+- The website uses the same saffron palette, and shows the icon beside its
+  name in the header, drawing the hero icon from SVG rather than a 1024 px
+  PNG.
 - The link previews (`og.png`, `assets/`) show the icon beside the app, and
   name the akshitbansal.dev domain.
-- The website shows the icon beside its name in the header, and draws the
-  hero icon from SVG rather than a 1024 px PNG.
-- The website moved to https://saltcellar.akshitbansal.dev.
-
-## [0.4.0] - 2026-10-16
-
-lokey is now Saltcellar. The vault format is unchanged (v3): a lokey vault is
-copied to the new folder on the first start, and opens with the same password.
-
-### Added
-
-- A copy of a lokey vault on the first start; see "Upgrading from lokey"
-  below.
-- A website at https://saltcellar.akshitbansal.me, with the documentation on one
-  page at `/docs`. Like the app, it loads nothing from anywhere else.
-- `SECURITY.md` (what the vault protects against, what it does not, and how to
-  report a hole privately) and `CONTRIBUTING.md`.
-
-### Changed
-
-- **lokey is now Saltcellar.** The window, the exe and the repository carry
-  the new name. Releases are named for their version: `Saltcellar-0.4.0.exe`
-  beside `SHA256SUMS.txt`, under the title "Saltcellar v0.4.0". The permanent
-  `releases/latest/download/lokey.exe` link stops at 0.3.0. The vault and
-  backup files keep their `.lokey` names.
-- The vault now lives in `%LOCALAPPDATA%\saltcellar`. `SALTCELLAR_DIR` chooses
-  another folder; `LOKEY_DIR` still works.
 
 ### Upgrading from lokey
 
@@ -161,8 +156,8 @@ A vault made by an earlier build opens as before with its master password. Its
 deletion password is no longer asked for and is dropped the next time the
 vault is saved. After that, the earlier builds cannot open the vault.
 
-[Unreleased]: https://github.com/akshit-bansal11/saltcellar/compare/v0.4.0...HEAD
-[0.4.0]: https://github.com/akshit-bansal11/saltcellar/compare/v0.3.0...v0.4.0
+[Unreleased]: https://github.com/akshit-bansal11/saltcellar/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/akshit-bansal11/saltcellar/compare/v0.3.0...v1.0.0
 [0.3.0]: https://github.com/akshit-bansal11/saltcellar/compare/v0.1.0...v0.3.0
 [0.1.0]: https://github.com/akshit-bansal11/saltcellar/compare/v0.0.2...v0.1.0
 [0.0.2]: https://github.com/akshit-bansal11/saltcellar/compare/v0.0.1...v0.0.2

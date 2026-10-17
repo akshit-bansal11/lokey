@@ -2803,7 +2803,7 @@ checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
 name = "saltcellar-app"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "saltcellar-core",
  "serde",
@@ -2814,7 +2814,7 @@ dependencies = [
 
 [[package]]
 name = "saltcellar-core"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "aes-gcm",
  "argon2",

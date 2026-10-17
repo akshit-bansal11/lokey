@@ -229,7 +229,7 @@ export function DocsSections() {
         id="upgrading"
         eyebrow="Your vault"
         title={navLabel("upgrading")}
-        lede="Saltcellar was called lokey until 0.4.0. The first start copies a lokey vault across, and leaves the original alone."
+        lede="Saltcellar was called lokey until 1.0.0. The first start copies a lokey vault across, and leaves the original alone."
       >
         <List>
           <li>

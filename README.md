@@ -6,7 +6,7 @@ Saltcellar keeps your passwords, environment keys and backup codes in one encryp
 
 It is for the secrets that should never leave the machine they are used on: the `DATABASE_URL` for a side project, an API token, the backup codes a site gave you once. The alternatives are a text file anyone can read, or a password manager that wants an account and a cloud to keep your vault in. Saltcellar is neither. There is no account, no sync and no server: the vault is a file on your disk, encrypted under a master password only you know. The cost is the cloud's own benefit: nothing syncs to your phone, and if the disk dies, only a backup you made brings the vault back.
 
-It was called **lokey** until 0.4.0. An existing lokey vault is copied over on the first start; see [Upgrading from lokey](#upgrading-from-lokey).
+It was called **lokey** until 1.0.0. An existing lokey vault is copied over on the first start; see [Upgrading from lokey](#upgrading-from-lokey).
 
 [![CI](https://github.com/akshit-bansal11/saltcellar/actions/workflows/ci.yml/badge.svg)](https://github.com/akshit-bansal11/saltcellar/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/akshit-bansal11/saltcellar)](https://github.com/akshit-bansal11/saltcellar/releases/latest)
@@ -25,7 +25,7 @@ It was called **lokey** until 0.4.0. An existing lokey vault is copied over on t
 
 ## Install
 
-Saltcellar comes from the [latest release](https://github.com/akshit-bansal11/saltcellar/releases/latest), under **Assets**. The file is named for its release: `Saltcellar-0.4.0.exe` is 0.4.0. It is the whole install: one portable exe, no setup program, no administrator rights, nothing written outside your own user folder. Put it wherever you keep your tools; to remove Saltcellar, delete it.
+Saltcellar comes from the [latest release](https://github.com/akshit-bansal11/saltcellar/releases/latest), under **Assets**. The file is named for its release: `Saltcellar-1.0.0.exe` is 1.0.0. It is the whole install: one portable exe, no setup program, no administrator rights, nothing written outside your own user folder. Put it wherever you keep your tools; to remove Saltcellar, delete it.
 
 Windows 10 or 11, 64-bit, with WebView2 (built into Windows 11, and into any Windows 10 kept up to date).
 
