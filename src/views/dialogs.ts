@@ -403,8 +403,3 @@ export function openSettings(context: SettingsContext): void {
 
   settingsDialog.showModal();
 }
-
-/** The shortcuts list is static markup; opening it is all there is. */
-export function showKeys(): void {
-  byId("keys-dialog", HTMLDialogElement).showModal();
-}
