@@ -1,19 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <title>Saltcellar</title>
-  <defs>
-    <!-- the seams between the faces, and the keyhole where they meet -->
-    <mask id="cut">
-      <rect width="1024" height="1024" fill="#fff"/>
-      <path d="M512 512 L263 368 M512 512 L761 368 M512 512 V820" stroke="#000" stroke-width="26"/>
-      <circle cx="512" cy="512" r="68" fill="#000"/>
-      <path d="M492 540 H532 L552 704 H472 Z" fill="#000"/>
-    </mask>
-  </defs>
-  <rect x="48" y="48" width="928" height="928" rx="212" fill="#E2552D"/>
-  <!-- a salt crystal: rock salt grows as cubes -->
-  <g mask="url(#cut)" stroke-width="28" stroke-linejoin="round">
-    <path d="M512 224 L761 368 L512 512 L263 368 Z" fill="#fff" stroke="#fff"/>
-    <path d="M263 368 L512 512 L512 800 L263 656 Z" fill="#FFD9CB" stroke="#FFD9CB"/>
-    <path d="M512 512 L761 368 L761 656 L512 800 Z" fill="#FFA889" stroke="#FFA889"/>
-  </g>
+  <!-- a hopper crystal: rock salt grows in stepped, sinking squares, like stairs down to a cellar -->
+  <rect width="1024" height="1024" rx="228" fill="#F6C24B"/>
+  <rect x="112" y="112" width="800" height="800" rx="160" fill="#E39B29"/>
+  <rect x="212" y="252" width="600" height="600" rx="120" fill="#AE6519"/>
+  <rect x="302" y="382" width="420" height="420" rx="84" fill="#5C3412"/>
+  <rect x="382" y="502" width="260" height="260" rx="52" fill="#1B120B"/>
+  <!-- the keyhole, at the bottom of the steps -->
+  <circle cx="512" cy="601" r="56" fill="#F6C24B"/>
+  <path d="M488 626 H536 L554 719 H470 Z" fill="#F6C24B"/>
 </svg>

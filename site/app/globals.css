@@ -5,34 +5,38 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
-  Copied from Edgepad's site, so the two read as one family: the same palette. Light is a soft graphite-grey ground with white grouped cards; dark is a graphite
-  near-black with off-white ink, not #000 and #FFF. One accent, an ember orange, kept for what
-  is selected, on, live or the one main action.
+  Copied from Edgepad's site, so the two read as one family. Light is a warm off-white ground
+  with white grouped cards; dark is a warm espresso-graphite near-black with cream ink, not
+  #000 and #FFF. One accent, saffron, kept for what is selected, on, live or the one main
+  action. Saffron is light, so text ON it is espresso, and saffron used AS text or as a focus
+  ring on the light theme is the darker --saffron-ink (the same saffron in dark).
 
   Every text pair used on the site was computed at 4.5:1 or better:
-    light  ink/ground 16.3  dim/ground 5.3  dim/card 5.8  dim/faint 4.9  dim/ember-soft 5.1
-           ember/card 5.2  ember/ground 4.7  ember/ember-soft 4.6  on-ember/ember 5.2
-    dark   ink/ground 16.7  dim/ground 6.5  dim/card 6.0  dim/faint 5.3  dim/ember-soft 5.4
-           ember/card 6.7  ember/ground 7.3  ember/ember-soft 6.0  ember/faint 5.9
-           on-ember/ember 7.3
-  One pair that does NOT pass, so never use it: ember on faint in light (4.3). Text on
-  a faint fill is ink or dim there; on a tinted fill it is ink, dim or ember.
+    light  ink/ground 17.2  dim/ground 5.8  dim/card 6.2  dim/faint 5.3  dim/saffron-soft 5.3
+           ink/saffron-soft 15.6  saffron-ink/ground 5.9  saffron-ink/card 6.3
+           saffron-ink/faint 5.4  saffron-ink/saffron-soft 5.3  on-saffron/saffron 11.2
+    dark   ink/ground 16.6  dim/ground 6.8  dim/card 6.3  dim/faint 5.7  dim/saffron-soft 5.2
+           ink/saffron-soft 12.8  saffron-ink/ground 11.4  saffron-ink/card 10.6
+           saffron-ink/faint 9.6  saffron-ink/saffron-soft 8.8  on-saffron/saffron 11.2
+  Never use plain --saffron as text or as an outline in light: it is 1.5:1 on the ground.
+  It is a fill (buttons, badges, the step discs) with --on-saffron on top.
 
   The shadcn variable names (background, card, primary, muted, border, ring…) are
   mapped onto those values, so a component installed with the shadcn CLI picks them up
-  unchanged. Note that shadcn's `accent` is its hover surface; the site's ember is
+  unchanged. Note that shadcn's `accent` is its hover surface; the site's saffron is
   `primary` here.
 */
 :root {
-  --ground: #f4f4f3;
+  --ground: #faf7f0;
   --card: #ffffff;
-  --line: #e5e4e2;
-  --faint: #ecebe9;
-  --ink: #171717;
-  --dim: #686560;
-  --ember: #c2410c;
-  --on-ember: #ffffff;
-  --ember-soft: #fdeee6;
+  --line: #e8e2d6;
+  --faint: #f1ecdf;
+  --ink: #1b120b;
+  --dim: #6a5f52;
+  --saffron: #f6c24b;
+  --on-saffron: #1b120b;
+  --saffron-soft: #fbebc4;
+  --saffron-ink: #8a5310;
   --danger: #d70015;
   --elev-card: 0 1px 2px rgb(16 18 24 / 0.05), 0 4px 16px rgb(16 18 24 / 0.05);
   --elev-lift: 0 12px 40px rgb(16 18 24 / 0.14);
@@ -40,15 +44,16 @@
 }
 
 .dark {
-  --ground: #121212;
-  --card: #1c1b1a;
-  --line: #2e2c2a;
-  --faint: #262523;
-  --ink: #f3f2f0;
-  --dim: #9c9893;
-  --ember: #ff7a4d;
-  --on-ember: #1a0f0a;
-  --ember-soft: #33201a;
+  --ground: #14110e;
+  --card: #1d1915;
+  --line: #342e26;
+  --faint: #27221c;
+  --ink: #f5f0e6;
+  --dim: #a39a8c;
+  --saffron: #f6c24b;
+  --on-saffron: #1b120b;
+  --saffron-soft: #35270e;
+  --saffron-ink: #f6c24b;
   --danger: #ff6961;
   --elev-card: 0 1px 2px rgb(0 0 0 / 0.3);
   --elev-lift: 0 12px 40px rgb(0 0 0 / 0.45);
@@ -62,10 +67,10 @@
   --card-foreground: var(--ink);
   --popover: var(--card);
   --popover-foreground: var(--ink);
-  --primary: var(--ember);
-  --primary-foreground: var(--on-ember);
-  --secondary: var(--ember-soft);
-  --secondary-foreground: var(--ember);
+  --primary: var(--saffron);
+  --primary-foreground: var(--on-saffron);
+  --secondary: var(--saffron-soft);
+  --secondary-foreground: var(--saffron-ink);
   --muted: var(--faint);
   --muted-foreground: var(--ink);
   --accent: var(--faint);
@@ -73,7 +78,7 @@
   --destructive: var(--danger);
   --border: var(--line);
   --input: var(--line);
-  --ring: var(--ember);
+  --ring: var(--saffron-ink);
 }
 
 @theme inline {
@@ -100,7 +105,8 @@
   --color-dim: var(--dim);
   --color-line: var(--line);
   --color-faint: var(--faint);
-  --color-accent-soft: var(--ember-soft);
+  --color-accent-soft: var(--saffron-soft);
+  --color-saffron-ink: var(--saffron-ink);
 
   /* System fonts, as in the app itself: nothing is fetched to draw text. */
   --font-sans: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
@@ -156,8 +162,8 @@
   }
 
   ::selection {
-    background: var(--ember);
-    color: var(--on-ember);
+    background: var(--saffron);
+    color: var(--on-saffron);
   }
 
   /* One focus treatment everywhere: the accent, offset so it clears a filled button. */

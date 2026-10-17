@@ -34,7 +34,9 @@ export default function DocsPage() {
         {/* No entrance on the title block: it is the first paint, and a fade would
             hide it until the JavaScript arrives. */}
         <div className="py-10 md:py-16">
-          <p className="text-primary mb-2 text-[0.9375rem] font-bold">Documentation</p>
+          <p className="text-saffron-ink mb-2 text-[0.9375rem] font-bold">
+            Documentation
+          </p>
           <h1 className="max-w-[20ch] text-[2.5rem] leading-[1.04] font-black tracking-[-0.025em] md:text-6xl">
             Everything Saltcellar does, and how.
           </h1>
