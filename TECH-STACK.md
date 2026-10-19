@@ -1,6 +1,6 @@
 # TECH-STACK.md — Saltcellar
 
-**Last verified:** 2026-10-16 · **Verified with:** `Cargo.lock`, `package-lock.json`
+**Last verified:** 2026-10-20 · **Verified with:** `Cargo.lock`, `package-lock.json`; `arboard` and `rfd` from the `Cargo.toml` requirements (lock pending)
 
 ## Runtime target
 
@@ -10,7 +10,7 @@
 | Node.js (build only) | 26 (`.nvmrc`); `engines >=24` | 26: 27 Oct 2027 | Active LTS. Node never ships to users; it builds the page |
 | Package manager | npm 12 | n/a | default |
 | Lockfiles | `Cargo.lock` and `package-lock.json` committed | n/a | CI uses `--locked` and `npm ci` only |
-| Target OS | Windows 10/11 x64 with WebView2 | n/a | the clipboard code and the app shell are Windows-only |
+| Target OS | Windows 10/11 x64 (WebView2); macOS universal (dmg); Linux x86_64 (AppImage and deb) | n/a | the Windows clipboard and dialogs use Win32; macOS and Linux use `arboard` and `rfd`. The macOS and Linux builds have not run on real hardware (`OPEN_ITEMS.md`) |
 
 ## Core
 
@@ -28,7 +28,9 @@
 | Serialisation | serde + serde_json | 1.0.229 / 1.0.151 | a binary format | readable header, simple versioning |
 | Randomness | getrandom | 0.4.3 | rand | OS RNG directly, smallest API |
 | Encoding | base64 | 0.23.1 | hex | shorter vault file |
-| Windows API | windows-sys | 0.61.2 | the `windows` crate, arboard, tauri-plugin-dialog | raw clipboard calls needed for the history-exclusion formats; the app crate also calls the Save/Open file dialogs through it, which keeps the page without filesystem access and adds no crate |
+| Windows API | windows-sys | 0.61.2 | the `windows` crate, arboard (on Windows) | raw clipboard calls needed for the history-exclusion formats; the app crate also calls the Save/Open file dialogs through it, which keeps the page without filesystem access and adds no crate |
+| Clipboard, macOS and Linux (core, non-Windows) | arboard | 3.6.1 requirement, default features off; `wayland-data-control` on Linux (lock pending) | objc2-app-kit | it already sets the ConcealedType marker and covers Linux too |
+| File dialogs, macOS and Linux (app, non-Windows) | rfd | 0.17.2 requirement (lock pending) | tauri-plugin-dialog | the page must keep no filesystem permission, and rfd needs no plugin registration |
 | Unit / integration tests | cargo test, node:test | built in | Vitest | no extra dependency |
 | Browser tests | none | n/a | Playwright | see "Deliberately not used" |
 | Formatter | rustfmt, Biome | Biome 2.5.14 | Prettier | Biome also lints JS and CSS |
@@ -62,11 +64,13 @@
 | Argon2id | 64 MiB, t=3, p=1 | SECURITY-SPEC SEC-05; stored per vault in the header |
 | Master password minimum | 15 characters, max 1024, leaked-list check | SECURITY-SPEC SEC-06 (NIST SP 800-63B-4) |
 | Lockout | 10 wrong passwords then 15 minutes; backoff 1s doubling to 30s | `lockout.json`, beside the vault |
-| Vault folder | `%LOCALAPPDATA%\saltcellar`; a vault in `%LOCALAPPDATA%\lokey` is copied there once | `DIR`, `OLD_DIR` and `Migration` in `store.rs` |
+| Vault folder | `%LOCALAPPDATA%\saltcellar` on Windows; `~/Library/Application Support/saltcellar` on macOS; `$XDG_DATA_HOME/saltcellar` on Linux. A vault in `%LOCALAPPDATA%\lokey` is copied there once | `DIR`, `OLD_DIR` and `Migration` in `store.rs` |
 | Names kept from lokey | format tag `"lokey"`, HPKE label `lokey inbox v1`, `vault.lokey*` and `.lokey` | changing any of them makes existing vaults or backups unreadable |
 | App idle lock | 5 minutes | `IDLE_LOCK` in `src-tauri/src/main.rs` |
 | Clipboard clear | 30 seconds, only if unchanged | `CLEAR_AFTER` in `clipboard.rs` |
 | Value size cap | 64 KiB | keeps the file every change re-reads small |
+| Vault file read cap | 64 MiB | `read_capped` in `store.rs` |
+| File modes on Unix | 0600 files, 0700 folder | `store.rs` |
 | Coverage threshold | not set | UNKNOWN: no coverage tool wired yet |
 | SLSA build level target | L2 (hosted build, signed provenance via `attest-build-provenance`) | release.yml |
 
@@ -75,9 +79,9 @@
 | Not used | Why | Revisit when |
 | --- | --- | --- |
 | Any network service (Better Stack, analytics, update check), including on the website | "No network, ever" is the product, and the site keeps to it: no analytics, trackers or remote fonts | never, without a new product decision |
-| Code signing | the certificate costs money yearly | there are enough users that SmartScreen warnings cost adoption |
+| Code signing and macOS notarization | the Authenticode certificate and the Apple Developer Program both cost money yearly | there are enough users that SmartScreen or Gatekeeper warnings cost adoption |
 | Browser/UI tests (Playwright, WebDriver) | Tauri WebDriver on Windows adds a driver dependency | the app grows past a handful of screens |
-| Any installer (NSIS, MSI) | the release is one portable exe; `tauri build --no-bundle` | an organisation asks for a managed install |
+| Any Windows installer (NSIS, MSI) | the Windows release is one portable exe; `tauri build --no-bundle` | an organisation asks for a managed install |
 
 ## Dead dependency sweep
 

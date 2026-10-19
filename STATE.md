@@ -1,6 +1,6 @@
 # STATE.md — Saltcellar
 
-**Updated:** 2026-10-17 · **Branch:** `claude/affectionate-dijkstra-defddy` · **Last release:** `v0.3.0`
+**Updated:** 2026-10-20 · **Branch:** `launch-fixes` · **Last release:** `v1.0.0`
 
 ## Bootstrap record
 
@@ -9,14 +9,14 @@
 | Bootstrapped | 2026-09-19 (moved from `F:/projects/mini-projects/lokey-lcmdjsfbbr`) |
 | Stack detected as | Rust 2024 workspace (lokey-core, lokey-cli, src-tauri) + Vite/TypeScript page, from Cargo.lock and package-lock.json. `lokey-cli` removed 2026-09-20 |
 | Quality gate command | `npm run check` (CI: `npm run check:ci`) |
-| Deployed at | not deployed; released from tags at https://github.com/akshit-bansal11/saltcellar/releases (was `akshit-bansal11/lokey` until the rename) |
+| Deployed at | site: https://saltcellar.akshitbansal.dev (Vercel project `saltcellar`); app: released from tags at https://github.com/akshit-bansal11/saltcellar/releases |
 
 ## Where the work is right now
 
-- **In flight:** 1.0.0, bumped and to be tagged once the release PR merges: the rename from lokey to Saltcellar (bumped as 0.4.0, never tagged; there is no 0.4.0 release), a one-time copy of `%LOCALAPPDATA%\lokey` into `%LOCALAPPDATA%\saltcellar` (`Migration` in `store.rs`), and the saffron redesign (PR #29: new icon, sidebar, command palette, shortcuts). The vault format and file names are unchanged. Also a website in `site/` (landing page and `/docs`), served at https://saltcellar.akshitbansal.dev (Vercel project `saltcellar`).
-- **Last shipped:** v0.3.0 (2026-09-27, PR #17, tag on `009679a`): the password generator (PR #15), the settings dialog's delete buttons drawing their icons, the SEC-03 command register above `generate_handler!`, `"type": "module"`, and Tauri 2.11.6 / CLI 2.11.5. There is no 0.2.0, by the maintainer's choice. v0.1.0 before it shipped vault format v3, the recovery key, and encrypted backup export and restore.
+- **In flight:** 1.1.0 on branch `launch-fixes` (PR to be opened): macOS and Linux support (clipboard through `arboard`, file dialogs through `rfd`, per-OS data folder, 0600 files / 0700 folder on Unix, parent-directory fsync after rename), a 64 MiB vault cap, the `migrated-from-lokey` marker, names that may hold spaces and `@ + :`, "Delete all keys" re-asking the master password, protected copy for selection and recovery-key copy, Mac shortcut labels, the identifier `dev.akshitbansal.saltcellar` (was `io.github.akshitbansal11.lokey`), and CI/release on three OSes (`gate` on Windows plus `gate-unix`, a 3-platform `build` matrix, `release.yml` split into `version` / `build` / `publish`).
+- **Last shipped:** v1.0.0 (2026-10-17): the rename from lokey to Saltcellar, the one-time copy of `%LOCALAPPDATA%\lokey`, and the saffron redesign. The vault format and file names are unchanged. v0.3.0 (2026-09-27) before it; there is no 0.2.0 or 0.4.0.
 - **Blocked on:** Nothing.
-- **Next action:** after the rename merges, rename the GitHub repo to `akshit-bansal11/saltcellar`, then run a draft release on a PC with a lokey vault to see the migration work (`OPEN_ITEMS.md`). Still open: the manual pass in the built exe listed in `OPEN_ITEMS.md` (recovery, export, restore, the Save/Open dialogs, the settings dialog's icons), plus the older items: every shortcut once, and opening a vault made by an earlier build to see it upgrade to v3.
+- **Next action:** regenerate `Cargo.lock` with `lockfile.yml` (it does not yet have `arboard` and `rfd`), get CI green on all three OSes, merge, tag v1.1.0, then a person runs the macOS and Linux builds on real machines (`OPEN_ITEMS.md`).
 
 ## Verified facts
 
@@ -41,6 +41,7 @@
 | Renaming the format tag `"lokey"`, the HPKE label `lokey inbox v1` or the `vault.lokey*` / `.lokey` names | They are inside existing vaults and backups, or are how they are found; every existing vault stops opening | Leave them; the rename (shipped in 1.0.0) kept them on purpose |
 | Writing to `%LOCALAPPDATA%\lokey` | It is the only copy of an upgrading user's vault until the migration has run | `Store::adopt` only reads it; keep it that way |
 | Lowering Argon2id parameters, even in tests | Weakens every vault created afterwards | Keep 64 MiB / t=3 / p=1; tests use fewer password operations |
+| Assuming macOS/Linux behave like Windows | Neither build has run on real hardware | Treat their clipboard, dialogs and capture protection as unverified until someone runs them |
 
 ## Environment state
 
@@ -50,13 +51,14 @@
 | Required status checks | `gate (lint, types, tests)`, strict | same call, 2026-09-19 |
 | Deploy approval environment exists with a reviewer | no; releases run on tag push, and a draft release when `release.yml` is run by hand; solo maintainer | 2026-10-16 |
 | Secrets present in CI | none needed (GITHUB_TOKEN only) | 2026-09-19 |
+| Repo security settings | private vulnerability reporting, secret scanning, push protection and Dependabot security updates enabled; wiki disabled | `gh api repos/akshit-bansal11/saltcellar` and `/private-vulnerability-reporting`, 2026-10-20 |
 | Backup provisioned and drilled | n/a: no server data | 2026-09-19 |
 
 ## Test status, honestly
 
 | Suite | Status | Note |
 | --- | --- | --- |
-| page logic (node:test) | green | 17 tests, CI gate on PR #13; 5 new for recovery-key matching |
+| page logic (node:test) | green | 29 `test(` calls in `src/**/*.test.ts` (counted 2026-10-20, not run here); last CI-proven count was 17 on PR #13 |
 | Rust unit / integration | green | CI gate on PR #15 (run 36320973747); the lokey-folder migration tests (8, in `store.rs`) pass on Linux, not yet in CI; covers password generation (length, every chosen set present, unchosen sets absent, bad input refused, the index draw staying in range and reaching every index), recovery, rotation (an old password or recovery key with an old copy reads nothing newer), export and restore, v1/v2 upgrade with an inbox, header tampering, the re-asked password counting toward the lockout |
 | desktop window | partly run | no automated UI test. The generator dialog passed the maintainer's manual pass on the CI build of `b3548a6`, against a real vault (2026-09-27). Still needs a manual pass: every shortcut, setup with and without a recovery key, recover, export and restore through the Windows dialogs, the delete confirm, the 5-minute lock |
 | the app opens a vault written by the old CLI | unit-tested only | a v2 vault with inbox records, built in the test from the old format, opens and upgrades; a real 0.2.0 vault has not been tried |
@@ -65,11 +67,11 @@
 
 | File | Exists | Last updated | Current? |
 | --- | --- | --- | --- |
-| `TECH-STACK.md` | yes | 2026-10-16 | yes |
+| `TECH-STACK.md` | yes | 2026-10-20 | yes |
 | `DIRECTORY-STRUCTURE.md` | yes | 2026-10-16 | yes |
-| `DECISIONS.md` | yes | 2026-10-16 | yes; earlier decisions are on the Notion page |
+| `DECISIONS.md` | yes | 2026-10-20 | yes; earlier decisions are on the Notion page |
 | `DRIFT.md` | no | | no known drift |
-| `OPEN_ITEMS.md` | yes | 2026-10-16 | yes |
+| `OPEN_ITEMS.md` | yes | 2026-10-20 | yes |
 
 ## Session handoff
 
