@@ -65,6 +65,13 @@ export function showUnlock(status: Status, handlers: UnlockHandlers, reason?: Lo
       restore();
       const failure = toFailure(error);
       setFormError(form, failure.message);
+      // The attempt that starts a lockout disables the button for its length too.
+      if (failure.code === "locked-out") {
+        api.status().then(
+          (fresh) => holdForLockout(form, submit, fresh.lockoutSecs),
+          () => undefined,
+        );
+      }
       input.select();
     }
   });
@@ -115,6 +122,13 @@ function showRecover(status: Status, handlers: UnlockHandlers): void {
         setFieldError(form, "master", message);
       } else {
         setFormError(form, recoverFailureMessage(code, message));
+      }
+      // Recovery attempts count toward the same lockout.
+      if (code === "locked-out") {
+        api.status().then(
+          (fresh) => holdForLockout(form, submit, fresh.lockoutSecs),
+          () => undefined,
+        );
       }
     }
   });

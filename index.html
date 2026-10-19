@@ -11,7 +11,7 @@
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
     <!-- The brand mark, defined once and used by <use href="#logo">. -->
-    <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+    <svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false">
       <defs>
         <symbol id="logo" viewBox="0 0 1024 1024">
           <!-- Hopper crystal: stepped squares sinking to a keyhole. Same in both themes. -->
@@ -36,14 +36,14 @@
       </span>
     </footer>
 
-    <!-- First run: no vault on this PC yet. -->
+    <!-- First run: no vault on this computer yet. -->
     <template id="tpl-setup">
       <section class="gate">
         <form class="gate-form" id="setup-form" novalidate>
           <svg class="logo" aria-hidden="true" focusable="false"><use href="#logo" /></svg>
           <h1 class="gate-title">Set up Saltcellar</h1>
           <p class="gate-lede">
-            Your keys stay in one encrypted file on this PC. One password protects it.
+            Your keys stay in one encrypted file on this computer. One password protects it.
           </p>
           <label class="field">
             <span class="field-label">Master password</span>
@@ -81,7 +81,7 @@
       </section>
     </template>
 
-    <!-- Setup, from a backup exported on this or another PC. -->
+    <!-- Setup, from a backup exported on this or another computer. -->
     <template id="tpl-restore">
       <section class="gate">
         <form class="gate-form" id="restore-form" novalidate>
@@ -251,7 +251,7 @@
         <label class="field">
           <span class="field-label">Project name</span>
           <input class="input mono" name="name" autocomplete="off" spellcheck="false" required />
-          <span class="field-hint">Letters, digits and _ - . / only. It is saved with its first key.</span>
+          <span class="field-hint">Letters, digits, spaces and _ - . / @ + : only. It is saved with its first key.</span>
           <span class="field-error" data-error-for="name"></span>
         </label>
         <div class="dialog-actions">
@@ -349,7 +349,7 @@
         <p class="dialog-text" id="recovery-text"></p>
         <p class="recovery-key" id="recovery-key"></p>
         <p class="dialog-text">
-          Write it on paper and keep it somewhere safe, away from this PC. Anyone who has it can open the vault. Saltcellar never shows it again.
+          Write it on paper and keep it somewhere safe, away from this computer. Anyone who has it can open the vault. Saltcellar never shows it again.
         </p>
         <label class="field">
           <span class="field-label">Type the recovery key to confirm you have it</span>

@@ -2,7 +2,7 @@
 // list in the shortcuts dialog. Both read src/lib/shortcuts.ts.
 
 import { byId } from "@/lib/dom.ts";
-import { GROUPS, SHORTCUTS } from "@/lib/shortcuts.ts";
+import { GROUPS, keyLabel, SHORTCUTS } from "@/lib/shortcuts.ts";
 
 export type PaletteCommand = {
   id: string;
@@ -15,7 +15,7 @@ export type PaletteCommand = {
 function chips(keys: string[]): HTMLElement[] {
   return keys.map((key) => {
     const kbd = document.createElement("kbd");
-    kbd.textContent = key;
+    kbd.textContent = keyLabel(key);
     return kbd;
   });
 }

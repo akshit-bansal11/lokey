@@ -36,6 +36,12 @@ const OLD_DIR_VAR: &str = "LOKEY_DIR";
 const CARRIED: [&str; 3] = [lockout::FILE, BACKUP, VAULT];
 /// One line per vault copied, or per failed attempt, beside the vault.
 const MIGRATION_LOG: &str = "migration.log";
+/// Written beside the vault once the lokey copy is done or found unneeded, so a
+/// vault deleted later is never brought back from the old folder.
+const MIGRATED: &str = "migrated-from-lokey";
+/// Far beyond any real vault (each value is capped at 64 KiB). A bigger file is
+/// not a vault, and is never read into memory.
+const MAX_VAULT_BYTES: u64 = 64 * 1024 * 1024;
 
 /// What became of a vault left in the folder of the app's previous name,
 /// `%LOCALAPPDATA%\lokey`. The old folder is only ever read: it is never
@@ -48,6 +54,8 @@ pub enum Migration {
     NewVaultExists,
     /// There is no old vault to copy.
     NoOldVault,
+    /// The copy was already made, or found unneeded, at an earlier start.
+    AlreadyMigrated,
     /// `SALTCELLAR_DIR` or `LOKEY_DIR` chose the folder, so nothing is copied.
     FolderOverride,
     /// Copying failed. No `vault.lokey` was written here, so the next start
@@ -64,15 +72,23 @@ enum Location {
     Default { dir: PathBuf, old: PathBuf },
 }
 
-/// `SALTCELLAR_DIR`, then `LOKEY_DIR`, then the default under
-/// `%LOCALAPPDATA%` (or the XDG data folder, for tests off Windows). `var`
-/// reads one environment variable, so tests need not change the real ones.
+/// `SALTCELLAR_DIR`, then `LOKEY_DIR`, then the default: `%LOCALAPPDATA%` on
+/// Windows, `~/Library/Application Support` on macOS, the XDG data folder
+/// (`~/.local/share`) on Linux. `var` reads one environment variable, so tests
+/// need not change the real ones.
 fn locate(var: impl Fn(&'static str) -> Option<OsString>) -> Option<Location> {
     if let Some(dir) = var(DIR_VAR).or_else(|| var(OLD_DIR_VAR)) {
         return Some(Location::Chosen(PathBuf::from(dir)));
     }
     let base = var("LOCALAPPDATA")
         .map(PathBuf::from)
+        .or_else(|| {
+            // macOS keeps app data under Library, not in an XDG folder.
+            cfg!(target_os = "macos")
+                .then(|| var("HOME"))
+                .flatten()
+                .map(|home| PathBuf::from(home).join("Library/Application Support"))
+        })
         .or_else(|| var("XDG_DATA_HOME").map(PathBuf::from))
         .or_else(|| var("HOME").map(|home| PathBuf::from(home).join(".local/share")))?;
     Some(Location::Default {
@@ -96,9 +112,10 @@ pub struct Store {
 }
 
 impl Store {
-    /// `SALTCELLAR_DIR` if set, then `LOKEY_DIR`, otherwise
-    /// `%LOCALAPPDATA%\saltcellar` on Windows. Local, not Roaming, so Windows
-    /// never syncs the vault to another machine.
+    /// `SALTCELLAR_DIR` if set, then `LOKEY_DIR`, otherwise a `saltcellar` folder
+    /// in the platform's local app data folder (see `locate`). On Windows that
+    /// is `%LOCALAPPDATA%`, not Roaming, so Windows never syncs the vault to
+    /// another machine.
     ///
     /// In the default folder, a vault left in `%LOCALAPPDATA%\lokey` by the
     /// app's previous name is copied over first, once. Call this before
@@ -122,15 +139,20 @@ impl Store {
     /// last and renamed into place, so a copy cut short leaves no
     /// `vault.lokey` here and the next start tries again.
     pub(crate) fn adopt(&self, old: &Path) -> Migration {
+        if self.dir.join(MIGRATED).exists() {
+            return Migration::AlreadyMigrated;
+        }
         if !old.join(VAULT).is_file() {
             return Migration::NoOldVault;
         }
         // This folder's lock: two windows starting at once copy only once.
         let outcome = self.locked(|store| {
             if store.exists() {
+                mark_migrated(&store.dir);
                 return Ok(Migration::NewVaultExists);
             }
             copy_from(old, &store.dir)?;
+            mark_migrated(&store.dir);
             Ok(Migration::Copied {
                 from: old.to_path_buf(),
             })
@@ -156,7 +178,10 @@ impl Store {
                     from.display()
                 )
             }
-            Migration::NewVaultExists | Migration::NoOldVault | Migration::FolderOverride => {
+            Migration::NewVaultExists
+            | Migration::NoOldVault
+            | Migration::AlreadyMigrated
+            | Migration::FolderOverride => {
                 return;
             }
         };
@@ -204,7 +229,15 @@ impl Store {
     /// Runs `work` while holding an exclusive lock on `vault.lokey.lock`. The
     /// lock is a separate file because the vault itself is replaced by rename.
     pub(crate) fn locked<T>(&self, work: impl FnOnce(&Self) -> Result<T>) -> Result<T> {
-        fs::create_dir_all(&self.dir)?;
+        if !self.dir.exists() {
+            fs::create_dir_all(&self.dir)?;
+            // A folder this app made is its owner's alone; one the user chose keeps its rights.
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                fs::set_permissions(&self.dir, fs::Permissions::from_mode(0o700))?;
+            }
+        }
         let lock = OpenOptions::new()
             .create(true)
             .truncate(false)
@@ -216,10 +249,12 @@ impl Store {
     }
 
     pub(crate) fn read(&self) -> Result<VaultFile> {
-        match fs::read(self.vault_path()) {
+        match read_capped(&self.vault_path()) {
             Ok(bytes) => VaultFile::parse(&bytes),
-            Err(err) if err.kind() == std::io::ErrorKind::NotFound => Err(Error::NoVault),
-            Err(err) => Err(err.into()),
+            Err(Error::Io(err)) if err.kind() == std::io::ErrorKind::NotFound => {
+                Err(Error::NoVault)
+            }
+            Err(err) => Err(err),
         }
     }
 
@@ -227,7 +262,7 @@ impl Store {
     /// encrypted as the vault itself.
     pub(crate) fn copy_to(&self, dest: &Path) -> Result<()> {
         let bytes = fs::read(self.vault_path())?;
-        let mut out = File::create(dest)?;
+        let mut out = create_private(dest)?;
         out.write_all(&bytes)?;
         out.sync_all()?;
         Ok(())
@@ -261,7 +296,7 @@ fn replace(
     bytes: &[u8],
     history: History,
 ) -> std::io::Result<()> {
-    let mut out = File::create(temp)?;
+    let mut out = create_private(temp)?;
     out.write_all(bytes)?;
     out.sync_all()?;
     drop(out);
@@ -269,6 +304,9 @@ fn replace(
         fs::copy(vault, backup)?;
     }
     fs::rename(temp, vault)?;
+    // Best effort: some file systems (FUSE, SMB) refuse to sync a folder, and the
+    // rename has already landed. SQLite ignores the same error for the same reason.
+    let _ = sync_dir(vault);
     if history == History::Forget {
         fs::copy(vault, backup)?;
     }
@@ -302,6 +340,48 @@ fn copy_from(old: &Path, new: &Path) -> std::io::Result<()> {
 fn copy_durably(from: &Path, to: &Path) -> std::io::Result<()> {
     fs::copy(from, to)?;
     OpenOptions::new().write(true).open(to)?.sync_all()
+}
+
+/// Reads a vault or backup file, refusing one too large to be a vault.
+pub(crate) fn read_capped(path: &Path) -> Result<Vec<u8>> {
+    if fs::metadata(path)?.len() > MAX_VAULT_BYTES {
+        return Err(Error::TooLarge(format!(
+            "{} is larger than {} MiB, too large to be a vault",
+            path.display(),
+            MAX_VAULT_BYTES / (1024 * 1024)
+        )));
+    }
+    Ok(fs::read(path)?)
+}
+
+/// Best effort: without the mark, the next start only checks again.
+fn mark_migrated(dir: &Path) {
+    let _ = File::create(dir.join(MIGRATED));
+}
+
+/// A new file only its owner can read on Unix. Windows needs nothing more:
+/// `%LOCALAPPDATA%` is already the user's alone.
+fn create_private(path: &Path) -> std::io::Result<File> {
+    let mut options = OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    options.open(path)
+}
+
+/// On Unix a rename is durable only once its folder is synced as well.
+#[cfg(unix)]
+fn sync_dir(path: &Path) -> std::io::Result<()> {
+    path.parent()
+        .map_or(Ok(()), |dir| File::open(dir)?.sync_all())
+}
+
+#[cfg(not(unix))]
+fn sync_dir(_path: &Path) -> std::io::Result<()> {
+    Ok(())
 }
 
 fn append_line(path: &Path, line: &str) -> std::io::Result<()> {
@@ -498,6 +578,17 @@ mod tests {
             locate(vars(&[(DIR_VAR, "D:/new"), (OLD_DIR_VAR, "D:/old")])),
             Some(Location::Chosen(PathBuf::from("D:/new")))
         );
+    }
+
+    #[test]
+    fn a_vault_deleted_after_the_copy_is_not_copied_again() {
+        let (_base, old, new) = with_old_vault();
+        let store = Store::at(&new);
+        assert_eq!(store.adopt(&old), Migration::Copied { from: old.clone() });
+        fs::remove_file(new.join(VAULT)).unwrap();
+
+        assert_eq!(store.adopt(&old), Migration::AlreadyMigrated);
+        assert!(!new.join(VAULT).exists());
     }
 
     #[test]

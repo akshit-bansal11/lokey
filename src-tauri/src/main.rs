@@ -39,7 +39,7 @@ const BACKUP_NAME: &str = "saltcellar-backup.lokey";
 
 struct Inner {
     store: Option<Store>,
-    /// Why `store` is `None`, when it is not a missing LOCALAPPDATA.
+    /// Why `store` is `None`, when it is not a missing data folder.
     problem: Option<String>,
     /// The lokey folder the vault was copied from at this start, until the
     /// page has been told.
@@ -119,7 +119,7 @@ fn shown(recovery_key: RecoveryKey) -> String {
     recovery_key.as_str().to_owned()
 }
 
-/// Runs `work` on the main thread, where Windows dialogs belong, and waits.
+/// Runs `work` on the main thread, where native dialogs belong (macOS allows them nowhere else), and waits.
 fn on_main_thread<T: Send + 'static>(
     app: &AppHandle,
     work: impl FnOnce() -> T + Send + 'static,
@@ -368,8 +368,11 @@ fn delete_project(state: State<'_, AppState>, project: String) -> Result<Snapsho
     })
 }
 
+/// Deletes every key, and the backup beside the vault. Asks for the master
+/// password again first: it empties the vault for good.
 #[tauri::command(async)]
-fn truncate(state: State<'_, AppState>) -> Result<Snapshot, Failure> {
+fn truncate(state: State<'_, AppState>, master: String) -> Result<Snapshot, Failure> {
+    verified(&state, &master)?;
     mutate(&state, |session| session.truncate().map(|_| ()))
 }
 
@@ -481,9 +484,10 @@ fn open_store() -> (Option<Store>, Option<String>, Option<PathBuf>) {
             );
             (None, Some(problem), None)
         }
-        Migration::NewVaultExists | Migration::NoOldVault | Migration::FolderOverride => {
-            (Some(store), None, None)
-        }
+        Migration::NewVaultExists
+        | Migration::NoOldVault
+        | Migration::FolderOverride
+        | Migration::AlreadyMigrated => (Some(store), None, None),
     }
 }
 
@@ -517,10 +521,9 @@ fn main() {
         //   restore                              the backup's password, lockout;
         //                                        refused when a vault exists
         //   reveal, copy, copy_text, generate,   unlocked session
-        //   save, delete_key, delete_project,
-        //   truncate
+        //   save, delete_key, delete_project
         //   export_backup, change_master,        unlocked session and the master
-        //   set_recovery                         password asked again
+        //   set_recovery, truncate               password asked again
         .invoke_handler(tauri::generate_handler![
             status,
             check_password,

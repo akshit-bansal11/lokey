@@ -55,5 +55,5 @@ export const SOCIAL_IMAGE = {
   url: "/og.png",
   width: 1200,
   height: 630,
-  alt: "Saltcellar: an encrypted vault that never leaves your PC. No network, ever.",
+  alt: "Saltcellar: an encrypted vault that never leaves your computer. No network requests.",
 };

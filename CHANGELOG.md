@@ -6,6 +6,61 @@ All notable changes to Saltcellar (called lokey until 1.0.0) are recorded here, 
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-20
+
+Saltcellar now runs on macOS and Linux as well as Windows.
+
+### Added
+
+- A macOS build: one universal `Saltcellar-<version>-macos-universal.dmg` for
+  Apple silicon and Intel. It is ad-hoc signed but not notarized.
+- Linux x86_64 builds: `Saltcellar-<version>-linux-x86_64.AppImage` and
+  `Saltcellar-<version>-linux-amd64.deb`, which needs WebKitGTK 4.1. Neither
+  new build has been tried on a real machine beyond CI yet.
+- The vault lives in `~/Library/Application Support/saltcellar` on macOS and
+  `$XDG_DATA_HOME/saltcellar` (`~/.local/share/saltcellar` by default) on
+  Linux. There the vault files are created readable by you only (0600), and a
+  folder Saltcellar creates is yours only (0700).
+- A protected copy on macOS and Linux. On macOS the copy is marked
+  `org.nspasteboard.ConcealedType`; on Linux it carries KDE's password-manager
+  hint. Both are cleared after 30 seconds, only if the clipboard still holds
+  the copied value. On macOS the copy is not kept out of Universal Clipboard.
+- On macOS the window asks to be excluded from screen captures. On Linux
+  there is no way to ask, so the window can be captured.
+- On a Mac, Cmd stands in for Ctrl, and the labels show ⌘ ⌥ ⇧.
+
+### Changed
+
+- Names may also contain spaces (not at the start or end), `@`, `+` and `:`,
+  so `me@example.com` can be a key name. `=` is still refused.
+- **Delete all keys** asks for the master password, like Export, because it
+  also clears the backup copy beside the vault. The delete confirmation now
+  puts focus on Cancel.
+- The app's identifier is now `dev.akshitbansal.saltcellar`, replacing the
+  leftover `io.github.akshitbansal11.lokey`. The vault location does not
+  depend on it.
+- CI and releases build and test on Windows, macOS and Linux.
+- The README, `SECURITY.md` and `CONTRIBUTING.md` cover all three systems.
+
+### Fixed
+
+- Selecting a shown value and pressing Ctrl+C (Cmd+C on a Mac, or Edit → Copy)
+  now goes through the same protected copy as the Copy button; so does
+  copying a new recovery key.
+- A shown value is no longer repeated in a tooltip.
+- After the attempt that starts the 15-minute lockout, the Unlock button stays
+  disabled for the lockout.
+- A vault deleted after the one-time copy from lokey is never copied back from
+  `%LOCALAPPDATA%\lokey`. A `migrated-from-lokey` marker beside the vault
+  records that the copy was done.
+- A vault file or backup larger than 64 MiB is refused as not a vault.
+
+### Security
+
+- The release's publishing job, the only one with write permission, runs no
+  npm or cargo.
+- The gitleaks download is checked against its checksum.
+
 ## [1.0.0] - 2026-10-17
 
 lokey is now Saltcellar, with a new look. There is no 0.4.0 release: the
@@ -156,7 +211,8 @@ A vault made by an earlier build opens as before with its master password. Its
 deletion password is no longer asked for and is dropped the next time the
 vault is saved. After that, the earlier builds cannot open the vault.
 
-[Unreleased]: https://github.com/akshit-bansal11/saltcellar/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/akshit-bansal11/saltcellar/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/akshit-bansal11/saltcellar/releases/tag/v1.1.0
 [1.0.0]: https://github.com/akshit-bansal11/saltcellar/compare/v0.3.0...v1.0.0
 [0.3.0]: https://github.com/akshit-bansal11/saltcellar/compare/v0.1.0...v0.3.0
 [0.1.0]: https://github.com/akshit-bansal11/saltcellar/compare/v0.0.2...v0.1.0

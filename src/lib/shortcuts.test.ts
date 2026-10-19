@@ -4,6 +4,7 @@ import {
   findShortcut,
   hintText,
   type KeyLike,
+  keyLabel,
   projectIndex,
   rowMoveKey,
   SHORTCUTS,
@@ -86,6 +87,13 @@ test("Enter and Ctrl+Enter add a key from the add row", () => {
   assert.equal(idOf(key("Enter"), "add"), "add-submit");
   assert.equal(idOf(key("Enter", ctrl), "add"), "add-submit");
   assert.equal(idOf(key("Enter", { shiftKey: true }), "add"), undefined);
+});
+
+test("keyLabel writes Mac modifiers as symbols", () => {
+  assert.equal(keyLabel("Ctrl+Shift+N", true), "⌘⇧N");
+  assert.equal(keyLabel("Alt+↑", true), "⌥↑");
+  assert.equal(keyLabel("Ctrl+K", false), "Ctrl+K");
+  assert.equal(keyLabel("F2", true), "F2");
 });
 
 test("the status bar hint", () => {

@@ -77,3 +77,32 @@ notes, which `release.yml` takes from the tagged version's section only.
 
 **Rejected:** tagging v0.4.0 on the rename commit first. It would publish a
 release in the old black, white and grey design that nobody asked for.
+
+
+## 2026-10-20 — Clipboard on macOS and Linux goes through arboard
+
+**Decided:** `saltcellar-core` uses `arboard` (default features off, plus
+`wayland-data-control` on Linux) for the protected copy on non-Windows. It
+already sets the ConcealedType marker. Known limit: no Universal Clipboard
+exclusion on macOS.
+
+**Rejected:** `objc2-app-kit`. More code to write and maintain, and macOS only,
+so Linux would still have needed a second crate.
+
+
+## 2026-10-20 — Save and Open dialogs on macOS and Linux go through rfd
+
+**Decided:** `src-tauri/src/file_dialog.rs` uses `rfd` on non-Windows. Windows
+keeps its direct Win32 dialog.
+
+**Rejected:** `tauri-plugin-dialog`. It adds a plugin and a capability surface,
+and the page must keep no filesystem permission; `rfd` needs no plugin
+registration.
+
+
+## 2026-10-20 — "Delete all keys" re-asks the master password
+
+**Decided:** `truncate` ("Delete all keys") asks for the master password again,
+because it also clears `vault.lokey.bak`, which cannot be undone. This is an
+exception to the "one password, then everything" rule. The maintainer instructed
+it, to fix the audit findings.

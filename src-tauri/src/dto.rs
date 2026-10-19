@@ -14,8 +14,7 @@ pub struct Status {
     pub lockout_secs: u64,
     /// Whether a recovery key also opens the vault. Read from the header.
     pub recovery: bool,
-    /// Why there is no vault folder to use, when that is not a missing
-    /// LOCALAPPDATA. Empty otherwise.
+    /// Why there is no vault folder to use, when that is not a missing data folder. Empty otherwise.
     pub problem: String,
     /// The lokey folder the vault was just copied from. Set once, on the
     /// first status after the copy, so the page says so once.
@@ -141,7 +140,7 @@ impl Failure {
     pub fn no_data_folder() -> Self {
         Self::new(
             "unsupported",
-            "Saltcellar cannot find your local app data folder (LOCALAPPDATA).",
+            "Saltcellar cannot find a folder for its data. Set SALTCELLAR_DIR to choose one.",
         )
     }
 }

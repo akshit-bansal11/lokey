@@ -12,7 +12,8 @@ export function SiteFooter() {
         <div>
           <p className="text-lg font-black">Saltcellar</p>
           <p className="text-dim mt-1">
-            MIT licensed. This site sends nothing anywhere, and neither does the app.
+            MIT licensed. This site loads nothing from anywhere else, and the app makes
+            no network requests.
           </p>
         </div>
         <div className="flex flex-wrap gap-x-5">

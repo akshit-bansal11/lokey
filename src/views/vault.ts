@@ -168,7 +168,6 @@ function showValue(tr: HTMLTableRowElement, value: string | undefined): void {
   } else {
     text.dataset.state = "shown";
     text.textContent = value === "" ? "(empty)" : value;
-    text.title = value;
     toggle.setAttribute("aria-pressed", "true");
     toggle.setAttribute("aria-label", `Hide ${key}`);
     toggle.replaceChildren(icon("eyeOff"));
@@ -304,7 +303,7 @@ export function applySnapshot(next: Snapshot): void {
   }
   if (next.rejected > 0) {
     alertText(
-      `${next.rejected} value(s) added from the terminal could not be opened and were discarded.`,
+      `${next.rejected} value(s) from an older vault's inbox could not be opened and were discarded.`,
     );
   }
   render();
@@ -490,7 +489,7 @@ function onSheetKey(event: KeyboardEvent): void {
       void onAction("delete", tr);
       return;
     case "row-copy":
-      // With text selected, Ctrl+C keeps its ordinary meaning.
+      // With text selected, the sheet's copy listener copies the selection, protected.
       if (window.getSelection()?.toString()) return;
       event.preventDefault();
       void onAction("copy", tr);
@@ -668,6 +667,20 @@ export function showVault(initial: Snapshot, vaultOptions: VaultOptions): void {
     if (tr && isAction(action)) void onAction(action, tr);
   });
   rowsBody().addEventListener("keydown", onSheetKey);
+  // A selection copied out of the sheet (Ctrl+C, or Edit > Copy on a Mac) would go the
+  // browser's way: into clipboard history, never cleared. Send exactly what is selected
+  // through the protected copy instead: a key name, part of a shown value, or text in
+  // the edit box.
+  rowsBody().addEventListener("copy", (event) => {
+    const target = event.target;
+    const text =
+      target instanceof HTMLInputElement
+        ? target.value.slice(target.selectionStart ?? 0, target.selectionEnd ?? 0)
+        : (document.getSelection()?.toString() ?? "");
+    if (!text) return;
+    event.preventDefault();
+    api.copyText(text).then(startClipboardTimer, handleFailure);
+  });
 
   const keyInput = find(root, "#new-key", HTMLInputElement);
   const valueInput = find(root, "#new-value", HTMLInputElement);
@@ -689,6 +702,7 @@ export function showVault(initial: Snapshot, vaultOptions: VaultOptions): void {
 
   // Tooltips carry their shortcut, read from the registry.
   const tips: [string, string, string][] = [
+    ["#new-project", "New project", "new-project"],
     ["#generate-open", "Generate a password", "generate"],
     ["#keys-open", "Keyboard shortcuts", "help"],
     ["#settings-open", "Settings", "settings"],

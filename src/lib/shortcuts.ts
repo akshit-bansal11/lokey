@@ -71,6 +71,18 @@ export function projectIndex(event: KeyLike): number | undefined {
   return /^[1-9]$/.test(event.key) ? Number(event.key) - 1 : undefined;
 }
 
+/** Whether this is a Mac, where Ctrl in a shortcut is pressed as Cmd. */
+const IS_MAC = typeof navigator !== "undefined" && /Macintosh|Mac OS X/.test(navigator.userAgent);
+
+/** A key chip as the platform writes it: "Ctrl+Shift+N" reads "⌘⇧N" on a Mac. */
+export function keyLabel(key: string, mac = IS_MAC): string {
+  if (!mac) return key;
+  return key
+    .replace(/^Ctrl\+/, "⌘")
+    .replace("Alt+", "⌥")
+    .replace("Shift+", "⇧");
+}
+
 export const SHORTCUTS: readonly Shortcut[] = [
   {
     id: "palette",
@@ -256,10 +268,11 @@ export function findShortcut(event: KeyLike, scope: ShortcutScope): Shortcut | u
 
 /** A tooltip such as "Lock (Ctrl+L)". */
 export function titleWithKey(label: string, id: string): string {
-  return `${label} (${shortcutById(id).keys[0] ?? ""})`;
+  return `${label} (${keyLabel(shortcutById(id).keys[0] ?? "")})`;
 }
 
 /** The status bar hint: "Ctrl+K commands · / search · Ctrl+L lock". */
 export function hintText(): string {
-  return SHORTCUTS.flatMap((s) => (s.hint ? [`${s.hint.key} ${s.hint.label}`] : [])).join(" · ");
+  const hints = SHORTCUTS.flatMap((s) => (s.hint ? [s.hint] : []));
+  return hints.map((h) => `${keyLabel(h.key)} ${h.label}`).join(" · ");
 }

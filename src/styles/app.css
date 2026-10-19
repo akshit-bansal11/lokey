@@ -43,6 +43,11 @@ main {
   white-space: nowrap;
 }
 
+/* The icon sprite: defined once in the page, never laid out. */
+.sprite {
+  position: absolute;
+}
+
 .skip-link {
   position: absolute;
   inset-block-start: var(--space-2);

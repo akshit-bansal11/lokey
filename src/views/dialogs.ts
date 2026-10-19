@@ -6,7 +6,7 @@ import { busy, byId, field, find, setFieldError, setFormError } from "@/lib/dom.
 import { fillIcons } from "@/lib/icons.ts";
 import { sameRecoveryKey } from "@/lib/recovery.ts";
 import { nameProblem } from "@/lib/rows.ts";
-import { announce } from "@/lib/status.ts";
+import { announce, startClipboardTimer } from "@/lib/status.ts";
 import type { Snapshot } from "@/lib/types.ts";
 
 // Dialogs live in the page, not in a template, so mount() never fills their
@@ -65,7 +65,8 @@ export function confirmDelete(request: DeleteRequest): void {
   deleteButton.textContent = request.confirm;
   setFormError(deleteForm, "");
   deleteDialog.showModal();
-  deleteButton.focus();
+  // Cancel has focus, not Delete: Del then Enter must not delete straight away.
+  find(deleteForm, "[data-close]", HTMLButtonElement).focus();
 }
 
 const projectDialog = byId("project-dialog", HTMLDialogElement);
@@ -182,6 +183,16 @@ let shownKey = "";
 
 // The key is shown once, so Escape must not close the dialog before it is saved.
 recoveryDialog.addEventListener("cancel", (event) => event.preventDefault());
+
+// Copying the key by selection would put it in clipboard history for good; route
+// it through the protected copy, cleared after 30 seconds, like a saved value.
+recoveryDialog.addEventListener("copy", (event) => {
+  if (!shownKey || !document.getSelection()?.containsNode(recoveryKeyText, true)) return;
+  event.preventDefault();
+  api.copyText(shownKey).then(startClipboardTimer, (error: unknown) => {
+    announce(toFailure(error).message);
+  });
+});
 
 recoveryForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -382,23 +393,26 @@ export function openSettings(context: SettingsContext): void {
     });
   };
 
-  deleteAll.onclick = () => {
+  deleteAll.onclick = async () => {
     if (context.totalCount === 0) {
       announce("There are no keys to delete.");
       return;
     }
-    // Opened on top of Settings, so Cancel returns focus inside it.
-    confirmDelete({
-      title: "Delete all keys?",
-      text: `Deletes all ${plural(context.totalCount, "key")} in ${plural(context.projectTotal, "project")}. The vault and its password stay. This cannot be undone.`,
-      confirm: "Delete all keys",
-      run: () => api.truncate(),
-      onDone: (snapshot) => {
-        settingsDialog.close();
-        context.onSnapshot(snapshot);
-        announce(`Deleted ${plural(context.totalCount, "key")}. The vault is empty.`);
+    // Opened on top of Settings, so Cancel returns focus inside it. Everything goes,
+    // the backup beside the vault too, so it asks for the master password, as Export does.
+    const snapshot = await askMaster(
+      {
+        title: "Delete all keys?",
+        text: `Deletes all ${plural(context.totalCount, "key")} in ${plural(context.projectTotal, "project")}, and the backup copy beside the vault. The vault and its password stay. This cannot be undone. Enter the master password to confirm.`,
+        action: "Delete all keys",
+        busyLabel: "Deleting…",
       },
-    });
+      (master) => api.truncate(master),
+    );
+    if (!snapshot) return;
+    settingsDialog.close();
+    context.onSnapshot(snapshot);
+    announce(`Deleted ${plural(context.totalCount, "key")}. The vault is empty.`);
   };
 
   settingsDialog.showModal();

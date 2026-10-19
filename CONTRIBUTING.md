@@ -21,9 +21,9 @@ git remote add upstream https://github.com/akshit-bansal11/saltcellar.git
 npm ci
 ```
 
-You need Rust (stable, at least the `rust-version` in `Cargo.toml`) and Node.js 24 or newer, on Windows 10 or 11: the clipboard and file-dialog code only compiles there. `npx tauri dev` runs the app against the page's dev server.
+You need Rust (stable, at least the `rust-version` in `Cargo.toml`) and Node.js 24 or newer, on Windows, macOS or Linux (on Linux, with the WebKitGTK 4.1 and GTK development packages Tauri lists). Each system has its own clipboard and file-dialog code, so CI runs the gate on all three. `npx tauri dev` runs the app against the page's dev server.
 
-No Rust toolchain on your machine? That is how the maintainer works. Push to a branch with a pull request open and CI runs the whole gate on Windows. After any change to a `Cargo.toml`, run the **lockfile** workflow on your branch and commit the `Cargo.lock` it uploads: CI installs with `--locked`.
+No Rust toolchain on your machine? That is how the maintainer works. Push to a branch with a pull request open and CI runs the whole gate on Windows, macOS and Linux. After any change to a `Cargo.toml`, run the **lockfile** workflow on your branch and commit the `Cargo.lock` it uploads: CI installs with `--locked`.
 
 ## Making a change
 

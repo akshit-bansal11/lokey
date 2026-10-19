@@ -40,10 +40,11 @@ export function wouldReplace(rows: Row[], project: string, key: string): boolean
 export function nameProblem(kind: string, name: string): string {
   if (name === "") return `Enter a ${kind} name.`;
   if ([...name].length > 128) return `The ${kind} name is longer than 128 characters.`;
-  const bad = [...name].find((c) => !/[\p{L}\p{N}_\-./]/u.test(c));
+  if (name.trim() !== name) return `The ${kind} name cannot start or end with a space.`;
+  const bad = [...name].find((c) => !/[\p{Alphabetic}\p{N}_\-./ @+:]/u.test(c));
   return bad === undefined
     ? ""
-    : `The ${kind} name cannot contain "${bad}". Use letters, digits and _ - . /`;
+    : `The ${kind} name cannot contain "${bad}". Use letters, digits, spaces and _ - . / @ + :`;
 }
 
 /** The project `step` places after `current` in `names`, wrapping at either end. */

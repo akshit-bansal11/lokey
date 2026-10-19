@@ -1,4 +1,4 @@
-//! The Windows Save and Open dialogs, called directly: choosing where a backup
+//! The native Save and Open dialogs, called directly: choosing where a backup
 //! goes needs no plugin, and the page keeps no filesystem access at all. The
 //! path chosen stays on this side; the page only ever sees it as text.
 
@@ -79,10 +79,20 @@ mod imp {
 mod imp {
     use std::path::PathBuf;
 
+    use rfd::FileDialog;
     use tauri::WebviewWindow;
 
-    /// Saltcellar ships for Windows only; elsewhere there is no dialog to show.
-    pub fn run(_window: &WebviewWindow, _initial: &str, _save: bool) -> Option<PathBuf> {
-        None
+    pub fn run(window: &WebviewWindow, initial: &str, save: bool) -> Option<PathBuf> {
+        // Owned by the app window, so the dialog is modal to it.
+        let dialog = FileDialog::new()
+            .set_parent(window)
+            .add_filter("Saltcellar backup", &["lokey"])
+            // "All files" too: a backup saved without .lokey must still be openable.
+            .add_filter("All files", &["*"]);
+        if save {
+            dialog.set_file_name(initial).save_file()
+        } else {
+            dialog.pick_file()
+        }
     }
 }

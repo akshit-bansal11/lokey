@@ -7,9 +7,10 @@ const MAX_NAME_CHARS: usize = 128;
 /// 64 KiB keeps one value from inflating the file that every change re-reads.
 pub const MAX_VALUE_BYTES: usize = 64 * 1024;
 
-/// Letters, digits and `_ - . /`, so a name survives every shell unquoted.
-/// The ban on `=` is inherited from the removed command line, whose arguments
-/// were `key=value`; vaults were written under this rule, so it stays.
+/// Letters, digits, spaces and `_ - . / @ + :`. A name is shown and matched,
+/// never run, so the old shell-safe rule of the removed command line was
+/// relaxed in 1.1.0. `=` stays banned: vaults written by the command line
+/// relied on it.
 pub fn check_name(kind: &str, name: &str) -> Result<()> {
     if name.is_empty() {
         return Err(Error::InvalidName(format!("{kind} name is empty")));
@@ -19,10 +20,16 @@ pub fn check_name(kind: &str, name: &str) -> Result<()> {
             "{kind} name is longer than {MAX_NAME_CHARS} characters"
         )));
     }
-    let allowed = |c: char| c.is_alphanumeric() || matches!(c, '_' | '-' | '.' | '/');
+    if name.trim() != name {
+        return Err(Error::InvalidName(format!(
+            "{kind} name starts or ends with a space"
+        )));
+    }
+    let allowed =
+        |c: char| c.is_alphanumeric() || matches!(c, '_' | '-' | '.' | '/' | ' ' | '@' | '+' | ':');
     if let Some(bad) = name.chars().find(|c| !allowed(*c)) {
         return Err(Error::InvalidName(format!(
-            "{kind} name '{name}' contains '{bad}'; use letters, digits, _ - . /"
+            "{kind} name '{name}' contains '{bad}'; use letters, digits, spaces and _ - . / @ + :"
         )));
     }
     Ok(())
@@ -57,6 +64,25 @@ mod tests {
     fn check_name_rejects_equals_sign() {
         assert!(matches!(
             check_name("key", "A=B"),
+            Err(Error::InvalidName(_))
+        ));
+    }
+
+    #[test]
+    fn check_name_accepts_emails_and_spaces() {
+        assert!(check_name("key", "me@example.com").is_ok());
+        assert!(check_name("key", "Work email").is_ok());
+        assert!(check_name("key", "a+b:c").is_ok());
+    }
+
+    #[test]
+    fn check_name_rejects_edge_spaces() {
+        assert!(matches!(
+            check_name("key", " lead"),
+            Err(Error::InvalidName(_))
+        ));
+        assert!(matches!(
+            check_name("key", "trail "),
             Err(Error::InvalidName(_))
         ));
     }

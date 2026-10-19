@@ -11,10 +11,7 @@
 //! operation re-reads the file under the lock, so a change made meanwhile by
 //! another process (an edit in a second window) is merged, not overwritten.
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use zeroize::{Zeroize, Zeroizing};
 
@@ -134,7 +131,7 @@ impl Store {
         backup: &Path,
         master: &str,
     ) -> Result<(Session, Report, Option<RecoveryKey>)> {
-        let mut file = VaultFile::parse(&fs::read(backup)?)?;
+        let mut file = VaultFile::parse(&crate::store::read_capped(backup)?)?;
         self.locked(|store| {
             if store.exists() {
                 return Err(Error::VaultExists);
