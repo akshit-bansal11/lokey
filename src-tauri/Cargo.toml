@@ -26,5 +26,9 @@ tauri = { version = "2.11.5", features = [] }
 [target.'cfg(windows)'.dependencies]
 windows-sys = { workspace = true, features = ["Win32_UI_Controls_Dialogs"] }
 
+# The Save and Open dialogs on macOS and Linux (file_dialog.rs); Windows calls its own.
+[target.'cfg(not(windows))'.dependencies]
+rfd = "0.17.2"
+
 [lints]
 workspace = true
