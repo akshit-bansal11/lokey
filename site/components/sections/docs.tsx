@@ -255,9 +255,9 @@ export function DocsSections() {
         <P>
           Set <C>SALTCELLAR_DIR</C> (or the older <C>LOKEY_DIR</C>) to keep them
           somewhere else. On Windows it is local, not roaming: Windows never syncs the
-          folder. On macOS and Linux the files are yours only (0600). The files keep
-          the <C>.lokey</C> extension from the app&apos;s previous name; the format
-          inside is the same.
+          folder. On macOS and Linux the files are yours only (0600). The files keep the{" "}
+          <C>.lokey</C> extension from the app&apos;s previous name; the format inside
+          is the same.
         </P>
         <P>
           Two Saltcellar windows can be open at once: every change takes a lock on the

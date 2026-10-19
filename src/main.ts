@@ -35,7 +35,8 @@ async function route(reason?: LockReason | "manual"): Promise<void> {
   if (!status.vaultPath) {
     showSetup(
       { onCreated: () => undefined, onRestored: () => undefined },
-      status.problem || "Saltcellar cannot find a folder for its data. Set SALTCELLAR_DIR to choose one.",
+      status.problem ||
+        "Saltcellar cannot find a folder for its data. Set SALTCELLAR_DIR to choose one.",
     );
     return;
   }

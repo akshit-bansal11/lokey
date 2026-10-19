@@ -170,7 +170,9 @@ export default function Page() {
           <div className="relative mx-auto grid max-w-[80rem] gap-14 px-4 pt-12 pb-16 md:px-6 md:pt-20 md:pb-24 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-20">
             <div>
               <p className="bg-card shadow-card inline-flex rounded-full px-4 py-1.5 text-sm font-bold">
-                <AnimatedShinyText>Local · Encrypted · Windows, macOS, Linux</AnimatedShinyText>
+                <AnimatedShinyText>
+                  Local · Encrypted · Windows, macOS, Linux
+                </AnimatedShinyText>
               </p>
               <h1 className="mt-6 max-w-[14ch] text-[2.75rem] leading-[1.02] font-black tracking-[-0.025em] sm:text-6xl lg:text-7xl">
                 Your secrets, sealed on your own computer.
@@ -367,8 +369,8 @@ export default function Page() {
 
         <section id="get" className={SECTION}>
           <Heading eyebrow="Get it" title="One file per system.">
-            Windows gets a portable exe, macOS a universal dmg, and Linux an AppImage
-            or a deb. Nothing needs administrator rights to run, and nothing is written
+            Windows gets a portable exe, macOS a universal dmg, and Linux an AppImage or
+            a deb. Nothing needs administrator rights to run, and nothing is written
             outside your own user folder. Download your system&apos;s file and
             SHA256SUMS.txt from the same release, check them, and run it. The macOS and
             Linux builds are new in 1.1.0 and not yet tried on real machines beyond CI.

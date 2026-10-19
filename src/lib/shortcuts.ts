@@ -77,7 +77,10 @@ const IS_MAC = typeof navigator !== "undefined" && /Macintosh|Mac OS X/.test(nav
 /** A key chip as the platform writes it: "Ctrl+Shift+N" reads "⌘⇧N" on a Mac. */
 export function keyLabel(key: string, mac = IS_MAC): string {
   if (!mac) return key;
-  return key.replace(/^Ctrl\+/, "⌘").replace("Alt+", "⌥").replace("Shift+", "⇧");
+  return key
+    .replace(/^Ctrl\+/, "⌘")
+    .replace("Alt+", "⌥")
+    .replace("Shift+", "⇧");
 }
 
 export const SHORTCUTS: readonly Shortcut[] = [
