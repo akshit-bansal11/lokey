@@ -2,15 +2,13 @@
 # `npm audit` and `cargo audit` both report 0 vulnerabilities. Each entry is a
 # warning pulled in by Tauri 2.11.5, not by Saltcellar's own code. Revisit every
 # entry by its expiry date, or sooner when a Tauri update drops the crate.
-# Accepted 2026-09-19. Expiry for all entries: 2026-12-19.
+# Accepted 2026-09-19; the Linux entries re-reviewed 2026-10-20 when the Linux build was added. Expiry for all entries: 2026-12-19.
 
 [advisories]
 ignore = [
-  # glib 0.18.5, unsound VariantStrIter iterator impls. Linux GTK stack only
-  # (tauri -> wry/gtk); it is never compiled into the Windows build.
+  # glib 0.18.5, unsound VariantStrIter iterator impls. Linux build only (tauri -> wry -> gtk); Saltcellar's own code never touches glib, and Tauri has no release off glib 0.18 yet.
   "RUSTSEC-2024-0429",
-  # proc-macro-error 1.0.4, unmaintained. Compile-time macro dependency of the
-  # Linux GTK bindings; runs only while building, never ships.
+  # proc-macro-error 1.0.4, unmaintained. A compile-time macro of the Linux GTK bindings: it runs while building and is not in the shipped binary.
   "RUSTSEC-2024-0370",
   # unic-* 0.9.0, unmaintained Unicode tables used by tauri-utils' URL pattern
   # matching. Unmaintained, not vulnerable; no replacement is available to us
