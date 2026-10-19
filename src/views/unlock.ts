@@ -65,6 +65,11 @@ export function showUnlock(status: Status, handlers: UnlockHandlers, reason?: Lo
       restore();
       const failure = toFailure(error);
       setFormError(form, failure.message);
+      // The attempt that starts a lockout disables the button for its length too.
+      if (failure.code === "locked-out") {
+        const fresh = await api.status();
+        holdForLockout(form, submit, fresh.lockoutSecs);
+      }
       input.select();
     }
   });

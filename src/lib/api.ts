@@ -89,7 +89,7 @@ export const api = {
     call<Snapshot>("save", { project, key, value }),
   deleteKey: (project: string, key: string) => call<Snapshot>("delete_key", { project, key }),
   deleteProject: (project: string) => call<Snapshot>("delete_project", { project }),
-  truncate: () => call<Snapshot>("truncate"),
+  truncate: (master: string) => call<Snapshot>("truncate", { master }),
   /** Resolves to the replacement recovery key when the vault has one. */
   changeMaster: (currentMaster: string, newMaster: string) =>
     call<string | null>("change_master", { currentMaster, newMaster }),

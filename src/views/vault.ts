@@ -168,7 +168,6 @@ function showValue(tr: HTMLTableRowElement, value: string | undefined): void {
   } else {
     text.dataset.state = "shown";
     text.textContent = value === "" ? "(empty)" : value;
-    text.title = value;
     toggle.setAttribute("aria-pressed", "true");
     toggle.setAttribute("aria-label", `Hide ${key}`);
     toggle.replaceChildren(icon("eyeOff"));
@@ -304,7 +303,7 @@ export function applySnapshot(next: Snapshot): void {
   }
   if (next.rejected > 0) {
     alertText(
-      `${next.rejected} value(s) added from the terminal could not be opened and were discarded.`,
+      `${next.rejected} value(s) from an older vault's inbox could not be opened and were discarded.`,
     );
   }
   render();
@@ -668,6 +667,16 @@ export function showVault(initial: Snapshot, vaultOptions: VaultOptions): void {
     if (tr && isAction(action)) void onAction(action, tr);
   });
   rowsBody().addEventListener("keydown", onSheetKey);
+  // Selecting a shown value and pressing Ctrl+C (or Edit > Copy on a Mac) would copy
+  // it the browser's way: into clipboard history, never cleared. Route any copy out
+  // of the sheet through the protected copy instead, as the Copy button does.
+  rowsBody().addEventListener("copy", (event) => {
+    const selection = document.getSelection();
+    const tr = [...rowsBody().rows].find((row) => selection?.containsNode(row, true));
+    if (!tr) return;
+    event.preventDefault();
+    void onAction("copy", tr);
+  });
 
   const keyInput = find(root, "#new-key", HTMLInputElement);
   const valueInput = find(root, "#new-value", HTMLInputElement);

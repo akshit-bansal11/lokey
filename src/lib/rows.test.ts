@@ -86,6 +86,15 @@ test("nameProblem accepts env style names", () => {
   assert.equal(nameProblem("key", "NEXT_PUBLIC_URL.v2/x-y"), "");
 });
 
+test("nameProblem accepts spaces inside, @ + and :", () => {
+  assert.equal(nameProblem("key", "me@example.com"), "");
+  assert.equal(nameProblem("key", "Work email"), "");
+});
+
+test("nameProblem rejects a leading space", () => {
+  assert.notEqual(nameProblem("key", " lead"), "");
+});
+
 test("nextProject steps forward and back, wrapping at either end", () => {
   const names = ["default", "api", "web"];
 
