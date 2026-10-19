@@ -86,7 +86,9 @@ mod imp {
         // Owned by the app window, so the dialog is modal to it.
         let dialog = FileDialog::new()
             .set_parent(window)
-            .add_filter("Saltcellar backup", &["lokey"]);
+            .add_filter("Saltcellar backup", &["lokey"])
+            // "All files" too: a backup saved without .lokey must still be openable.
+            .add_filter("All files", &["*"]);
         if save {
             dialog.set_file_name(initial).save_file()
         } else {

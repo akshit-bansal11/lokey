@@ -195,7 +195,12 @@ mod imp {
             Some(clipboard) => slot.insert(clipboard),
             None => slot.insert(Clipboard::new().map_err(failed)?),
         };
-        work(clipboard).map_err(failed)
+        let result = work(clipboard);
+        if result.is_err() {
+            // A broken connection stays broken: open a fresh clipboard next time.
+            *slot = None;
+        }
+        result.map_err(failed)
     }
 
     pub fn copy_secret(text: &str) -> Result<u32> {

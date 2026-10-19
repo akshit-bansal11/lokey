@@ -304,7 +304,9 @@ fn replace(
         fs::copy(vault, backup)?;
     }
     fs::rename(temp, vault)?;
-    sync_dir(vault)?;
+    // Best effort: some file systems (FUSE, SMB) refuse to sync a folder, and the
+    // rename has already landed. SQLite ignores the same error for the same reason.
+    let _ = sync_dir(vault);
     if history == History::Forget {
         fs::copy(vault, backup)?;
     }

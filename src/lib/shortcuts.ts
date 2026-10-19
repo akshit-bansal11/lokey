@@ -270,5 +270,6 @@ export function titleWithKey(label: string, id: string): string {
 
 /** The status bar hint: "Ctrl+K commands · / search · Ctrl+L lock". */
 export function hintText(): string {
-  return SHORTCUTS.flatMap((s) => (s.hint ? [`${keyLabel(s.hint.key)} ${s.hint.label}`] : [])).join(" · ");
+  const hints = SHORTCUTS.flatMap((s) => (s.hint ? [s.hint] : []));
+  return hints.map((h) => `${keyLabel(h.key)} ${h.label}`).join(" · ");
 }

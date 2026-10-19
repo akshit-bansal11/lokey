@@ -489,7 +489,7 @@ function onSheetKey(event: KeyboardEvent): void {
       void onAction("delete", tr);
       return;
     case "row-copy":
-      // With text selected, Ctrl+C keeps its ordinary meaning.
+      // With text selected, the sheet's copy listener copies the selection, protected.
       if (window.getSelection()?.toString()) return;
       event.preventDefault();
       void onAction("copy", tr);
@@ -667,15 +667,19 @@ export function showVault(initial: Snapshot, vaultOptions: VaultOptions): void {
     if (tr && isAction(action)) void onAction(action, tr);
   });
   rowsBody().addEventListener("keydown", onSheetKey);
-  // Selecting a shown value and pressing Ctrl+C (or Edit > Copy on a Mac) would copy
-  // it the browser's way: into clipboard history, never cleared. Route any copy out
-  // of the sheet through the protected copy instead, as the Copy button does.
+  // A selection copied out of the sheet (Ctrl+C, or Edit > Copy on a Mac) would go the
+  // browser's way: into clipboard history, never cleared. Send exactly what is selected
+  // through the protected copy instead: a key name, part of a shown value, or text in
+  // the edit box.
   rowsBody().addEventListener("copy", (event) => {
-    const selection = document.getSelection();
-    const tr = [...rowsBody().rows].find((row) => selection?.containsNode(row, true));
-    if (!tr) return;
+    const target = event.target;
+    const text =
+      target instanceof HTMLInputElement
+        ? target.value.slice(target.selectionStart ?? 0, target.selectionEnd ?? 0)
+        : (document.getSelection()?.toString() ?? "");
+    if (!text) return;
     event.preventDefault();
-    void onAction("copy", tr);
+    api.copyText(text).then(startClipboardTimer, handleFailure);
   });
 
   const keyInput = find(root, "#new-key", HTMLInputElement);
@@ -698,6 +702,7 @@ export function showVault(initial: Snapshot, vaultOptions: VaultOptions): void {
 
   // Tooltips carry their shortcut, read from the registry.
   const tips: [string, string, string][] = [
+    ["#new-project", "New project", "new-project"],
     ["#generate-open", "Generate a password", "generate"],
     ["#keys-open", "Keyboard shortcuts", "help"],
     ["#settings-open", "Settings", "settings"],

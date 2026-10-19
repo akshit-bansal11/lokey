@@ -89,6 +89,11 @@ test("nameProblem accepts env style names", () => {
 test("nameProblem accepts spaces inside, @ + and :", () => {
   assert.equal(nameProblem("key", "me@example.com"), "");
   assert.equal(nameProblem("key", "Work email"), "");
+  assert.equal(nameProblem("key", "a+b:c"), "");
+});
+
+test("nameProblem rejects a trailing space", () => {
+  assert.notEqual(nameProblem("key", "trail "), "");
 });
 
 test("nameProblem rejects a leading space", () => {
