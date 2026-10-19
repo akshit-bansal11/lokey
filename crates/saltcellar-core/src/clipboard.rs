@@ -4,6 +4,11 @@
 //! clipboard history and cloud clipboard sync. Clearing is conditional on the
 //! clipboard sequence number: if anything else was copied in the meantime, the
 //! user's newer copy is left alone.
+//!
+//! On macOS and Linux the copy is marked for clipboard managers to skip (the
+//! ConcealedType marker, or the KDE hint), and the clear compares the
+//! clipboard's text with what was copied, since neither has a sequence number.
+//! Neither can keep a copy out of macOS Universal Clipboard.
 
 use std::time::Duration;
 
@@ -150,15 +155,74 @@ mod imp {
 
 #[cfg(not(windows))]
 mod imp {
+    use std::{
+        hash::{DefaultHasher, Hash, Hasher},
+        sync::{Mutex, PoisonError},
+    };
+
+    use arboard::Clipboard;
+    #[cfg(target_os = "macos")]
+    use arboard::SetExtApple;
+    #[cfg(target_os = "linux")]
+    use arboard::SetExtLinux;
+    use zeroize::Zeroizing;
+
     use crate::{Error, Result};
 
-    pub fn copy_secret(_text: &str) -> Result<u32> {
-        Err(Error::Unsupported(
-            "copying needs Windows; use --view to print the value",
-        ))
+    /// Kept for the life of the app: on Linux the copied text is served by this
+    /// process, so dropping the clipboard would take the copy away with it.
+    static CLIPBOARD: Mutex<Option<Clipboard>> = Mutex::new(None);
+
+    fn failed(err: arboard::Error) -> Error {
+        Error::Io(std::io::Error::other(err.to_string()))
     }
 
-    pub fn clear_if_unchanged(_sequence: u32) -> Result<bool> {
-        Ok(false)
+    /// macOS and Linux hand out no clipboard sequence number, so the "sequence"
+    /// is a fingerprint of the copied text: the clear empties the clipboard only
+    /// while it still holds that same text.
+    fn fingerprint(text: &str) -> u32 {
+        let mut hasher = DefaultHasher::new();
+        text.hash(&mut hasher);
+        // Only the low 32 bits fit the sequence slot; that is enough to tell copies apart.
+        hasher.finish() as u32
+    }
+
+    fn with_clipboard<T>(
+        work: impl FnOnce(&mut Clipboard) -> std::result::Result<T, arboard::Error>,
+    ) -> Result<T> {
+        let mut slot = CLIPBOARD.lock().unwrap_or_else(PoisonError::into_inner);
+        let clipboard = match slot.take() {
+            Some(clipboard) => slot.insert(clipboard),
+            None => slot.insert(Clipboard::new().map_err(failed)?),
+        };
+        work(clipboard).map_err(failed)
+    }
+
+    pub fn copy_secret(text: &str) -> Result<u32> {
+        with_clipboard(|clipboard| {
+            // Asks clipboard managers not to keep it: org.nspasteboard.ConcealedType on
+            // macOS, the KDE password-manager hint on Linux.
+            #[cfg(any(target_os = "macos", target_os = "linux"))]
+            let set = clipboard.set().exclude_from_history();
+            #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+            let set = clipboard.set();
+            set.text(text)
+        })?;
+        Ok(fingerprint(text))
+    }
+
+    pub fn clear_if_unchanged(sequence: u32) -> Result<bool> {
+        with_clipboard(|clipboard| match clipboard.get_text() {
+            Ok(text) => {
+                let text = Zeroizing::new(text);
+                if fingerprint(&text) == sequence {
+                    clipboard.clear().map(|()| true)
+                } else {
+                    Ok(false)
+                }
+            }
+            // There is no text on the clipboard: not ours to clear.
+            Err(_) => Ok(false),
+        })
     }
 }

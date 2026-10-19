@@ -21,5 +21,13 @@ zeroize.workspace = true
 [target.'cfg(windows)'.dependencies]
 windows-sys.workspace = true
 
+# Copying on macOS and Linux (clipboard.rs). Windows keeps its own code, which also
+# sets the formats that keep a copy out of Win+V history and cloud clipboard.
+[target.'cfg(not(windows))'.dependencies]
+arboard.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+arboard = { workspace = true, features = ["wayland-data-control"] }
+
 [lints]
 workspace = true
