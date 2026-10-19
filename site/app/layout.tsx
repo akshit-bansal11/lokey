@@ -9,9 +9,9 @@ import "./globals.css";
   through next/font/google; that is the one part of its stack not copied here.
 */
 
-const TITLE = "Saltcellar — an encrypted vault that never leaves your PC";
+const TITLE = "Saltcellar — an encrypted vault that never leaves your computer";
 const DESCRIPTION =
-  "Saltcellar keeps your passwords, environment keys and backup codes in one encrypted file on your own Windows PC. AES-256-GCM under an Argon2id key. No account, no sync, no network code. MIT.";
+  "Saltcellar keeps your passwords, environment keys and backup codes in one encrypted file on your own computer, on Windows, macOS or Linux. AES-256-GCM under an Argon2id key. No account, no sync, no network requests. MIT.";
 
 export const metadata: Metadata = {
   // Every relative URL in metadata (Open Graph, canonical) resolves against this.
@@ -48,6 +48,16 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      {/* Without JavaScript, motion never animates the blocks in: show them as they are. */}
+      <head>
+        <noscript>
+          <style>
+            {
+              ".blur-fade{opacity:1!important;filter:none!important;transform:none!important}"
+            }
+          </style>
+        </noscript>
+      </head>
       <body className="font-sans">
         <ThemeProvider
           attribute="class"

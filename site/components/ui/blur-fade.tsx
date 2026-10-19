@@ -90,7 +90,9 @@ export function BlurFade({
         // not with useReducedMotion, because the server cannot know the preference:
         // a hook would render different markup on the client, and React does not
         // repair a mismatched style on hydration, so the content stayed invisible.
+        // "blur-fade" lets the root layout's <noscript> style show the content when no script runs.
         className={cn(
+          "blur-fade",
           className,
           "motion-reduce:opacity-100! motion-reduce:filter-none! motion-reduce:transform-none!",
         )}

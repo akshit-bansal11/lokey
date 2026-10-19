@@ -33,7 +33,7 @@ const FACTS: { term: string; value: string }[] = [
   { term: "Cipher", value: "AES-256-GCM" },
   { term: "Key derivation", value: "Argon2id, 64 MiB, 3 passes" },
   { term: "Network code", value: "None" },
-  { term: "Runs on", value: "Windows 10 and 11, x64" },
+  { term: "Runs on", value: "Windows 10/11, macOS, Linux (x64)" },
 ];
 
 const STORES: { title: string; Icon: LucideIcon; body: string }[] = [
@@ -60,27 +60,27 @@ const STORES: { title: string; Icon: LucideIcon; body: string }[] = [
   {
     title: "Kept off the clipboard's record",
     Icon: ClipboardX,
-    body: "A copied value is kept out of Win+V history and cloud clipboard, and cleared after 30 seconds unless you copied something else.",
+    body: "A copied value is cleared after 30 seconds unless you copied something else. On Windows it stays out of Win+V history and cloud clipboard; on macOS and Linux it is marked for clipboard managers to skip.",
   },
   {
     title: "Hidden from the screen",
     Icon: EyeOff,
-    body: "The window is left out of screenshots, recordings and shared screens, so a value on show does not end up in a video call.",
+    body: "On Windows the window is left out of screenshots, recordings and shared screens; on macOS it asks to be. A value on show does not end up in a video call.",
   },
 ];
 
 const LOCAL: { title: string; body: string }[] = [
   {
-    title: "There is nothing to breach",
+    title: "There is no server to breach",
     body: "No account, no server and no sync means no database of vaults anyone can take at once. Your vault is one file, and it is on your disk.",
   },
   {
     title: "Nothing can phone home",
-    body: "The app contains no network code at all. Its content security policy allows only its own files and the channel to its Rust side, so the window cannot make a request even if asked to.",
+    body: "The app makes no network requests. Its content security policy allows only its own files and the channel to its Rust side, so the window cannot make a request even if asked to.",
   },
   {
     title: "Nothing syncs behind your back",
-    body: "The vault lives under %LOCALAPPDATA%, not the roaming profile, so Windows never copies it to another machine. A backup goes only where you save it.",
+    body: "The vault lives in your own user folder (on Windows under %LOCALAPPDATA%, not the roaming profile), so nothing copies it to another machine. A backup goes only where you save it.",
   },
 ];
 
@@ -103,12 +103,13 @@ const ENCRYPTION: { step: string; title: string; body: string }[] = [
 ];
 
 const WONT: string[] = [
-  "Sync. Nothing leaves the PC, so the vault is not on your phone or your other computers.",
+  "Sync. Nothing leaves the computer, so the vault is not on your phone or your other computers.",
   "Bring a vault back without a backup. If the disk dies, an exported backup is the only way back.",
   "Let you in without the master password or the recovery key. There are no hints, no security questions and no reset by email.",
   "Protect you from malware already running as you. A program that can read your keystrokes or your screen can read your vault as you use it.",
-  "Run anywhere but Windows, for now. The clipboard and window protections are Windows APIs.",
-  "Come signed. The exe is not code-signed yet, so SmartScreen warns the first time; the checksum and the build attestation are how you check it.",
+  "Protect as much on macOS and Linux as on Windows. Universal Clipboard still carries a copy on a Mac, and Linux cannot keep the window out of screenshots.",
+  "Come signed. Nothing is code-signed yet, so Windows and macOS warn the first time; the checksum and the build attestation are how you check a download.",
+  "Act as a full password manager. It has no username or URL fields, no autofill and no sync; KeePassXC does those on your own disk.",
 ];
 
 function Heading({
@@ -150,7 +151,7 @@ function MoreLink({ href, children }: { href: string; children: React.ReactNode 
 
 const SECTION = "mx-auto max-w-[80rem] scroll-mt-20 px-4 py-14 md:px-6 md:py-20";
 
-const VERIFY = `gh attestation verify Saltcellar-<version>.exe --repo akshit-bansal11/saltcellar`;
+const VERIFY = `gh attestation verify <file> --repo akshit-bansal11/saltcellar`;
 
 export default function Page() {
   return (
@@ -169,15 +170,15 @@ export default function Page() {
           <div className="relative mx-auto grid max-w-[80rem] gap-14 px-4 pt-12 pb-16 md:px-6 md:pt-20 md:pb-24 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-20">
             <div>
               <p className="bg-card shadow-card inline-flex rounded-full px-4 py-1.5 text-sm font-bold">
-                <AnimatedShinyText>Local · Encrypted · Windows</AnimatedShinyText>
+                <AnimatedShinyText>Local · Encrypted · Windows, macOS, Linux</AnimatedShinyText>
               </p>
               <h1 className="mt-6 max-w-[14ch] text-[2.75rem] leading-[1.02] font-black tracking-[-0.025em] sm:text-6xl lg:text-7xl">
-                Your secrets, sealed on your own PC.
+                Your secrets, sealed on your own computer.
               </h1>
               <p className="text-dim mt-6 max-w-[56ch] text-lg leading-relaxed md:text-xl">
                 Saltcellar keeps your passwords, environment keys and backup codes in
-                one encrypted file on your Windows PC. One window, one file, one master
-                password. No account, no sync, and no network code at all.
+                one encrypted file on your own computer. One window, one file, one
+                master password. No account, no sync, and no network requests.
               </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -348,8 +349,8 @@ export default function Page() {
         <section className={SECTION}>
           <div className="grid gap-10 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-16">
             <Heading eyebrow="The cost" title="What it will not do.">
-              Keeping everything on one PC has a price. Nothing here is hidden because
-              it is inconvenient.
+              Keeping everything on one computer has a price. Nothing here is hidden
+              because it is inconvenient.
             </Heading>
 
             <BlurFade delay={0.05}>
@@ -365,10 +366,12 @@ export default function Page() {
         </section>
 
         <section id="get" className={SECTION}>
-          <Heading eyebrow="Get it" title="One portable exe.">
-            No installer, no administrator rights, nothing written outside your own user
-            folder. Download Saltcellar-&lt;version&gt;.exe and SHA256SUMS.txt from the
-            same release, check them, and run it.
+          <Heading eyebrow="Get it" title="One file per system.">
+            Windows gets a portable exe, macOS a universal dmg, and Linux an AppImage
+            or a deb. Nothing needs administrator rights to run, and nothing is written
+            outside your own user folder. Download your system&apos;s file and
+            SHA256SUMS.txt from the same release, check them, and run it. The macOS and
+            Linux builds are new in 1.1.0 and not yet tried on real machines beyond CI.
           </Heading>
 
           <div className="mt-10 grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -376,13 +379,14 @@ export default function Page() {
               <Card className="h-full px-6 py-6">
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="solid">Windows 10 / 11, x64</Badge>
-                  <Badge variant="outline">Saltcellar-&lt;version&gt;.exe</Badge>
+                  <Badge variant="solid">macOS, universal</Badge>
+                  <Badge variant="solid">Linux, x86_64</Badge>
                 </div>
                 <ol className="divide-line divide-y">
                   {[
-                    "Download the exe and SHA256SUMS.txt from the latest release.",
+                    "Download your system's file and SHA256SUMS.txt from the latest release.",
                     "Check the hash, and the attestation if you have the GitHub CLI.",
-                    "Run it. SmartScreen asks first: More info, then Run anyway.",
+                    "Run it. Windows SmartScreen: More info, then Run anyway. macOS: Open Anyway in Privacy & Security. Linux: chmod +x the AppImage first.",
                     "Choose a master password, and a recovery key to write on paper.",
                   ].map((step, index) => (
                     <li key={step} className="flex gap-3 py-3 first:pt-0 last:pb-0">

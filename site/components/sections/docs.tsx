@@ -15,14 +15,16 @@ function List({ children }: { children: React.ReactNode }) {
 const HASH_POWERSHELL = `(Get-FileHash .\\Saltcellar-<version>.exe -Algorithm SHA256).Hash.ToLower()
 Get-Content .\\SHA256SUMS.txt`;
 
-const HASH_BASH = "sha256sum -c SHA256SUMS.txt";
+const HASH_MACOS = "shasum -a 256 -c SHA256SUMS.txt --ignore-missing";
 
-const ATTEST =
-  "gh attestation verify Saltcellar-<version>.exe --repo akshit-bansal11/saltcellar";
+const HASH_LINUX = "sha256sum -c --ignore-missing SHA256SUMS.txt";
+
+const ATTEST = "gh attestation verify <file> --repo akshit-bansal11/saltcellar";
 
 const BUILD = `npm ci
 npm run check                 # format, lint, type-check, all tests, build the page
-npx tauri build --no-bundle   # target/release/saltcellar.exe`;
+npx tauri build --no-bundle   # target/release/saltcellar.exe
+npx tauri build --bundles app,dmg   # macOS; Linux: --bundles appimage,deb`;
 
 export function DocsSections() {
   return (
@@ -31,25 +33,45 @@ export function DocsSections() {
         id="install"
         eyebrow="Start here"
         title={navLabel("install")}
-        lede="One portable exe. No setup program, no administrator rights, nothing written outside your own user folder."
+        lede="One file per system. Nothing to set up and nothing written outside your own user folder."
       >
         <P>
-          Saltcellar runs on Windows 10 or 11, 64-bit, with WebView2, which is built
-          into Windows 11 and into any Windows 10 kept up to date.
+          <strong>Windows</strong> 10 or 11, 64-bit: the portable{" "}
+          <C>Saltcellar-&lt;version&gt;.exe</C>. It needs WebView2, which is built into
+          Windows 11 and into any Windows 10 kept up to date.
         </P>
+        <P>
+          <strong>macOS</strong>, Apple silicon or Intel: the universal{" "}
+          <C>Saltcellar-&lt;version&gt;-macos-universal.dmg</C>.
+        </P>
+        <P>
+          <strong>Linux</strong>, x86_64:{" "}
+          <C>Saltcellar-&lt;version&gt;-linux-x86_64.AppImage</C> or{" "}
+          <C>Saltcellar-&lt;version&gt;-linux-amd64.deb</C>. The .deb needs WebKitGTK
+          4.1, which it pulls in.
+        </P>
+        <Note label="New in 1.1.0">
+          The macOS and Linux builds are new in 1.1.0 and not yet tried on real machines
+          beyond CI.
+        </Note>
         <List>
           <li>
-            Download <C>Saltcellar-&lt;version&gt;.exe</C> and <C>SHA256SUMS.txt</C>{" "}
-            from the same release, under <strong>Assets</strong> on the{" "}
+            Download your system&apos;s file and <C>SHA256SUMS.txt</C> from the same
+            release, under <strong>Assets</strong> on the{" "}
             <ExternalLink href={LATEST_RELEASE}>latest release</ExternalLink>.
           </li>
           <li>Check the download, as below.</li>
           <li>
-            Run it. The builds are not code-signed yet, so SmartScreen asks first:
-            choose <strong>More info</strong>, then <strong>Run anyway</strong>.
+            Run it. The builds are not code-signed yet. On Windows, SmartScreen asks
+            first: choose <strong>More info</strong>, then <strong>Run anyway</strong>.
+            On macOS the build is ad-hoc signed but not notarized, so macOS refuses the
+            first time: open <strong>System Settings → Privacy &amp; Security</strong>{" "}
+            and choose <strong>Open Anyway</strong>. On Linux, make the AppImage
+            executable first with <C>chmod +x</C>.
           </li>
           <li>
-            Put the exe wherever you keep your tools. To remove Saltcellar, delete it.
+            On Windows, put the exe wherever you keep your tools. To remove Saltcellar,
+            delete the file.
           </li>
         </List>
         <Sub>Check the download</Sub>
@@ -60,16 +82,24 @@ export function DocsSections() {
         <Tabs defaultValue="powershell">
           <TabsList>
             <TabsTrigger value="powershell">PowerShell</TabsTrigger>
-            <TabsTrigger value="bash">Git Bash, WSL or Linux</TabsTrigger>
+            <TabsTrigger value="macos">macOS</TabsTrigger>
+            <TabsTrigger value="linux">Linux</TabsTrigger>
           </TabsList>
           <TabsContent value="powershell">
             <CodeBlock title="Compare the hash in PowerShell" code={HASH_POWERSHELL} />
           </TabsContent>
-          <TabsContent value="bash">
+          <TabsContent value="macos">
+            <CodeBlock
+              title="Compare the hash with shasum"
+              code={HASH_MACOS}
+              caption="Prints OK next to the file when it matches."
+            />
+          </TabsContent>
+          <TabsContent value="linux">
             <CodeBlock
               title="Compare the hash with sha256sum"
-              code={HASH_BASH}
-              caption="Prints OK next to the exe when it matches."
+              code={HASH_LINUX}
+              caption="Prints OK next to the file when it matches."
             />
           </TabsContent>
         </Tabs>
@@ -99,9 +129,9 @@ export function DocsSections() {
           <li>
             <strong>A recovery key (recommended).</strong> Saltcellar shows a
             32-character key once, and asks you to type it back to prove you saved it.
-            Write it on paper and keep it away from the PC. If you forget the master
-            password, the recovery key opens the vault and you choose a new password;
-            you then get a new recovery key and the used one stops working.
+            Write it on paper and keep it away from the computer. If you forget the
+            master password, the recovery key opens the vault and you choose a new
+            password; you then get a new recovery key and the used one stops working.
           </li>
           <li>
             <strong>No recovery.</strong> Only the master password opens the vault.
@@ -128,9 +158,13 @@ export function DocsSections() {
             show one, and only one is shown at a time.
           </li>
           <li>
-            Copying clears the clipboard after 30 seconds, and a thin line in the status
-            bar counts it down. Copied values stay out of Win+V history and cloud
-            clipboard.
+            Copying clears the clipboard after 30 seconds, if it still holds the copied
+            value, and a thin line in the status bar counts it down. Selecting the text
+            goes through the same protected copy. On Windows, copied values stay out of
+            Win+V history and cloud clipboard. On macOS they are marked so clipboard
+            managers that honour <C>org.nspasteboard.ConcealedType</C> skip them, but
+            Universal Clipboard (Handoff) still carries them. On Linux, KDE&apos;s
+            password-manager hint is added.
           </li>
           <li>
             <strong>Generate a password</strong> with the dice button or Ctrl+G: a
@@ -143,13 +177,16 @@ export function DocsSections() {
             <C>default</C> unless you pick another.
           </li>
           <li>
-            <strong>Names</strong> use letters, digits and <C>_ - . /</C>, and match
-            regardless of case.
+            <strong>Names</strong> use letters, digits, spaces (not at either end) and{" "}
+            <C>_ - . / @ + :</C>, and match regardless of case.
           </li>
           <li>
             The app locks itself after 5 minutes without use, on Ctrl+L, and whenever it
-            is closed. The window is hidden from screenshots and screen sharing.
+            is closed. On Windows the window is hidden from screenshots and screen
+            sharing; macOS is asked to hide it too, and whether a tool honours that is
+            up to macOS. Linux cannot.
           </li>
+          <li>On a Mac, Cmd stands in for Ctrl in every shortcut.</li>
         </List>
         <Sub>The keyboard</Sub>
         <P>
@@ -177,9 +214,9 @@ export function DocsSections() {
           had when you exported it. Keep one on a USB drive or another disk.
         </P>
         <P>
-          To move to a new PC, or after losing the disk, start Saltcellar with no vault
-          and choose <strong>Restore from a backup…</strong>. Saltcellar never restores
-          over an existing vault.
+          To move to a new computer, or after losing the disk, start Saltcellar with no
+          vault and choose <strong>Restore from a backup…</strong>. Saltcellar never
+          restores over an existing vault.
         </P>
         <Note label="Mind where you save it">
           A folder synced by OneDrive or a similar service uploads whatever you save
@@ -194,7 +231,10 @@ export function DocsSections() {
         title={navLabel("where")}
         lede={
           <>
-            <C>%LOCALAPPDATA%\saltcellar</C>, in your own user profile.
+            <C>%LOCALAPPDATA%\saltcellar</C> on Windows,{" "}
+            <C>~/Library/Application Support/saltcellar</C> on macOS and{" "}
+            <C>~/.local/share/saltcellar</C> (or <C>$XDG_DATA_HOME/saltcellar</C>) on
+            Linux, in your own user profile.
           </>
         }
       >
@@ -214,8 +254,9 @@ export function DocsSections() {
         </List>
         <P>
           Set <C>SALTCELLAR_DIR</C> (or the older <C>LOKEY_DIR</C>) to keep them
-          somewhere else. Local, not roaming: Windows never syncs the folder. The files
-          keep the <C>.lokey</C> extension from the app&apos;s previous name; the format
+          somewhere else. On Windows it is local, not roaming: Windows never syncs the
+          folder. On macOS and Linux the files are yours only (0600). The files keep
+          the <C>.lokey</C> extension from the app&apos;s previous name; the format
           inside is the same.
         </P>
         <P>
@@ -314,8 +355,13 @@ export function DocsSections() {
             open.
           </li>
           <li>
-            Keys, decrypted entries and generated passwords are wiped from memory when
-            they are dropped.
+            Keys and the decrypted vault in the Rust side are wiped (<C>zeroize</C>)
+            when dropped. Values shown in the window live in the web view&apos;s memory,
+            which Saltcellar cannot wipe.
+          </li>
+          <li>
+            The app makes no network requests and its content security policy blocks
+            any. The system web view underneath is updated by the operating system.
           </li>
         </List>
         <Sub>What it cannot protect you from</Sub>
@@ -333,14 +379,14 @@ export function DocsSections() {
             Someone who finds your recovery key. It opens the vault as fully as the
             password does.
           </li>
-          <li>Someone at your PC while the vault is unlocked, until it locks.</li>
+          <li>Someone at your computer while the vault is unlocked, until it locks.</li>
           <li>
             Old copies: a backup or vault.lokey.bak opens with the password and recovery
             key it had.
           </li>
           <li>
             SSDs keeping old blocks after a file is rewritten. Full-disk encryption
-            (BitLocker) covers that, and the stolen-laptop case.
+            (BitLocker, FileVault, LUKS) covers that, and the stolen-laptop case.
           </li>
         </List>
         <Note label="Not audited">
@@ -360,7 +406,7 @@ export function DocsSections() {
         id="build"
         eyebrow="Under the hood"
         title={navLabel("build")}
-        lede="Rust (stable) and Node.js 24 or newer, on Windows."
+        lede="Rust (stable) and Node.js 24 or newer, on Windows, macOS or Linux."
       >
         <CodeBlock title="Build the app" code={BUILD} />
         <P>
