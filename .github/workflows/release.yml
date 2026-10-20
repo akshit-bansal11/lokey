@@ -112,21 +112,22 @@ jobs:
       - name: Name the files for the version
         shell: bash
         run: |
-          mkdir -p dist
+          # Not dist/: Vite builds the page there, and its files would be uploaded and released too.
+          mkdir -p release
           case "${{ matrix.name }}" in
-            windows) cp target/release/saltcellar.exe "dist/Saltcellar-$VERSION.exe" ;;
-            macos) cp target/universal-apple-darwin/release/bundle/dmg/*.dmg "dist/Saltcellar-$VERSION-macos-universal.dmg" ;;
+            windows) cp target/release/saltcellar.exe "release/Saltcellar-$VERSION.exe" ;;
+            macos) cp target/universal-apple-darwin/release/bundle/dmg/*.dmg "release/Saltcellar-$VERSION-macos-universal.dmg" ;;
             linux)
-              cp target/release/bundle/appimage/*.AppImage "dist/Saltcellar-$VERSION-linux-x86_64.AppImage"
-              cp target/release/bundle/deb/*.deb "dist/Saltcellar-$VERSION-linux-amd64.deb"
+              cp target/release/bundle/appimage/*.AppImage "release/Saltcellar-$VERSION-linux-x86_64.AppImage"
+              cp target/release/bundle/deb/*.deb "release/Saltcellar-$VERSION-linux-amd64.deb"
               ;;
           esac
-          ls -l dist
+          ls -l release
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist-${{ matrix.name }}
-          path: dist/*
+          path: release/*
           if-no-files-found: error
           retention-days: 1
 
@@ -148,11 +149,11 @@ jobs:
         with:
           pattern: dist-*
           merge-multiple: true
-          path: dist
+          path: release
 
       - name: Sum the files
         shell: bash
-        run: cd dist && sha256sum Saltcellar-* > SHA256SUMS.txt && cat SHA256SUMS.txt
+        run: cd release && sha256sum Saltcellar-* > SHA256SUMS.txt && cat SHA256SUMS.txt
 
       # A tagged run takes that version's section of CHANGELOG.md. A hand-run
       # draft takes Unreleased, since it is a build of work in progress; when
@@ -186,7 +187,7 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          subject-path: dist/Saltcellar-*
+          subject-path: release/Saltcellar-*
 
       - name: Publish the release
         if: github.event_name == 'push'
@@ -194,7 +195,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: >
-          gh release create "$env:GITHUB_REF_NAME" dist/*
+          gh release create "$env:GITHUB_REF_NAME" release/*
           --repo "$env:GITHUB_REPOSITORY" --title "Saltcellar $env:GITHUB_REF_NAME" --notes-file notes.md --verify-tag
 
       # --draft is what keeps this private, and the run number keeps two test
@@ -208,7 +209,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           NAME: ${{ inputs.label }}-${{ github.run_number }}
         run: |
-          gh release create "$env:NAME" dist/* --repo "$env:GITHUB_REPOSITORY" --title "Saltcellar $env:NAME" --notes-file notes.md --draft --target "$env:GITHUB_SHA"
+          gh release create "$env:NAME" release/* --repo "$env:GITHUB_REPOSITORY" --title "Saltcellar $env:NAME" --notes-file notes.md --draft --target "$env:GITHUB_SHA"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           @(
             "Draft build **$env:NAME**, visible only to accounts with push access to this repo."
