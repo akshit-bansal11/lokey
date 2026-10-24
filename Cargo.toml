@@ -14,7 +14,7 @@ saltcellar-core = { path = "crates/saltcellar-core" }
 aes-gcm = { version = "0.11.1", default-features = false, features = ["aes", "alloc", "zeroize"] }
 argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "zeroize"] }
 # Pinned: 3.7.0 is under two weeks old. Dependabot moves it.
-arboard = { version = "=3.6.1", default-features = false }
+arboard = { version = "=3.7.0", default-features = false }
 base64 = "0.23.1"
 getrandom = "0.4.3"
 hpke = { version = "0.14.1", default-features = false, features = ["alloc", "getrandom", "x25519", "aes"] }
