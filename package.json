@@ -14,14 +14,14 @@
     "check:ci": "biome ci . && tsc --noEmit && npm run test:ui && vite build && cargo fmt --all --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked"
   },
   "dependencies": {
-    "@tauri-apps/api": "2.11.1"
+    "@tauri-apps/api": "2.12.4"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
-    "@tauri-apps/cli": "2.11.5",
-    "@types/node": "26.6.4",
+    "@tauri-apps/cli": "2.12.3",
+    "@types/node": "26.6.5",
     "typescript": "7.0.2",
-    "vite": "8.3.3"
+    "vite": "8.3.4"
   },
   "engines": {
     "node": ">=24"
